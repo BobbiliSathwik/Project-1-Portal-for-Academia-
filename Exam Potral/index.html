@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Exam Test Portal</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1f2933;
+            background: #f4f6f8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: #f4f6f8;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 18px 32px;
+            background: #ffffff;
+            border-bottom: 1px solid #d9e0e6;
+        }
+
+        .site-title {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 700;
+        }
+
+        .student-name {
+            margin: 0;
+            color: #52606d;
+            font-size: 14px;
+        }
+
+        .page {
+            width: min(100% - 32px, 760px);
+            margin: 0 auto;
+            padding: 56px 0;
+        }
+
+        .welcome-heading {
+            margin: 0 0 8px;
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        .intro-text {
+            margin: 0 0 28px;
+            color: #52606d;
+            line-height: 1.5;
+        }
+
+        .exam-card {
+            max-width: 520px;
+            padding: 26px;
+            background: #ffffff;
+            border: 1px solid #d9e0e6;
+            border-radius: 8px;
+        }
+
+        .exam-card h2 {
+            margin: 0 0 22px;
+            font-size: 21px;
+        }
+
+        .exam-details {
+            display: grid;
+            gap: 14px;
+            margin: 0 0 24px;
+        }
+
+        .exam-detail {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #edf0f2;
+        }
+
+        .exam-detail dt {
+            color: #52606d;
+        }
+
+        .exam-detail dd {
+            margin: 0;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 11px 17px;
+            border: 1px solid #175cd3;
+            border-radius: 6px;
+            background: #175cd3;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: #1049a5;
+            border-color: #1049a5;
+        }
+
+        .button:focus-visible {
+            outline: 3px solid #a7c7ff;
+            outline-offset: 2px;
+        }
+
+        .back-button {
+            margin-bottom: 22px;
+            background: #ffffff;
+            color: #175cd3;
+        }
+
+        .back-button:hover {
+            background: #eef4ff;
+            color: #1049a5;
+        }
+
+        .portal-heading {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        .portal-description {
+            margin: 0 0 24px;
+            color: #52606d;
+            line-height: 1.5;
+        }
+
+        #examPortalContainer {
+            display: grid;
+            min-height: 300px;
+            place-items: center;
+            padding: 32px;
+            border: 2px dashed #7b8794;
+            border-radius: 8px;
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .placeholder-content {
+            max-width: 440px;
+            color: #52606d;
+            line-height: 1.6;
+        }
+
+        .placeholder-content strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #1f2933;
+            font-size: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .site-header {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px;
+            }
+
+            .page {
+                width: min(100% - 24px, 760px);
+                padding: 36px 0;
+            }
+
+            .welcome-heading,
+            .portal-heading {
+                font-size: 25px;
+            }
+
+            .exam-card {
+                padding: 20px;
+            }
+
+            .exam-detail {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .exam-detail dd {
+                text-align: left;
+            }
+
+            #examPortalContainer {
+                min-height: 260px;
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <h1 class="site-title">AI Exam Test Portal</h1>
+        <p class="student-name">Student: Alex Johnson</p>
+    </header>
+
+    <main>
+        <section id="dashboardScreen" class="page" aria-labelledby="dashboardHeading">
+            <h2 id="dashboardHeading" class="welcome-heading">Welcome, Alex Johnson</h2>
+            <p class="intro-text">Your exam is ready when you are.</p>
+
+            <article class="exam-card">
+                <h2>AI Practice Examination</h2>
+                <dl class="exam-details">
+                    <div class="exam-detail">
+                        <dt>Subject</dt>
+                        <dd>General</dd>
+                    </div>
+                    <div class="exam-detail">
+                        <dt>Questions</dt>
+                        <dd>20</dd>
+                    </div>
+                    <div class="exam-detail">
+                        <dt>Duration</dt>
+                        <dd>30 Minutes</dd>
+                    </div>
+                    <div class="exam-detail">
+                        <dt>Status</dt>
+                        <dd>Available</dd>
+                    </div>
+                </dl>
+                <button id="startExamButton" class="button" type="button">Start Exam</button>
+            </article>
+        </section>
+
+        <section id="examPortalScreen" class="page hidden" aria-labelledby="portalHeading">
+            <button id="backToDashboardButton" class="button back-button" type="button">← Back to Dashboard</button>
+            <h2 id="portalHeading" class="portal-heading">Exam Portal</h2>
+            <p class="portal-description">Your friend's exam portal will be inserted here.</p>
+
+            <div id="examPortalContainer">
+                <!--
+                ==================================================
+                FRIEND'S EXAM PORTAL CODE
+                ==================================================
+
+                PASTE / INTEGRATE THE EXISTING EXAM PORTAL CODE
+                INSIDE THIS CONTAINER.
+
+                DO NOT MODIFY THE DASHBOARD CODE ABOVE.
+
+                ==================================================
+                -->
+                <div class="placeholder-content">
+                    <strong>FRIEND'S EXAM PORTAL GOES HERE</strong>
+                    Replace this placeholder with the existing exam portal code.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const dashboardScreen = document.getElementById("dashboardScreen");
+        const examPortalScreen = document.getElementById("examPortalScreen");
+        const startExamButton = document.getElementById("startExamButton");
+        const backToDashboardButton = document.getElementById("backToDashboardButton");
+
+        function showExamPortal() {
+            dashboardScreen.classList.add("hidden");
+            examPortalScreen.classList.remove("hidden");
+        }
+
+        function showDashboard() {
+            examPortalScreen.classList.add("hidden");
+            dashboardScreen.classList.remove("hidden");
+        }
+
+        startExamButton.addEventListener("click", showExamPortal);
+        backToDashboardButton.addEventListener("click", showDashboard);
+    </script>
+</body>
+</html>
