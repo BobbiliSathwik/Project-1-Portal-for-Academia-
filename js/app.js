@@ -65,6 +65,11 @@
 			menu: '☰'
 		};
 		const app = document.getElementById('app');
+		const AI_API_ENDPOINT = '';
+		let chatbotState = {
+			lastOpportunity: null,
+			pendingApplication: null
+		};
 
 		function brand() {
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillBridge</a>`;
@@ -176,6 +181,312 @@
 
 		function closeSidebar() {
 			document.getElementById('sidebar')?.classList.remove('open');
+		}
+
+		function chatbotMarkup() {
+			return `<button class="ai-launcher" type="button" aria-label="Open SkillBridge AI Assistant" aria-expanded="false">
+				<span class="ai-launcher-icon">✦</span>
+				<span class="ai-launcher-label">SkillBridge AI</span>
+			</button>
+			<div class="ai-panel" aria-hidden="true">
+				<div class="ai-header">
+					<div class="ai-title-wrap">
+						<div class="ai-avatar">✦</div>
+						<div>
+							<strong>SkillBridge AI Assistant</strong>
+							<span>Ready to help with your career journey</span>
+						</div>
+					</div>
+					<button class="ai-close" type="button" aria-label="Minimize assistant">−</button>
+				</div>
+				<div class="ai-messages" aria-live="polite"></div>
+				<div class="ai-suggestions">
+					<button type="button" data-prompt="Find me a software developer internship">Software internships</button>
+					<button type="button" data-prompt="Show my skill gaps">My skill gaps</button>
+					<button type="button" data-prompt="Open my career path">Career path</button>
+				</div>
+				<form class="ai-form">
+					<input class="ai-input" type="text" placeholder="Ask about skills, jobs, or careers..." aria-label="Ask SkillBridge AI Assistant" autocomplete="off">
+					<button class="ai-send" type="submit" aria-label="Send message">↗</button>
+				</form>
+			</div>`;
+		}
+
+		function currentRole() {
+			const match = location.hash.match(/^#\/(student|industry|institution)\//);
+			return match?.[1] || 'student';
+		}
+
+		function currentPage() {
+			return location.hash.slice(1) || '/';
+		}
+
+		function chatbotContext() {
+			return {
+				role: currentRole(),
+				currentPage: currentPage(),
+				student: data.student,
+				skills: data.skills,
+				skillGaps: data.gaps,
+				careers: data.careers,
+				opportunities: data.opportunities,
+				company: data.company,
+				candidates: data.candidates,
+				actions: [
+					'OPEN_DASHBOARD', 'OPEN_SKILLS', 'OPEN_OPPORTUNITIES', 'OPEN_APPLICATIONS',
+					'OPEN_CAREER', 'OPEN_COMPANY', 'OPEN_OPPORTUNITY', 'SHOW_SKILL_GAPS',
+					'START_ASSESSMENT', 'APPLY_TO_OPPORTUNITY'
+				]
+			};
+		}
+
+		async function askAI(message, context) {
+			if (!AI_API_ENDPOINT) return null;
+
+			const response = await fetch(AI_API_ENDPOINT, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ message, context })
+			});
+
+			if (!response.ok) throw new Error('AI service unavailable');
+			return response.json();
+		}
+
+		function findOpportunities(message) {
+			const query = message.toLowerCase();
+			const terms = ['python', 'javascript', 'react', 'git', 'sql', 'frontend', 'backend', 'software developer', 'data analyst'];
+			const matches = data.opportunities.filter((opportunity) => {
+				const searchable = opportunity.join(' ').toLowerCase();
+				return terms.some((term) => query.includes(term) && searchable.includes(term));
+			});
+			return matches.length ? matches : data.opportunities;
+		}
+
+		function findOpportunity(message) {
+			const query = message.toLowerCase();
+			return data.opportunities.find((opportunity) => {
+				const searchable = opportunity.join(' ').toLowerCase();
+				return searchable.includes('technova') && query.includes('technova') ||
+					searchable.includes('software developer') && query.includes('software developer') ||
+					searchable.includes('frontend') && query.includes('frontend');
+			}) || chatbotState.lastOpportunity || data.opportunities[0];
+		}
+
+		function chatbotResultCard(opportunity) {
+			const [name, company, location, skills, match] = opportunity;
+			return `<div class="ai-result-card">
+				<div class="ai-result-top"><span class="tag success">${match} match</span><span>${location}</span></div>
+				<strong>${name}</strong>
+				<span class="ai-result-company">${company}</span>
+				<span class="ai-result-skills">Required skills: ${skills}</span>
+				<div class="ai-result-actions">
+					<button type="button" data-chat-action="OPEN_OPPORTUNITY" data-opportunity="${name}">View Opportunity</button>
+					<button type="button" class="primary" data-chat-action="APPLY_TO_OPPORTUNITY" data-opportunity="${name}">Apply</button>
+				</div>
+			</div>`;
+		}
+
+		function chatbotSkillCards() {
+			return `<div class="ai-skill-list">${data.skills.map(([name, score, status]) =>
+				`<div class="ai-skill-row"><span>${name}</span><span><b>${score}%</b> <em class="${status === 'Verified' ? 'verified' : 'improve'}">${status}</em></span></div>`
+			).join('')}</div>`;
+		}
+
+		function chatbotResponse(message) {
+			const query = message.toLowerCase().trim();
+			const wantsApply = /\bapply|application\b/.test(query);
+			const wantsCompany = /company|technova|industry/.test(query);
+			const wantsSkills = /skills|skill gap|ready for/.test(query);
+			const wantsCareer = /career path|career guidance|career/.test(query);
+			const wantsApplications = /my applications|show applications|applications/.test(query);
+			const wantsAssessment = /assessment|assess my skills|take.*assessment/.test(query);
+			const wantsOpportunity = /internship|opportunit|job|developer|frontend|backend|python|sql|react/.test(query);
+
+			if (/^(yes|yeah|confirm|go ahead|apply now)$/.test(query) && chatbotState.pendingApplication) {
+				const opportunity = chatbotState.pendingApplication;
+				chatbotState.pendingApplication = null;
+				return {
+					text: `Your application request for ${opportunity[0]} at ${opportunity[1]} is ready. I'll open your Applications workspace now.`,
+					action: { type: 'OPEN_APPLICATIONS' }
+				};
+			}
+
+			if (wantsApply) {
+				const opportunity = findOpportunity(message);
+				chatbotState.lastOpportunity = opportunity;
+				chatbotState.pendingApplication = opportunity;
+				return {
+					text: `I found ${opportunity[0]} at ${opportunity[1]}. Would you like to continue to the application workspace?`,
+					cards: chatbotResultCard(opportunity),
+					confirm: true
+				};
+			}
+
+			if (wantsCompany) {
+				const opportunity = findOpportunity(message);
+				chatbotState.lastOpportunity = opportunity;
+				return {
+					text: `${opportunity[1]} is connected to ${opportunity[0]}. I'll open the relevant industry opportunity page.`,
+					cards: chatbotResultCard(opportunity),
+					action: { type: 'OPEN_COMPANY', opportunity }
+				};
+			}
+
+			if (wantsApplications) {
+				return { text: 'Here is your Applications workspace.', action: { type: 'OPEN_APPLICATIONS' } };
+			}
+
+			if (wantsAssessment) {
+				return { text: 'I will open the skills workspace so you can begin your assessment.', action: { type: 'START_ASSESSMENT' } };
+			}
+
+			if (wantsCareer) {
+				return { text: 'Here is your personalized Career Path.', action: { type: 'OPEN_CAREER' } };
+			}
+
+			if (wantsSkills) {
+				if (chatbotState.lastOpportunity) {
+					const [name, company, location, skills, match] = chatbotState.lastOpportunity;
+					return {
+						text: `${name} at ${company} requires ${skills}. Your current match is ${match}.`,
+						cards: chatbotResultCard(chatbotState.lastOpportunity)
+					};
+				}
+				return {
+					text: 'Your current skill profile shows the verified skills below. SQL is your clearest improvement area, along with the gaps shown on your skills page.',
+					cards: chatbotSkillCards(),
+					action: { type: 'SHOW_SKILL_GAPS' }
+				};
+			}
+
+			if (wantsOpportunity) {
+				const opportunities = findOpportunities(message);
+				chatbotState.lastOpportunity = opportunities[0];
+				const opportunityLabel = opportunities.length === 1 ? 'opportunity' : 'opportunities';
+				return {
+					text: `I found ${opportunities.length} matching ${opportunityLabel} for you.`,
+					cards: opportunities.map(chatbotResultCard).join('')
+				};
+			}
+
+			if (/dashboard|home|workspace/.test(query)) {
+				return { text: 'Opening your dashboard.', action: { type: 'OPEN_DASHBOARD' } };
+			}
+
+			return {
+				text: 'I can help you find opportunities, review your skills and gaps, open your career path, view applications, or start an assessment. Try “Find Python internships”.'
+			};
+		}
+
+		function chatbotNavigate(type, opportunity) {
+			const role = currentRole();
+			const routes = {
+				OPEN_DASHBOARD: `/${role}/dashboard`,
+				OPEN_SKILLS: `/${role}/skills`,
+				OPEN_OPPORTUNITIES: `/${role}/opportunities`,
+				OPEN_APPLICATIONS: `/${role}/applications`,
+				OPEN_CAREER: `/${role}/career-path`,
+				OPEN_COMPANY: `/${role}/opportunities`,
+				OPEN_OPPORTUNITY: `/${role}/opportunities`,
+				SHOW_SKILL_GAPS: `/${role}/skills`,
+				START_ASSESSMENT: `/${role}/skills`
+			};
+
+			if (type === 'APPLY_TO_OPPORTUNITY') {
+				chatbotState.pendingApplication = opportunity || chatbotState.lastOpportunity || data.opportunities[0];
+				return;
+			}
+
+			if (routes[type]) location.hash = routes[type];
+		}
+
+		function initChatbot() {
+			document.querySelector('.ai-launcher')?.parentElement?.remove();
+			document.body.insertAdjacentHTML('beforeend', `<div class="ai-assistant">${chatbotMarkup()}</div>`);
+
+			const assistant = document.querySelector('.ai-assistant');
+			const launcher = assistant.querySelector('.ai-launcher');
+			const panel = assistant.querySelector('.ai-panel');
+			const close = assistant.querySelector('.ai-close');
+			const messages = assistant.querySelector('.ai-messages');
+			const form = assistant.querySelector('.ai-form');
+			const input = assistant.querySelector('.ai-input');
+
+			const addMessage = (content, sender = 'assistant', cards = '') => {
+				const message = document.createElement('div');
+				message.className = `ai-message ${sender}`;
+				const text = document.createElement('p');
+				text.textContent = content;
+				message.append(text);
+				if (cards) message.insertAdjacentHTML('beforeend', cards);
+				messages.append(message);
+				messages.scrollTop = messages.scrollHeight;
+			};
+
+			const showWelcome = () => {
+				if (!messages.children.length) {
+					addMessage('Hi! I am your SkillBridge AI Assistant. I can help you explore opportunities, understand your skills, and navigate your workspace.');
+				}
+			};
+
+			const handleMessage = async (message) => {
+				const cleanMessage = message.trim();
+				if (!cleanMessage) return;
+
+				addMessage(cleanMessage, 'user');
+				input.value = '';
+				const typing = document.createElement('div');
+				typing.className = 'ai-typing';
+				typing.textContent = 'SkillBridge AI is thinking...';
+				messages.append(typing);
+				messages.scrollTop = messages.scrollHeight;
+
+				let response;
+				try {
+					response = await askAI(cleanMessage, chatbotContext()) || chatbotResponse(cleanMessage);
+				} catch (error) {
+					response = chatbotResponse(cleanMessage);
+				}
+				typing.remove();
+				addMessage(response.text, 'assistant', response.cards || '');
+
+				if (response.action) chatbotNavigate(response.action.type, response.action.opportunity);
+			};
+
+			launcher.onclick = () => {
+				const isOpen = assistant.classList.toggle('open');
+				launcher.setAttribute('aria-expanded', String(isOpen));
+				panel.setAttribute('aria-hidden', String(!isOpen));
+				if (isOpen) {
+					showWelcome();
+					input.focus();
+				}
+			};
+			close.onclick = () => {
+				assistant.classList.remove('open');
+				launcher.setAttribute('aria-expanded', 'false');
+				panel.setAttribute('aria-hidden', 'true');
+			};
+			form.onsubmit = (event) => {
+				event.preventDefault();
+				handleMessage(input.value);
+			};
+			assistant.querySelectorAll('[data-prompt]').forEach((button) => {
+				button.onclick = () => handleMessage(button.dataset.prompt);
+			});
+			assistant.addEventListener('click', (event) => {
+				const actionButton = event.target.closest('[data-chat-action]');
+				if (!actionButton) return;
+				const opportunity = data.opportunities.find((item) => item[0] === actionButton.dataset.opportunity);
+				const action = actionButton.dataset.chatAction;
+				if (action === 'APPLY_TO_OPPORTUNITY') {
+					chatbotState.pendingApplication = opportunity;
+					addMessage(`Please confirm that you want to apply for ${opportunity[0]} at ${opportunity[1]}. Type “Yes” to continue.`);
+				} else {
+					chatbotNavigate(action, opportunity);
+				}
+			});
 		}
 
 		function notFound() {
@@ -318,6 +629,7 @@
 			if (path === '/register') updateRoleFields('Student');
 			if (path === '/login' || path === '/register') bindFormValidation(path.slice(1));
 			window.scrollTo(0, 0)
+			initChatbot();
 		}
 		window.addEventListener('hashchange', render);
 		render();
