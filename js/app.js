@@ -1,38 +1,323 @@
 		const data = {
-			student:{name:'Rahul Kumar', role:'CSE Student • 3rd Year', initials:'RK', title:'Good morning, Rahul', subtitle:"Here's your career readiness overview."},
-			skills:[['Python',82,'Verified'],['JavaScript',74,'Verified'],['React',68,'Verified'],['Git',80,'Verified'],['SQL',42,'Improve'],['Communication',76,'Verified']],
-			gaps:[['SQL',42,70],['Data Structures',48,75],['Node.js',35,65]],
-			careers:[['Full Stack Developer','82%','Build end-to-end products across the modern web.','React • Node.js • SQL'],['Frontend Developer','78%','Create accessible, polished digital experiences.','JavaScript • React • CSS'],['Backend Developer','71%','Design reliable systems and APIs at scale.','Node.js • Python • SQL']],
-			opportunities:[['Software Developer Intern','TechNova','Hyderabad','Python • React • Git','89%'],['Frontend Developer Intern','InnovateLabs','Remote','JavaScript • React • CSS','84%'],['Data Analyst Intern','DataSphere','Bengaluru','Python • SQL • Excel','67%']],
-			company:{name:'TechNova Technologies',initials:'TN',title:'Welcome, TechNova',subtitle:'Manage your opportunities and discover suitable talent.'},
-			candidates:[['Rahul Kumar','CSE • 3rd Year','92%','Python • React • Git • SQL','3 verified skills'],['Priya Sharma','IT • 4th Year','88%','Java • React • Git','4 verified skills'],['Arjun Reddy','CSE • 3rd Year','84%','Python • Node.js • SQL','3 verified skills']],
-			institution:{name:'ABC Institute of Technology',initials:'AI',title:'Good morning, Admin',subtitle:'Monitor student readiness, skills, internships, and industry engagement.'}
+			student: {
+				name: 'Rahul Kumar',
+				role: 'CSE Student • 3rd Year',
+				initials: 'RK',
+				title: 'Good morning, Rahul',
+				subtitle: "Here's your career readiness overview."
+			},
+			skills: [
+				['Python', 82, 'Verified'],
+				['JavaScript', 74, 'Verified'],
+				['React', 68, 'Verified'],
+				['Git', 80, 'Verified'],
+				['SQL', 42, 'Improve'],
+				['Communication', 76, 'Verified']
+			],
+			gaps: [
+				['SQL', 42, 70],
+				['Data Structures', 48, 75],
+				['Node.js', 35, 65]
+			],
+			careers: [
+				['Full Stack Developer', '82%', 'Build end-to-end products across the modern web.',
+					'React • Node.js • SQL'
+				],
+				['Frontend Developer', '78%', 'Create accessible, polished digital experiences.',
+					'JavaScript • React • CSS'
+				],
+				['Backend Developer', '71%', 'Design reliable systems and APIs at scale.', 'Node.js • Python • SQL']
+			],
+			opportunities: [
+				['Software Developer Intern', 'TechNova', 'Hyderabad', 'Python • React • Git', '89%'],
+				['Frontend Developer Intern', 'InnovateLabs', 'Remote', 'JavaScript • React • CSS', '84%'],
+				['Data Analyst Intern', 'DataSphere', 'Bengaluru', 'Python • SQL • Excel', '67%']
+			],
+			company: {
+				name: 'TechNova Technologies',
+				initials: 'TN',
+				title: 'Welcome, TechNova',
+				subtitle: 'Manage your opportunities and discover suitable talent.'
+			},
+			candidates: [
+				['Rahul Kumar', 'CSE • 3rd Year', '92%', 'Python • React • Git • SQL', '3 verified skills'],
+				['Priya Sharma', 'IT • 4th Year', '88%', 'Java • React • Git', '4 verified skills'],
+				['Arjun Reddy', 'CSE • 3rd Year', '84%', 'Python • Node.js • SQL', '3 verified skills']
+			],
+			institution: {
+				name: 'ABC Institute of Technology',
+				initials: 'AI',
+				title: 'Good morning, Admin',
+				subtitle: 'Monitor student readiness, skills, internships, and industry engagement.'
+			}
 		};
-		const icons = {dashboard:'⌂', home:'⌂', profile:'◉', skills:'✦', jobs:'▣', briefcase:'▤', analytics:'▥', settings:'⚙', logout:'↪', bell:'◌', menu:'☰'};
-		const app=document.getElementById('app');
-		function brand(){return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillBridge</a>`}
-		function landing(){return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a><a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
+		const icons = {
+			dashboard: '⌂',
+			home: '⌂',
+			profile: '◉',
+			skills: '✦',
+			jobs: '▣',
+			briefcase: '▤',
+			analytics: '▥',
+			settings: '⚙',
+			logout: '↪',
+			bell: '◌',
+			menu: '☰'
+		};
+		const app = document.getElementById('app');
+
+		function brand() {
+			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillBridge</a>`;
+		}
+
+		function landing() {
+			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a><a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
 			<section class="hero"><div class="container"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><h1>Bridge the Gap Between <span>Skills</span> and Industry</h1><p>SkillBridge connects students, industries, and institutions through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillBridge ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillBridge</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillBridge gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
 			<section class="section soft" id="roles"><div class="container"><div class="section-heading"><div class="eyebrow">One ecosystem</div><h2>Built for the Entire Academia–Industry Ecosystem</h2></div><div class="grid-3"><div class="card role-card student"><div class="icon-box">♙</div><h3>Student</h3><p>Find internships, jobs, learning programs, and career guidance.</p><a class="btn btn-light" href="#/role-selection">Explore as Student →</a></div><div class="card role-card industry"><div class="icon-box">▤</div><h3>Industry</h3><p>Find skilled candidates and collaborate with institutions.</p><a class="btn btn-light" href="#/role-selection">Explore as Industry →</a></div><div class="card role-card institution"><div class="icon-box">⌂</div><h3>Institution</h3><p>Monitor student readiness and build industry partnerships.</p><a class="btn btn-light" href="#/role-selection">Explore as Institution →</a></div></div></div></section>
-			<section class="section"><div class="container"><div class="section-heading"><div class="eyebrow">Coming together</div><h2>Preview the Platform</h2></div><div class="feature-grid">${['Skill Assessment','Verified Skills','Career Guidance','Internship & Job Matching','Industry Learning Programs','Institution Analytics'].map((x,i)=>`<div class="feature"><div class="icon-box">${['✦','✓','◎','▣','◈','▥'][i]}</div><strong>${x}</strong></div>`).join('')}</div></div></section><section class="cta"><div class="container"><h2>Build a Stronger Bridge Between Education and Industry</h2><p>From learning new skills to finding the right opportunity, SkillBridge brings the complete journey into one platform.</p><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a></div></section><footer><div class="container"><div class="footer-grid"><div>${brand()}<p style="margin-top:14px">Connecting Skills, Academia &amp; Industry.</p></div><div><h4>Platform</h4><a href="#/role-selection">Students</a><a href="#/role-selection">Industry</a><a href="#/role-selection">Institutions</a><a href="#/role-selection">Opportunities</a></div><div><h4>Company</h4><a href="#about">About</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div><div><h4>Social</h4><p>LinkedIn · X · Instagram</p></div></div><div class="copyright">© 2026 SkillBridge. All rights reserved.</div></div></footer></div>`}
-		function updateRoleFields(role){const target=document.getElementById('role-fields');if(!target)return;const fields=role==='Student'?['College','Degree','Branch','Year']:role==='Industry'?['Company Name','Industry Type']:['Institution Name','Institution Type'];target.innerHTML=fields.map((field)=>`<label>${field}</label><input placeholder="${field}">`).join('')}
-		function auth(type){let register=type==='register';return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillBridge workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`}
-		function roleSelection(){return `<div class="role-page"><div class="container role-top">${brand()}</div><div class="role-select"><div class="eyebrow">Choose your perspective</div><h1>Choose Your Workspace</h1><p>Select how you want to use SkillBridge.</p><div class="role-options"><div class="role-option"><div class="icon-box">♙</div><h2>Student</h2><p>Build your skill profile, discover opportunities, and prepare for your career.</p><a class="btn btn-primary" href="#/student/dashboard">Continue as Student →</a></div><div class="role-option"><div class="icon-box">▤</div><h2>Industry</h2><p>Discover suitable candidates, post opportunities, and collaborate with academia.</p><a class="btn btn-primary" href="#/industry/dashboard">Continue as Industry →</a></div><div class="role-option"><div class="icon-box">⌂</div><h2>Institution</h2><p>Track student readiness, internships, placement progress, and collaboration.</p><a class="btn btn-primary" href="#/institution/dashboard">Continue as Institution →</a></div></div></div></div>`}
-		const dashboardRoutes={student:{dashboard:'Dashboard',profile:'My Profile',skills:'My Skills',opportunities:'Opportunities',applications:'Applications',settings:'Settings', 'career-path':'Career Path'},industry:{dashboard:'Dashboard',profile:'Company Profile',opportunities:'Opportunities',candidates:'Candidates',analytics:'Analytics',applications:'Applications',programs:'Industry Programs','post-opportunity':'Post Opportunity',settings:'Settings'},institution:{dashboard:'Dashboard',profile:'Institution Profile',skills:'Student Skills',analytics:'Analytics',partnerships:'Partnerships',settings:'Settings'}};
-		function placeholder(role,section){const title=dashboardRoutes[role]?.[section]||'Page Not Found';const description=section==='settings'?'Workspace preferences will be available in the next development phase.':`${title} functionality will be enabled in the next development phase.`;return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="toggleSidebar()">☰</button><h2>${title}</h2></div><div class="topbar-right"><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${data[role==='student'?'student':role==='industry'?'company':'institution'].initials}</div></div></header><div class="placeholder"><div class="placeholder-card"><div class="icon-box">✦</div><h1>${title}</h1><p>${description}<br><span class="prototype-note">This is a Day 1 prototype screen.</span></p><a class="btn btn-primary" href="#/${role}/dashboard">← Back to Dashboard</a></div></div></main></div>`}
-		function sidebar(role){const current=location.hash.slice(1).split('/')[2]||'dashboard';const hidden=['settings','career-path','applications','programs','post-opportunity'];const items=Object.entries(dashboardRoutes[role]).filter(([key])=>!hidden.includes(key));return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key]||'◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()"><span>⚙</span> Settings</a><button class="logout" onclick="location.hash='/'">↪ &nbsp; Logout</button></aside>`}
-		function dash(role){let person= data[role==='student'?'student':role==='industry'?'company':'institution'];return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button><h2>${role[0].toUpperCase()+role.slice(1)} Dashboard</h2></div><div class="topbar-right"><div class="search">⌕ &nbsp; Search anything</div><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${person.initials}</div><div class="user-meta">${person.name}<span>${role[0].toUpperCase()+role.slice(1)}</span></div></div></header><div class="dash-content"><div class="dash-intro"><div><h1>${person.title}</h1><p>${person.subtitle}</p></div><span class="tag blue">Prototype workspace</span></div>${role==='student'?studentDash():role==='industry'?industryDash():institutionDash()}</div></main></div>`}
-		function panel(title,content,link='View all →'){return `<section class="dash-panel"><div class="panel-head"><h3>${title}</h3><button class="btn-plain">${link}</button></div>${content}</section>`}
-		function studentDash(){return `<div class="kpis">${[['Skill Readiness','72%','↑ 8% this month','✦'],['Verified Skills','4','2 pending review','✓'],['Applications','6','2 new updates','▣'],['Profile Completion','85%','Almost there','◉']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="dash-grid">${panel('Your Skills',data.skills.map(x=>`<div class="skill"><div class="skill-line"><span>${x[0]}</span><span><b>${x[1]}%</b> <span class="tag ${x[2]==='Verified'?'success':'warning'}">${x[2]==='Verified'?'✓ Verified':'⚠ Improve'}</span></span></div><div class="bar"><span style="width:${x[1]}%"></span></div></div>`).join(''),'Manage skills →')}${panel('Your Skill Gaps',data.gaps.map(x=>`<div class="gap-row"><div class="skill-line"><b>${x[0]}</b><span>${x[1]}% <span class="muted">/ ${x[2]}% target</span></span></div><div class="bar"><span style="width:${x[1]}%;background:var(--amber)"></span></div></div>`).join('')+'<button class="btn btn-light">Improve Skill →</button>')}</div>${panel('Recommended Career Paths',`<div class="career-grid">${data.careers.map(x=>`<div class="mini-card"><span class="tag success">${x[1]} match</span><h4 style="margin-top:12px">${x[0]}</h4><p>${x[2]}<br><b>${x[3]}</b></p><button class="btn btn-light">View Career</button></div>`).join('')}</div>`)}${panel('Recommended Opportunities',data.opportunities.map(x=>`<div class="opportunity"><div class="opportunity-icon">▣</div><div class="opportunity-info"><strong>${x[0]}</strong><small>${x[1]} · ${x[2]}<br>${x[3]}</small></div><div class="match">${x[4]}<small style="display:block;color:var(--muted);font-weight:400">match</small></div></div>`).join(''),'View all opportunities →')}${panel('Recent Applications',`<table><thead><tr><th>Opportunity</th><th>Company</th><th>Applied</th><th>Status</th></tr></thead><tbody><tr><td>Software Developer Intern</td><td>TechNova</td><td>02 Sep 2026</td><td><span class="tag warning">Under Review</span></td></tr><tr><td>Frontend Intern</td><td>InnovateLabs</td><td>01 Sep 2026</td><td><span class="tag success">Shortlisted</span></td></tr><tr><td>Data Analyst Intern</td><td>DataSphere</td><td>30 Aug 2026</td><td><span class="tag blue">Applied</span></td></tr></tbody></table>`)}`}
-		function industryDash(){return `<div class="kpis">${[['Active Opportunities','12','4 closing soon','▣'],['Applications','248','↑ 24 this week','▤'],['Shortlisted','32','13 awaiting review','✓'],['Interviews','18','6 this week','◎']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="action-grid"><button class="action">＋ Post Opportunity</button><button class="action">♙ View Candidates</button><button class="action">▤ Manage Applications</button><button class="action">◈ Industry Programs</button></div>${panel('Active Opportunities',`<table><thead><tr><th>Opportunity</th><th>Applicants</th><th>Avg. match</th><th></th></tr></thead><tbody>${[['Software Developer Intern','12','89%'],['Frontend Developer Intern','26','84%'],['Data Analyst Intern','18','76%']].map(x=>`<tr><td>${x[0]}</td><td>${x[1]} applicants</td><td><span class="tag success">${x[2]}</span></td><td><button class="btn-plain">Manage →</button></td></tr>`).join('')}</tbody></table>`)}${panel('Top Matching Candidates',`<div class="candidate-grid">${data.candidates.map(x=>`<div class="mini-card"><div class="candidate-name"><div class="avatar">${x[0].split(' ').map(y=>y[0]).join('')}</div><strong>${x[0]}</strong><small>${x[1]}</small></div><p style="margin-top:17px"><span class="tag success">${x[2]} match</span><br>${x[3]}<br>${x[4]}</p><button class="btn btn-light">View Profile</button></div>`).join('')}</div>`)}${panel('Academia Collaboration',`<div class="collab-grid">${['Guest Lectures','Live Industry Projects','Workshops','Mentorship','Faculty Collaboration'].map(x=>`<div class="mini-card"><h4>${x}</h4><p>Connect with academic talent and create meaningful outcomes.</p><button class="btn-plain">Explore →</button></div>`).join('')}</div>`)}`}
-		function institutionDash(){return `<div class="kpis">${[['Total Students','2,450','↑ 120 this year','♙'],['Assessed Students','1,980','81% of total','✓'],['Internship Ready','68%','↑ 6% this term','▣'],['Placement Ready','61%','↑ 4% this term','◎']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="dash-grid">${panel('Top Student Skill Gaps',`<div class="stat-bars">${[['SQL',84],['Cloud Computing',70],['AI / Machine Learning',62],['Data Structures',54],['Communication',42]].map(x=>`<div class="skill-line"><span>${x[0]}</span><span>${x[1]}%</span><div class="bar" style="width:100%"><span style="width:${x[1]}%"></span></div></div>`).join('')}</div>`)}${panel('Internship Participation',`<div class="metric-row"><span>Total students</span><strong>2,450</strong></div><div class="metric-row"><span>Internship participants</span><strong>1,240</strong></div><div class="metric-row"><span>Active internships</span><strong>340</strong></div><div class="metric-row"><span>Completed</span><strong style="color:var(--green)">780</strong></div>`,'View analytics →')}</div><div class="dash-grid">${panel('Placement Overview',`<div class="funnel"><div><span>Eligible</span><b>850</b></div><div><span>Applied</span><b>720</b></div><div><span>Shortlisted</span><b>340</b></div><div><span>Placed</span><b>180</b></div></div>`)}${panel('Industry Collaboration',`<div class="metric-row"><span>Active Industry Partners</span><strong>42</strong></div><div class="metric-row"><span>Live Projects</span><strong>18</strong></div><div class="metric-row"><span>Workshops This Year</span><strong>27</strong></div><div class="metric-row"><span>Research Collaborations</span><strong>12</strong></div><button class="btn btn-primary" style="margin-top:19px">Manage Partnerships →</button>`)}</div>`}
-		function toggleSidebar(){document.getElementById('sidebar')?.classList.toggle('open')}
-		function closeSidebar(){document.getElementById('sidebar')?.classList.remove('open')}
-		function notFound(){return `<div class="role-page"><div class="role-top container">${brand()}</div><div class="placeholder"><div class="placeholder-card"><div class="icon-box">?</div><h1>404 / Page Not Found</h1><p>That route is not part of the current SkillBridge prototype.</p><a class="btn btn-primary" href="#/">Return Home</a></div></div></div>`}
-		function bindDashboardActions(role){const routes={student:{'My Skills':'skills','Manage skills →':'skills','View all →':'opportunities','View all opportunities →':'opportunities','View Career':'career-path','View Opportunity':'opportunities','Improve Skill →':'skills'},industry:{'＋ Post Opportunity':'post-opportunity','View Candidates':'candidates','Manage Applications':'applications','Industry Programs':'programs','View Profile':'candidates','Manage →':'opportunities','View all →':'opportunities','Explore →':'programs'},institution:{'View analytics →':'analytics','Manage Partnerships →':'partnerships','View all →':'analytics'}};document.querySelectorAll('button').forEach(button=>{const destination=routes[role]?.[button.textContent.trim()];if(destination)button.onclick=()=>{location.hash=`/${role}/${destination}`}});document.querySelector('.main')?.addEventListener('click',event=>{if(event.target.closest('.sidebar')||event.target.closest('.mobile-dash-menu'))return;if(window.innerWidth<=850&&!event.target.closest('#sidebar'))closeSidebar()})}
-		function bindFormValidation(type){const form=document.querySelector('.form');if(!form)return;if(type==='login'){const note=document.createElement('div');note.className='prototype-note';note.textContent='Demo access for prototype evaluation';form.append(note)}const button=form.querySelector('.btn-primary');button.onclick=(event)=>{event.preventDefault();const inputs=[...form.querySelectorAll('input')];const email=inputs.find(input=>input.type==='email');let message='';if(inputs.some(input=>!input.value.trim()))message='Please complete all required fields.';else if(email&&!/^\S+@\S+\.\S+$/.test(email.value))message='Please enter a valid email address.';else if(type==='register'&&inputs.filter(input=>input.type==='password').length>1&&inputs.filter(input=>input.type==='password')[0].value!==inputs.filter(input=>input.type==='password')[1].value)message='Passwords do not match.';document.querySelector('.form-error')?.remove();if(message){const error=document.createElement('div');error.className='form-error';error.textContent=message;form.prepend(error);return}location.hash=type==='register'?'/role-selection':'/role-selection'}}
-		function render(){const path=location.hash.slice(1)||'/';if(path&&!path.startsWith('/')){if(document.querySelector('.landing'))document.getElementById(path)?.scrollIntoView();return}const match=path.match(/^\/(student|industry|institution)\/(dashboard|profile|skills|opportunities|applications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs)$/);if(path==='/')app.innerHTML=landing();else if(path==='/login'||path==='/register')app.innerHTML=auth(path.slice(1));else if(path==='/role-selection')app.innerHTML=roleSelection();else if(match){const [,role,section]=match;app.innerHTML=section==='dashboard'?dash(role):placeholder(role,section);if(section==='dashboard')bindDashboardActions(role)}else app.innerHTML=notFound();document.querySelectorAll('a[href="#"]').forEach(link=>link.href='#/');if(path==='/register')updateRoleFields('Student');if(path==='/login'||path==='/register')bindFormValidation(path.slice(1));window.scrollTo(0,0)}
-		window.addEventListener('hashchange',render); render();
+			<section class="section"><div class="container"><div class="section-heading"><div class="eyebrow">Coming together</div><h2>Preview the Platform</h2></div><div class="feature-grid">${['Skill Assessment','Verified Skills','Career Guidance','Internship & Job Matching','Industry Learning Programs','Institution Analytics'].map((x,i)=>`<div class="feature"><div class="icon-box">${['✦','✓','◎','▣','◈','▥'][i]}</div><strong>${x}</strong></div>`).join('')}</div></div></section><section class="cta"><div class="container"><h2>Build a Stronger Bridge Between Education and Industry</h2><p>From learning new skills to finding the right opportunity, SkillBridge brings the complete journey into one platform.</p><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a></div></section><footer><div class="container"><div class="footer-grid"><div>${brand()}<p style="margin-top:14px">Connecting Skills, Academia &amp; Industry.</p></div><div><h4>Platform</h4><a href="#/role-selection">Students</a><a href="#/role-selection">Industry</a><a href="#/role-selection">Institutions</a><a href="#/role-selection">Opportunities</a></div><div><h4>Company</h4><a href="#about">About</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div><div><h4>Social</h4><p>LinkedIn · X · Instagram</p></div></div><div class="copyright">© 2026 SkillBridge. All rights reserved.</div></div></footer></div>`
+		}
+
+		function updateRoleFields(role) {
+			const target = document.getElementById('role-fields');
+			if (!target) return;
+
+			const fields = role === 'Student' ?
+				['College', 'Degree', 'Branch', 'Year'] :
+				role === 'Industry' ?
+				['Company Name', 'Industry Type'] :
+				['Institution Name', 'Institution Type'];
+
+			target.innerHTML = fields
+				.map((field) => `<label>${field}</label><input placeholder="${field}">`)
+				.join('');
+		}
+
+		function auth(type) {
+			let register = type === 'register';
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillBridge workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
+		}
+
+		function roleSelection() {
+			return `<div class="role-page"><div class="container role-top">${brand()}</div><div class="role-select"><div class="eyebrow">Choose your perspective</div><h1>Choose Your Workspace</h1><p>Select how you want to use SkillBridge.</p><div class="role-options"><div class="role-option"><div class="icon-box">♙</div><h2>Student</h2><p>Build your skill profile, discover opportunities, and prepare for your career.</p><a class="btn btn-primary" href="#/student/dashboard">Continue as Student →</a></div><div class="role-option"><div class="icon-box">▤</div><h2>Industry</h2><p>Discover suitable candidates, post opportunities, and collaborate with academia.</p><a class="btn btn-primary" href="#/industry/dashboard">Continue as Industry →</a></div><div class="role-option"><div class="icon-box">⌂</div><h2>Institution</h2><p>Track student readiness, internships, placement progress, and collaboration.</p><a class="btn btn-primary" href="#/institution/dashboard">Continue as Institution →</a></div></div></div></div>`
+		}
+		const dashboardRoutes = {
+			student: {
+				dashboard: 'Dashboard',
+				profile: 'My Profile',
+				skills: 'My Skills',
+				opportunities: 'Opportunities',
+				applications: 'Applications',
+				settings: 'Settings',
+				'career-path': 'Career Path'
+			},
+			industry: {
+				dashboard: 'Dashboard',
+				profile: 'Company Profile',
+				opportunities: 'Opportunities',
+				candidates: 'Candidates',
+				analytics: 'Analytics',
+				applications: 'Applications',
+				programs: 'Industry Programs',
+				'post-opportunity': 'Post Opportunity',
+				settings: 'Settings'
+			},
+			institution: {
+				dashboard: 'Dashboard',
+				profile: 'Institution Profile',
+				skills: 'Student Skills',
+				analytics: 'Analytics',
+				partnerships: 'Partnerships',
+				settings: 'Settings'
+			}
+		};
+
+		function placeholder(role, section) {
+			const title = dashboardRoutes[role]?.[section] || 'Page Not Found';
+			const description = section === 'settings' ?
+				'Workspace preferences will be available in the next development phase.' :
+				`${title} functionality will be enabled in the next development phase.`;
+			return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="toggleSidebar()">☰</button><h2>${title}</h2></div><div class="topbar-right"><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${data[role==='student'?'student':role==='industry'?'company':'institution'].initials}</div></div></header><div class="placeholder"><div class="placeholder-card"><div class="icon-box">✦</div><h1>${title}</h1><p>${description}<br><span class="prototype-note">This is a Day 1 prototype screen.</span></p><a class="btn btn-primary" href="#/${role}/dashboard">← Back to Dashboard</a></div></div></main></div>`
+		}
+
+		function sidebar(role) {
+			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
+			const hidden = ['settings', 'career-path', 'applications', 'programs', 'post-opportunity'];
+			const items = Object.entries(dashboardRoutes[role]).filter(([key]) => !hidden.includes(key));
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key]||'◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()"><span>⚙</span> Settings</a><button class="logout" onclick="location.hash='/'">↪ &nbsp; Logout</button></aside>`
+		}
+
+		function dash(role) {
+			let person = data[role === 'student' ? 'student' : role === 'industry' ? 'company' : 'institution'];
+			return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button><h2>${role[0].toUpperCase()+role.slice(1)} Dashboard</h2></div><div class="topbar-right"><div class="search">⌕ &nbsp; Search anything</div><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${person.initials}</div><div class="user-meta">${person.name}<span>${role[0].toUpperCase()+role.slice(1)}</span></div></div></header><div class="dash-content"><div class="dash-intro"><div><h1>${person.title}</h1><p>${person.subtitle}</p></div><span class="tag blue">Prototype workspace</span></div>${role==='student'?studentDash():role==='industry'?industryDash():institutionDash()}</div></main></div>`
+		}
+
+		function panel(title, content, link = 'View all →') {
+			return `<section class="dash-panel"><div class="panel-head"><h3>${title}</h3><button class="btn-plain">${link}</button></div>${content}</section>`
+		}
+
+		function studentDash() {
+			return `<div class="kpis">${[['Skill Readiness','72%','↑ 8% this month','✦'],['Verified Skills','4','2 pending review','✓'],['Applications','6','2 new updates','▣'],['Profile Completion','85%','Almost there','◉']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="dash-grid">${panel('Your Skills',data.skills.map(x=>`<div class="skill"><div class="skill-line"><span>${x[0]}</span><span><b>${x[1]}%</b> <span class="tag ${x[2]==='Verified'?'success':'warning'}">${x[2]==='Verified'?'✓ Verified':'⚠ Improve'}</span></span></div><div class="bar"><span style="width:${x[1]}%"></span></div></div>`).join(''),'Manage skills →')}${panel('Your Skill Gaps',data.gaps.map(x=>`<div class="gap-row"><div class="skill-line"><b>${x[0]}</b><span>${x[1]}% <span class="muted">/ ${x[2]}% target</span></span></div><div class="bar"><span style="width:${x[1]}%;background:var(--amber)"></span></div></div>`).join('')+'<button class="btn btn-light">Improve Skill →</button>')}</div>${panel('Recommended Career Paths',`<div class="career-grid">${data.careers.map(x=>`<div class="mini-card"><span class="tag success">${x[1]} match</span><h4 style="margin-top:12px">${x[0]}</h4><p>${x[2]}<br><b>${x[3]}</b></p><button class="btn btn-light">View Career</button></div>`).join('')}</div>`)}${panel('Recommended Opportunities',data.opportunities.map(x=>`<div class="opportunity"><div class="opportunity-icon">▣</div><div class="opportunity-info"><strong>${x[0]}</strong><small>${x[1]} · ${x[2]}<br>${x[3]}</small></div><div class="match">${x[4]}<small style="display:block;color:var(--muted);font-weight:400">match</small></div></div>`).join(''),'View all opportunities →')}${panel('Recent Applications',`<table><thead><tr><th>Opportunity</th><th>Company</th><th>Applied</th><th>Status</th></tr></thead><tbody><tr><td>Software Developer Intern</td><td>TechNova</td><td>02 Sep 2026</td><td><span class="tag warning">Under Review</span></td></tr><tr><td>Frontend Intern</td><td>InnovateLabs</td><td>01 Sep 2026</td><td><span class="tag success">Shortlisted</span></td></tr><tr><td>Data Analyst Intern</td><td>DataSphere</td><td>30 Aug 2026</td><td><span class="tag blue">Applied</span></td></tr></tbody></table>`)}`
+		}
+
+		function industryDash() {
+			return `<div class="kpis">${[['Active Opportunities','12','4 closing soon','▣'],['Applications','248','↑ 24 this week','▤'],['Shortlisted','32','13 awaiting review','✓'],['Interviews','18','6 this week','◎']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="action-grid"><button class="action">＋ Post Opportunity</button><button class="action">♙ View Candidates</button><button class="action">▤ Manage Applications</button><button class="action">◈ Industry Programs</button></div>${panel('Active Opportunities',`<table><thead><tr><th>Opportunity</th><th>Applicants</th><th>Avg. match</th><th></th></tr></thead><tbody>${[['Software Developer Intern','12','89%'],['Frontend Developer Intern','26','84%'],['Data Analyst Intern','18','76%']].map(x=>`<tr><td>${x[0]}</td><td>${x[1]} applicants</td><td><span class="tag success">${x[2]}</span></td><td><button class="btn-plain">Manage →</button></td></tr>`).join('')}</tbody></table>`)}${panel('Top Matching Candidates',`<div class="candidate-grid">${data.candidates.map(x=>`<div class="mini-card"><div class="candidate-name"><div class="avatar">${x[0].split(' ').map(y=>y[0]).join('')}</div><strong>${x[0]}</strong><small>${x[1]}</small></div><p style="margin-top:17px"><span class="tag success">${x[2]} match</span><br>${x[3]}<br>${x[4]}</p><button class="btn btn-light">View Profile</button></div>`).join('')}</div>`)}${panel('Academia Collaboration',`<div class="collab-grid">${['Guest Lectures','Live Industry Projects','Workshops','Mentorship','Faculty Collaboration'].map(x=>`<div class="mini-card"><h4>${x}</h4><p>Connect with academic talent and create meaningful outcomes.</p><button class="btn-plain">Explore →</button></div>`).join('')}</div>`)}`
+		}
+
+		function institutionDash() {
+			return `<div class="kpis">${[['Total Students','2,450','↑ 120 this year','♙'],['Assessed Students','1,980','81% of total','✓'],['Internship Ready','68%','↑ 6% this term','▣'],['Placement Ready','61%','↑ 4% this term','◎']].map(x=>`<div class="kpi"><div class="kpi-top"><span>${x[0]}</span><span class="kpi-icon">${x[3]}</span></div><div class="kpi-value">${x[1]}</div><div class="kpi-note">${x[2]}</div></div>`).join('')}</div><div class="dash-grid">${panel('Top Student Skill Gaps',`<div class="stat-bars">${[['SQL',84],['Cloud Computing',70],['AI / Machine Learning',62],['Data Structures',54],['Communication',42]].map(x=>`<div class="skill-line"><span>${x[0]}</span><span>${x[1]}%</span><div class="bar" style="width:100%"><span style="width:${x[1]}%"></span></div></div>`).join('')}</div>`)}${panel('Internship Participation',`<div class="metric-row"><span>Total students</span><strong>2,450</strong></div><div class="metric-row"><span>Internship participants</span><strong>1,240</strong></div><div class="metric-row"><span>Active internships</span><strong>340</strong></div><div class="metric-row"><span>Completed</span><strong style="color:var(--green)">780</strong></div>`,'View analytics →')}</div><div class="dash-grid">${panel('Placement Overview',`<div class="funnel"><div><span>Eligible</span><b>850</b></div><div><span>Applied</span><b>720</b></div><div><span>Shortlisted</span><b>340</b></div><div><span>Placed</span><b>180</b></div></div>`)}${panel('Industry Collaboration',`<div class="metric-row"><span>Active Industry Partners</span><strong>42</strong></div><div class="metric-row"><span>Live Projects</span><strong>18</strong></div><div class="metric-row"><span>Workshops This Year</span><strong>27</strong></div><div class="metric-row"><span>Research Collaborations</span><strong>12</strong></div><button class="btn btn-primary" style="margin-top:19px">Manage Partnerships →</button>`)}</div>`
+		}
+
+		function toggleSidebar() {
+			document.getElementById('sidebar')?.classList.toggle('open');
+		}
+
+		function closeSidebar() {
+			document.getElementById('sidebar')?.classList.remove('open');
+		}
+
+		function notFound() {
+			return `<div class="role-page"><div class="role-top container">${brand()}</div><div class="placeholder"><div class="placeholder-card"><div class="icon-box">?</div><h1>404 / Page Not Found</h1><p>That route is not part of the current SkillBridge prototype.</p><a class="btn btn-primary" href="#/">Return Home</a></div></div></div>`
+		}
+
+		function showToast(message) {
+			document.querySelector('.toast')?.remove();
+			const toast = document.createElement('div');
+			toast.className = 'toast';
+			toast.textContent = message;
+			document.body.append(toast);
+			setTimeout(() => toast.remove(), 2600);
+		}
+
+		function bindDashboardActions(role) {
+			const routes = {
+				student: {
+					'My Skills': 'skills',
+					'Manage skills →': 'skills',
+					'Improve Skill →': 'skills',
+					'View Career': 'career-path',
+					'View Opportunity': 'opportunities'
+				},
+				industry: {
+					'＋ Post Opportunity': 'post-opportunity',
+					'View Candidates': 'candidates',
+					'Manage Applications': 'applications',
+					'Industry Programs': 'programs',
+					'View Profile': 'candidates',
+					'Manage →': 'opportunities',
+					'Explore →': 'programs'
+				},
+				institution: {
+					'View analytics →': 'analytics',
+					'Manage Partnerships →': 'partnerships'
+				}
+			};
+			const panelRoutes = {
+				student: {
+					'Your Skills': 'skills',
+					'Your Skill Gaps': 'skills',
+					'Recommended Career Paths': 'career-path',
+					'Recommended Opportunities': 'opportunities',
+					'Recent Applications': 'applications'
+				},
+				industry: {
+					'Active Opportunities': 'opportunities',
+					'Top Matching Candidates': 'candidates',
+					'Academia Collaboration': 'programs'
+				},
+				institution: {
+					'Top Student Skill Gaps': 'skills',
+					'Internship Participation': 'analytics',
+					'Placement Overview': 'analytics',
+					'Industry Collaboration': 'partnerships'
+				}
+			};
+
+			document.querySelectorAll('.main button').forEach((button) => {
+				const label = button.textContent.trim();
+				const panelTitle = button.closest('.dash-panel')
+					?.querySelector('.panel-head h3')
+					?.textContent.trim();
+				const destination = routes[role]?.[label] || panelRoutes[role]?.[panelTitle];
+
+				if (destination) {
+					button.onclick = () => {
+						location.hash = `/${role}/${destination}`;
+					};
+				} else {
+					button.onclick = () => showToast(
+						`${label.replace(/[→＋♙▤◈]/g, '').trim()} is available in the next workspace update.`
+					);
+				}
+			});
+
+			const search = document.querySelector('.search');
+			if (search) search.onclick = () => showToast('Search is ready for the next workspace update.');
+
+			const notification = document.querySelector('.topbar-right > span');
+			if (notification) notification.onclick = () => showToast('You are all caught up.');
+
+			document.querySelector('.main')?.addEventListener('click', (event) => {
+				if (event.target.closest('.sidebar') || event.target.closest('.mobile-dash-menu')) return;
+				if (window.innerWidth <= 850 && !event.target.closest('#sidebar')) closeSidebar();
+			});
+		}
+
+		function bindFormValidation(type) {
+			const form = document.querySelector('.form');
+			if (!form) return;
+			if (type === 'login') {
+				const note = document.createElement('div');
+				note.className = 'prototype-note';
+				note.textContent = 'Demo access for prototype evaluation';
+				form.append(note)
+			}
+			const button = form.querySelector('.btn-primary');
+			button.onclick = (event) => {
+				event.preventDefault();
+				const inputs = [...form.querySelectorAll('input')];
+				const email = inputs.find(input => input.type === 'email');
+				let message = '';
+				if (inputs.some(input => !input.value.trim())) message = 'Please complete all required fields.';
+				else if (email && !/^\S+@\S+\.\S+$/.test(email.value)) message = 'Please enter a valid email address.';
+				else if (type === 'register' && inputs.filter(input => input.type === 'password').length > 1 && inputs
+					.filter(input => input.type === 'password')[0].value !== inputs.filter(input => input.type ===
+						'password')[1].value) message = 'Passwords do not match.';
+				document.querySelector('.form-error')?.remove();
+				if (message) {
+					const error = document.createElement('div');
+					error.className = 'form-error';
+					error.textContent = message;
+					form.prepend(error);
+					return
+				}
+				location.hash = type === 'register' ? '/role-selection' : '/role-selection'
+			}
+		}
+
+		function render() {
+			const path = location.hash.slice(1) || '/';
+			if (path && !path.startsWith('/')) {
+				if (document.querySelector('.landing')) document.getElementById(path)?.scrollIntoView();
+				return
+			}
+			const match = path.match(
+				/^\/(student|industry|institution)\/(dashboard|profile|skills|opportunities|applications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs)$/
+				);
+			if (path === '/') app.innerHTML = landing();
+			else if (path === '/login' || path === '/register') app.innerHTML = auth(path.slice(1));
+			else if (path === '/role-selection') app.innerHTML = roleSelection();
+			else if (match) {
+				const [, role, section] = match;
+				app.innerHTML = section === 'dashboard' ? dash(role) : placeholder(role, section);
+				if (section === 'dashboard') bindDashboardActions(role)
+			} else app.innerHTML = notFound();
+			document.querySelectorAll('a[href="#"]').forEach(link => link.href = '#/');
+			if (path === '/register') updateRoleFields('Student');
+			if (path === '/login' || path === '/register') bindFormValidation(path.slice(1));
+			window.scrollTo(0, 0)
+		}
+		window.addEventListener('hashchange', render);
+		render();
