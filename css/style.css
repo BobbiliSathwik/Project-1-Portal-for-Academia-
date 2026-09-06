@@ -993,6 +993,53 @@
 			width: 100%;
 		}
 
+		.auth-field {
+			position: relative;
+		}
+
+		.auth-field label b {
+			color: var(--red);
+		}
+
+		.auth-field label span {
+			color: var(--muted);
+			font-weight: 500;
+		}
+
+		.input-wrap {
+			position: relative;
+		}
+
+		.input-wrap input {
+			padding-right: 64px;
+		}
+
+		.password-toggle {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			padding: 3px 5px;
+			border-radius: 4px;
+			color: var(--cyan);
+			background: transparent;
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.field-error {
+			margin: -10px 0 13px;
+			color: var(--red);
+			font-size: 12px;
+			font-weight: 600;
+			line-height: 1.4;
+		}
+
+		.auth-field input[aria-invalid="true"],
+		.auth-field select[aria-invalid="true"] {
+			border-color: var(--red);
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 16%, transparent);
+		}
+
 		.form-row {
 			display: flex;
 			justify-content: space-between;
@@ -2366,6 +2413,183 @@
 
 		.assessment-card {
 			margin-top: 20px;
+		}
+
+		.skill-profile-panel .panel-head p {
+			margin-top: 5px;
+			font-size: 13px;
+		}
+
+		.assessment-kpis {
+			margin-bottom: 0;
+		}
+
+		.assessment-history {
+			display: grid;
+			gap: 0;
+		}
+
+		.assessment-history-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+			padding: 14px 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.assessment-history-row:last-child {
+			border-bottom: 0;
+		}
+
+		.assessment-history-row small,
+		.assessment-history-row span {
+			display: block;
+			margin-top: 4px;
+			color: var(--muted);
+			font-size: 12px;
+		}
+
+		.assessment-history-row > div:last-child {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.assessment-history-row > div:last-child span {
+			margin: 0;
+		}
+
+		.assessment-skill-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 12px;
+		}
+
+		.assessment-skill {
+			display: grid;
+			gap: 8px;
+			min-height: 116px;
+			padding: 18px;
+			border: 1px solid var(--line);
+			border-radius: 10px;
+			color: var(--ink);
+			background: var(--soft);
+			text-align: left;
+			font-weight: 700;
+			transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+		}
+
+		.assessment-skill:hover,
+		.assessment-skill:focus-visible {
+			border-color: var(--cyan);
+			box-shadow: 0 12px 28px #17333a12;
+			transform: translateY(-3px);
+		}
+
+		.assessment-skill > span {
+			color: var(--cyan);
+			font-size: 20px;
+		}
+
+		.assessment-skill small {
+			color: var(--muted);
+			font-weight: 500;
+		}
+
+		.assessment-question {
+			max-width: 760px;
+		}
+
+		.assessment-progress {
+			height: 6px;
+			margin-bottom: 28px;
+			border-radius: 99px;
+			background: var(--soft);
+			overflow: hidden;
+		}
+
+		.assessment-progress span {
+			display: block;
+			height: 100%;
+			border-radius: inherit;
+			background: var(--cyan);
+			transition: width .25s ease;
+		}
+
+		.assessment-question h3 {
+			margin-bottom: 22px;
+			font-size: 22px;
+		}
+
+		.assessment-options {
+			display: grid;
+			gap: 10px;
+			margin-bottom: 26px;
+		}
+
+		.assessment-option {
+			display: flex;
+			align-items: center;
+			gap: 11px;
+			margin: 0;
+			padding: 14px;
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			cursor: pointer;
+			transition: border-color .2s ease, background-color .2s ease;
+		}
+
+		.assessment-option:has(input:checked) {
+			border-color: var(--cyan);
+			background: #b8f3ee55;
+		}
+
+		.assessment-option input {
+			width: auto;
+			margin: 0;
+		}
+
+		.assessment-result {
+			max-width: 560px;
+			text-align: center;
+		}
+
+		.assessment-result h2 {
+			margin: 16px 0 4px;
+		}
+
+		.assessment-result p {
+			margin: 20px 0;
+			color: var(--muted);
+			line-height: 1.8;
+		}
+
+		.assessment-score {
+			margin: 16px 0;
+			color: var(--cyan);
+			font: 700 clamp(52px, 9vw, 86px)/1 'Space Grotesk', sans-serif;
+		}
+
+		.assessment-result .card-actions {
+			justify-content: center;
+		}
+
+		@media(max-width:760px) {
+			.assessment-skill-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+
+		@media(max-width:520px) {
+			.assessment-skill-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.assessment-history-row {
+				align-items: flex-start;
+				flex-direction: column;
+			}
 		}
 
 		@media(max-width:520px) {
