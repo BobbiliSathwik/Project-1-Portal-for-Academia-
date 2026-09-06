@@ -8,6 +8,13 @@
 		name="description"
 		content="SkillBridge connects students, academia and industry through verified skills and opportunities."
 	/>
+	<script>
+		try {
+			document.documentElement.dataset.theme = localStorage.getItem('skillbridge-theme') === 'dark' ? 'dark' : 'light';
+		} catch (error) {
+			document.documentElement.dataset.theme = 'light';
+		}
+	</script>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link
@@ -17,6 +24,7 @@
 	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+	<div id="global-background" aria-hidden="true"></div>
 	<div id="app"></div>
 	<script src="js/app.js"></script>
 </body>

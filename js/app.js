@@ -66,18 +66,48 @@
 		};
 		const app = document.getElementById('app');
 		const AI_API_ENDPOINT = '';
+		const THEME_KEY = 'skillbridge-theme';
+		let selectedTheme = loadThemePreference();
+		document.documentElement.dataset.theme = selectedTheme;
 		let chatbotState = {
 			lastOpportunity: null,
 			pendingApplication: null
 		};
+
+		function loadThemePreference() {
+			try {
+				return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+			} catch (error) {
+				return 'light';
+			}
+		}
+
+		function themeToggleMarkup() {
+			const isDark = selectedTheme === 'dark';
+			return `<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="${isDark}" aria-label="Switch to ${isDark ? 'white' : 'black'} mode"><span class="theme-toggle-icon" aria-hidden="true">${isDark ? '☼' : '◐'}</span><span class="theme-toggle-label">${isDark ? 'Black' : 'White'}</span></button>`;
+		}
+
+		function setTheme(theme) {
+			selectedTheme = theme === 'dark' ? 'dark' : 'light';
+			document.documentElement.dataset.theme = selectedTheme;
+			try { localStorage.setItem(THEME_KEY, selectedTheme); } catch (error) { }
+			const isDark = selectedTheme === 'dark';
+			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+				button.setAttribute('aria-pressed', String(isDark));
+				button.setAttribute('aria-label', `Switch to ${isDark ? 'white' : 'black'} mode`);
+				button.querySelector('.theme-toggle-icon').textContent = isDark ? '☼' : '◐';
+				button.querySelector('.theme-toggle-label').textContent = isDark ? 'Black' : 'White';
+			});
+			if (document.body.classList.contains('home-page')) updateGlobalBackground();
+		}
 
 		function brand() {
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillBridge</a>`;
 		}
 
 		function landing() {
-			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a><a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
-			<section class="hero"><div class="container"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><h1>Bridge the Gap Between <span>Skills</span> and Industry</h1><p>SkillBridge connects students, industries, and institutions through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillBridge ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
+			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a>${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
+			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillBridge">Skill<span>Bridge</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillBridge ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillBridge</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillBridge gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
@@ -102,7 +132,7 @@
 
 		function auth(type) {
 			let register = type === 'register';
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillBridge workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:var(--cyan)">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillBridge workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
 		}
 
 		function roleSelection() {
@@ -141,9 +171,7 @@
 
 		function placeholder(role, section) {
 			const title = dashboardRoutes[role]?.[section] || 'Page Not Found';
-			const description = section === 'settings' ?
-				'Workspace preferences will be available in the next development phase.' :
-				`${title} functionality will be enabled in the next development phase.`;
+			const description = `${title} is not available for this route.`;
 			return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="toggleSidebar()">☰</button><h2>${title}</h2></div><div class="topbar-right"><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${data[role==='student'?'student':role==='industry'?'company':'institution'].initials}</div></div></header><div class="placeholder"><div class="placeholder-card"><div class="icon-box">✦</div><h1>${title}</h1><p>${description}<br><span class="prototype-note">This is a Day 1 prototype screen.</span></p><a class="btn btn-primary" href="#/${role}/dashboard">← Back to Dashboard</a></div></div></main></div>`
 		}
 
@@ -306,6 +334,7 @@
 			if (/^(yes|yeah|confirm|go ahead|apply now)$/.test(query) && chatbotState.pendingApplication) {
 				const opportunity = chatbotState.pendingApplication;
 				chatbotState.pendingApplication = null;
+				addApplication(opportunity[0]);
 				return {
 					text: `Your application request for ${opportunity[0]} at ${opportunity[1]} is ready. I'll open your Applications workspace now.`,
 					action: { type: 'OPEN_APPLICATIONS' }
@@ -558,14 +587,12 @@
 						location.hash = `/${role}/${destination}`;
 					};
 				} else {
-					button.onclick = () => showToast(
-						`${label.replace(/[→＋♙▤◈]/g, '').trim()} is available in the next workspace update.`
-					);
+					button.onclick = () => showToast(`${label.replace(/[→＋♙▤◈]/g, '').trim()} is not available from this dashboard.`);
 				}
 			});
 
 			const search = document.querySelector('.search');
-			if (search) search.onclick = () => showToast('Search is ready for the next workspace update.');
+			if (search) search.onclick = () => document.querySelector('.page-search')?.focus();
 
 			const notification = document.querySelector('.topbar-right > span');
 			if (notification) notification.onclick = () => showToast('You are all caught up.');
@@ -633,3 +660,395 @@
 		}
 		window.addEventListener('hashchange', render);
 		render();
+
+		/* Functional prototype layer: keeps the original visual shell and hash routes. */
+		const STATE_KEY = 'skillbridge-prototype-state';
+		const defaultState = {
+			student: { ...data.student, email: 'rahul@example.com', college: 'ABC Institute of Technology', degree: 'B.Tech', branch: 'Computer Science', year: '3rd Year' },
+			company: { ...data.company, email: 'talent@technova.example', industryType: 'Software & Technology' },
+			institution: { ...data.institution, email: 'admin@abc.example', institutionType: 'Engineering College' },
+			skills: data.skills.map(([name, score, status]) => ({ name, score, status })),
+			gaps: data.gaps.map(([name, score, target]) => ({ name, score, target })),
+			careers: data.careers.map(([name, match, description, skills]) => ({ name, match, description, skills })),
+			opportunities: data.opportunities.map(([title, company, location, skills, match]) => ({ title, company, location, skills, match, type: 'Internship', duration: '3 months', eligibility: 'Students with relevant foundational skills', deadline: '2026-12-31', description: 'A hands-on opportunity to build practical experience with a collaborative team.' })),
+			applications: [{ id: 'seed-1', opportunity: 'Software Developer Intern', company: 'TechNova', status: 'Under Review', applied: '2026-08-22' }],
+			partnerships: [{ id: 'seed-p1', name: 'TechNova Technologies', type: 'Hiring partnership', status: 'Active' }, { id: 'seed-p2', name: 'InnovateLabs', type: 'Guest lectures', status: 'Active' }],
+			notifications: [{ id: 'seed-n1', text: 'Welcome to your SkillBridge workspace.', read: false, time: 'Today' }],
+			settings: { emailUpdates: true, profileVisibility: true, compactView: false },
+			activeRole: null,
+			assessment: null
+		};
+		let state = loadState();
+
+		function clone(value) { return JSON.parse(JSON.stringify(value)); }
+		function loadState() {
+			try {
+				const saved = JSON.parse(localStorage.getItem(STATE_KEY));
+				return saved ? { ...clone(defaultState), ...saved, student: { ...defaultState.student, ...saved.student }, company: { ...defaultState.company, ...saved.company }, institution: { ...defaultState.institution, ...saved.institution }, settings: { ...defaultState.settings, ...saved.settings } } : clone(defaultState);
+			} catch (error) { return clone(defaultState); }
+		}
+		function saveState() {
+			try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (error) { showToast('Changes could not be saved in this browser.'); }
+		}
+		function notify(text) {
+			state.notifications.unshift({ id: `n-${Date.now()}`, text, read: false, time: 'Just now' });
+			saveState();
+		}
+		function roleLabel(role) { return role[0].toUpperCase() + role.slice(1); }
+		function personFor(role) { return state[role === 'student' ? 'student' : role === 'industry' ? 'company' : 'institution']; }
+		function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+		function go(route) { location.hash = route.startsWith('#') ? route : `#${route}`; }
+		function opportunityByTitle(title) { return state.opportunities.find((item) => item.title === title); }
+		function appFor(title) { return state.applications.find((item) => item.opportunity === title); }
+		function addApplication(title) {
+			const opportunity = opportunityByTitle(title);
+			if (!opportunity) return showToast('That opportunity is no longer available.');
+			if (appFor(title)) return showToast('You have already applied to this opportunity.');
+			state.applications.unshift({ id: `a-${Date.now()}`, opportunity: title, company: opportunity.company, status: 'Applied', applied: new Date().toISOString().slice(0, 10) });
+			notify(`Application submitted for ${title}.`);
+			saveState();
+			showToast('Application submitted successfully.');
+			renderFunctional();
+		}
+
+		function functionalSidebar(role) {
+			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${Object.entries(dashboardRoutes[role]).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key] || '◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><button class="logout" data-action="logout">↪ &nbsp; Logout</button></aside>`;
+		}
+		function shell(role, title, content) {
+			const person = personFor(role);
+			const unread = state.notifications.filter((item) => !item.read).length;
+			return `<div class="app">${functionalSidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right"><button class="search" data-action="focus-search">⌕ &nbsp; Search anything</button>${themeToggleMarkup()}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(role)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
+		}
+		function pageIntro(title, text, action = '') { return `<div class="dash-intro"><div><h1>${esc(title)}</h1><p>${esc(text)}</p></div>${action}</div>`; }
+		function searchBox(placeholder = 'Search this workspace') { return `<input class="page-search" data-action="filter" placeholder="⌕  ${placeholder}" aria-label="${placeholder}">`; }
+		function emptyState(text) { return `<div class="empty-state">${esc(text)}</div>`; }
+		function studentDashboardPage() {
+			const verified = state.skills.filter((skill) => skill.status === 'Verified').length;
+			return shell('student', 'Student Dashboard', `${pageIntro(state.student.title, state.student.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Skill Readiness</span><span class="kpi-icon">✦</span></div><div class="kpi-value">72%</div><div class="kpi-note">↑ 8% this month</div></div><div class="kpi"><div class="kpi-top"><span>Verified Skills</span><span class="kpi-icon">✓</span></div><div class="kpi-value">${verified}</div><div class="kpi-note">${state.skills.length - verified} need attention</div></div><div class="kpi"><div class="kpi-top"><span>Applications</span><span class="kpi-icon">▣</span></div><div class="kpi-value">${state.applications.length}</div><div class="kpi-note">${state.applications.filter((item) => item.status === 'Applied').length} new updates</div></div><div class="kpi"><div class="kpi-top"><span>Profile Completion</span><span class="kpi-icon">◉</span></div><div class="kpi-value">85%</div><div class="kpi-note">Almost there</div></div></div><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Your Skills</h3><button class="btn-plain" data-action="route" data-route="/student/skills">Manage skills →</button></div>${state.skills.slice(0, 6).map((skill) => `<div class="skill"><div class="skill-line"><span>${esc(skill.name)}</span><span><b>${skill.score}%</b> <span class="tag ${skill.status === 'Verified' ? 'success' : 'warning'}">${skill.status}</span></span></div><div class="bar"><span style="width:${skill.score}%"></span></div></div>`).join('')}</section><section class="dash-panel"><div class="panel-head"><h3>Your Skill Gaps</h3></div>${state.gaps.map((gap) => `<div class="gap-row"><div class="skill-line"><b>${esc(gap.name)}</b><span>${gap.score}% <span class="muted">/ ${gap.target}% target</span></span></div><div class="bar"><span style="width:${gap.score}%;background:var(--amber)"></span></div></div>`).join('')}<button class="btn btn-light" data-action="route" data-route="/student/skills">Improve Skill →</button></section></div><section class="dash-panel"><div class="panel-head"><h3>Recommended Career Paths</h3><button class="btn-plain" data-action="route" data-route="/student/career-path">View all →</button></div><div class="career-grid">${state.careers.map((career) => `<div class="mini-card"><span class="tag success">${esc(career.match)} match</span><h4 style="margin-top:12px">${esc(career.name)}</h4><p>${esc(career.description)}<br><b>${esc(career.skills)}</b></p><button class="btn btn-light" data-action="route" data-route="/student/career-path">View Career</button></div>`).join('')}</div></section><section class="dash-panel"><div class="panel-head"><h3>Recommended Opportunities</h3><button class="btn-plain" data-action="route" data-route="/student/opportunities">View all opportunities →</button></div>${state.opportunities.slice(0, 3).map(opportunityRow).join('')}</section></div>`);
+		}
+		function opportunityRow(opportunity) { return `<button class="opportunity opportunity-button" data-action="view-opportunity" data-title="${esc(opportunity.title)}"><span class="opportunity-icon">▣</span><span class="opportunity-info"><strong>${esc(opportunity.title)}</strong><small>${esc(opportunity.company)} · ${esc(opportunity.location)}<br>${esc(opportunity.skills)}</small></span><span class="match">${esc(opportunity.match)}<small style="display:block;color:var(--muted);font-weight:400">match</small></span></button>`; }
+		function opportunitiesPage(role) {
+			const canManage = role === 'industry';
+			return shell(role, 'Opportunities', `${pageIntro('Opportunities', role === 'student' ? 'Find a practical next step for your career.' : 'Manage opportunities published by your company.', canManage ? '<button class="btn btn-primary" data-action="route" data-route="/industry/post-opportunity">＋ Post Opportunity</button>' : '')}${searchBox('Search title, company, skill, or location')}<div class="dash-panel" style="margin-top:18px"><div id="filtered-results" class="opportunity-list">${state.opportunities.map((item) => `<div class="opportunity-card" data-searchable="${esc(`${item.title} ${item.company} ${item.location} ${item.skills}`)}"><div><span class="tag blue">${esc(item.type)}</span><h3>${esc(item.title)}</h3><p>${esc(item.company)} · ${esc(item.location)} · ${esc(item.duration)}</p><small>${esc(item.skills)} · Deadline ${esc(item.deadline)}</small></div><div class="card-actions"><button class="btn btn-light" data-action="view-opportunity" data-title="${esc(item.title)}">View details</button>${canManage ? `<button class="btn-plain" data-action="delete-opportunity" data-title="${esc(item.title)}">Delete</button>` : `<button class="btn btn-primary" data-action="apply" data-title="${esc(item.title)}">${appFor(item.title) ? 'Applied' : 'Apply'}</button>`}</div></div>`).join('')}</div></div>`);
+		}
+		function detailModal(opportunity) { return `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="opportunity-title" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close opportunity details">×</button><span class="tag blue">${esc(opportunity.type)}</span><h2 id="opportunity-title">${esc(opportunity.title)}</h2><p>${esc(opportunity.company)} · ${esc(opportunity.location)}</p><p>${esc(opportunity.description)}</p><p><b>Required skills:</b> ${esc(opportunity.skills)}<br><b>Duration:</b> ${esc(opportunity.duration)}<br><b>Eligibility:</b> ${esc(opportunity.eligibility || 'Students with relevant foundational skills')}<br><b>Deadline:</b> ${esc(opportunity.deadline)}</p><button class="btn btn-primary" data-action="apply" data-title="${esc(opportunity.title)}" ${appFor(opportunity.title) ? 'disabled' : ''}>${appFor(opportunity.title) ? 'Already applied' : 'Apply now'}</button></div></div>`; }
+		function skillsPage() { return shell('student', 'My Skills', `${pageIntro('My Skills', 'Track your strengths, close your gaps, and build confidence.', '<button class="btn btn-primary" data-action="assessment">Start Assessment</button>')}${searchBox('Search skills')}<div class="dash-grid" style="margin-top:18px"><section class="dash-panel"><div class="panel-head"><h3>Skill profile</h3><button class="btn-plain" data-action="add-skill">＋ Add skill</button></div><div id="skill-results">${state.skills.map((skill) => `<div class="skill skill-row" data-searchable="${esc(skill.name)}"><div class="skill-line"><span><b>${esc(skill.name)}</b><br><small class="muted">${esc(skill.status)}</small></span><span><b>${skill.score}%</b> <button class="btn-plain" data-action="improve-skill" data-skill="${esc(skill.name)}">Improve</button> <button class="btn-plain" data-action="remove-skill" data-skill="${esc(skill.name)}">Remove</button></span></div><div class="bar"><span style="width:${skill.score}%"></span></div></div>`).join('')}</div></section><section class="dash-panel"><div class="panel-head"><h3>Skill gaps</h3></div>${state.gaps.map((gap) => `<div class="gap-row"><div class="skill-line"><b>${esc(gap.name)}</b><span>${gap.score}% / ${gap.target}%</span></div><div class="bar"><span style="width:${gap.score}%;background:var(--amber)"></span></div></div>`).join('')}</section></div><div id="assessment-area"></div>`); }
+		function profilePage(role) { const person = personFor(role); return shell(role, dashboardRoutes[role].profile, `${pageIntro(dashboardRoutes[role].profile, 'Keep your workspace information current.') }<form class="dash-panel editable-form" data-form="profile" data-role="${role}"><label>Name</label><input name="name" value="${esc(person.name)}" required><label>Email</label><input name="email" type="email" value="${esc(person.email)}" required><label>${role === 'student' ? 'College' : role === 'industry' ? 'Industry type' : 'Institution type'}</label><input name="details" value="${esc(role === 'student' ? person.college : role === 'industry' ? person.industryType : person.institutionType)}" required><button class="btn btn-primary" type="submit">Save changes</button></form>`); }
+		function applicationsPage(role) { return shell(role, 'Applications', `${pageIntro('Applications', role === 'industry' ? 'Review candidate applications for your opportunities.' : 'Track every opportunity you have applied for.')}${searchBox('Search applications')}<div class="dash-panel" style="margin-top:18px"><div id="application-results">${state.applications.length ? state.applications.map((item) => `<div class="application-row" data-searchable="${esc(`${item.opportunity} ${item.company} ${item.status}`)}"><div><b>${esc(item.opportunity)}</b><p>${esc(item.company)} · Applied ${esc(item.applied)}</p></div>${role === 'industry' ? `<select data-action="status" data-id="${item.id}"><option ${item.status === 'Under Review' ? 'selected' : ''}>Under Review</option><option ${item.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option><option ${item.status === 'Selected' ? 'selected' : ''}>Selected</option><option ${item.status === 'Rejected' ? 'selected' : ''}>Rejected</option></select>` : `<span class="tag ${item.status === 'Selected' ? 'success' : 'blue'}">${esc(item.status)}</span>`}</div>`).join('') : emptyState('No applications yet. Explore opportunities to get started.')}</div></div>`); }
+		function careerPage() { return shell('student', 'Career Path', `${pageIntro('Career Path', 'Explore directions that match your current skills.') }<div class="career-grid">${state.careers.map((career) => `<article class="mini-card"><span class="tag success">${esc(career.match)} match</span><h3>${esc(career.name)}</h3><p>${esc(career.description)}</p><p><b>Focus skills:</b> ${esc(career.skills)}</p><button class="btn btn-light" data-action="route" data-route="/student/skills">Build these skills</button><button class="btn-plain" data-action="route" data-route="/student/opportunities">Find opportunities →</button></article>`).join('')}</div>`); }
+		function postOpportunityPage() { return shell('industry', 'Post Opportunity', `${pageIntro('Post Opportunity', 'Publish a prototype opportunity for students to discover.') }<form class="dash-panel editable-form" data-form="opportunity"><label>Opportunity title</label><input name="title" required><label>Company</label><input name="company" value="${esc(state.company.name)}" required><label>Location</label><input name="location" required><label>Opportunity type</label><select name="type"><option>Internship</option><option>Full-time</option><option>Part-time</option></select><label>Required skills</label><input name="skills" placeholder="Python · React · Git" required><label>Description</label><textarea name="description" rows="4" required></textarea><label>Duration</label><input name="duration" placeholder="3 months" required><label>Application deadline</label><input name="deadline" type="date" required><button class="btn btn-primary" type="submit">Publish opportunity</button></form>`); }
+		function candidatesPage() { return shell('industry', 'Candidates', `${pageIntro('Candidates', 'Review student profiles matched to your opportunities.')}${searchBox('Search candidates')}<div class="candidate-grid" style="margin-top:18px" id="candidate-results">${data.candidates.map((candidate) => `<article class="mini-card" data-searchable="${esc(candidate.join(' '))}"><div class="candidate-name"><div class="avatar">${candidate[0].split(' ').map((part) => part[0]).join('')}</div><strong>${esc(candidate[0])}</strong><small>${esc(candidate[1])}</small></div><p><span class="tag success">${esc(candidate[2])} match</span><br>${esc(candidate[3])}<br>${esc(candidate[4])}</p><button class="btn btn-light" data-action="candidate" data-name="${esc(candidate[0])}">View Profile</button></article>`).join('')}</div>`); }
+		function analyticsPage(role) { const selected = state.applications.filter((item) => item.status === 'Selected').length; return shell(role, 'Analytics', `${pageIntro('Analytics', 'Prototype metrics update from the current workspace data.')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Opportunities</span></div><div class="kpi-value">${state.opportunities.length}</div></div><div class="kpi"><div class="kpi-top"><span>Applications</span></div><div class="kpi-value">${state.applications.length}</div></div><div class="kpi"><div class="kpi-top"><span>Shortlisted</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Shortlisted').length}</div></div><div class="kpi"><div class="kpi-top"><span>Selected</span></div><div class="kpi-value">${selected}</div></div></div><section class="dash-panel"><div class="metric-row"><span>Student readiness</span><strong>68%</strong></div><div class="metric-row"><span>Internship participation</span><strong>${Math.min(100, 40 + state.applications.length * 5)}%</strong></div><div class="metric-row"><span>Industry collaboration</span><strong>${state.partnerships.length} active partners</strong></div></section>`); }
+		function institutionSkillsPage() { return shell('institution', 'Student Skills', `${pageIntro('Student Skills', 'Monitor readiness and the most common skill gaps.')}${searchBox('Search student skills')}<div class="dash-panel" style="margin-top:18px">${state.gaps.concat(state.skills.map((skill) => ({ name: skill.name, score: skill.score, target: 80 }))).map((item) => `<div class="skill" data-searchable="${esc(item.name)}"><div class="skill-line"><b>${esc(item.name)}</b><span>${item.score}%</span></div><div class="bar"><span style="width:${item.score}%;background:var(--cyan)"></span></div></div>`).join('')}</div>`); }
+		function partnershipsPage() { return shell('institution', 'Partnerships', `${pageIntro('Partnerships', 'Build and maintain industry connections.', '<button class="btn btn-primary" data-action="add-partnership">＋ Add partnership</button>')}<div class="dash-panel" style="margin-top:18px" id="partnership-results">${state.partnerships.map((item) => `<div class="application-row"><div><b>${esc(item.name)}</b><p>${esc(item.type)} · ${esc(item.status)}</p></div><button class="btn-plain" data-action="remove-partnership" data-id="${item.id}">Remove</button></div>`).join('')}</div>`); }
+		function programsPage() { return shell('industry', 'Industry Programs', `${pageIntro('Industry Programs', 'Explore ways to connect industry and academia.') }<div class="collab-grid">${['Guest Lectures', 'Live Industry Projects', 'Workshops', 'Mentorship', 'Faculty Collaboration'].map((name) => `<article class="mini-card"><h3>${name}</h3><p>Connect with academic talent and create meaningful outcomes.</p><button class="btn btn-light" data-action="join-program" data-name="${name}">Explore / Join</button></article>`).join('')}</div>`); }
+		function settingsPage(role) { return shell(role, 'Settings', `${pageIntro('Settings', 'Manage your prototype workspace preferences.') }<form class="dash-panel editable-form" data-form="settings"><label><input type="checkbox" name="emailUpdates" ${state.settings.emailUpdates ? 'checked' : ''}> Email updates</label><label><input type="checkbox" name="profileVisibility" ${state.settings.profileVisibility ? 'checked' : ''}> Make my profile visible to matches</label><label><input type="checkbox" name="compactView" ${state.settings.compactView ? 'checked' : ''}> Use compact workspace view</label><button class="btn btn-primary" type="submit">Save settings</button><button class="btn btn-light" type="button" data-action="logout">Log out</button></form>`); }
+		function markNotification(id, button) { const notification = state.notifications.find((item) => item.id === id); if (notification) notification.read = true; saveState(); button.closest('.notification-row')?.remove(); }
+		function notificationPanel() { return `<div class="modal-backdrop" onclick="this.remove()"><div class="modal-card notification-panel" onclick="event.stopPropagation()"><button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">×</button><h2>Notifications</h2>${state.notifications.length ? state.notifications.map((item) => `<div class="notification-row ${item.read ? '' : 'unread'}"><span>${esc(item.text)}<small>${esc(item.time)}</small></span>${item.read ? '' : `<button class="btn-plain" onclick="markNotification('${item.id}', this)">Mark read</button>`}</div>`).join('') : emptyState('You are all caught up.')}</div></div>`; }
+		function institutionDashboardPage() { return shell('institution', 'Institution Dashboard', `${pageIntro(state.institution.title, state.institution.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Students</span></div><div class="kpi-value">2,450</div></div><div class="kpi"><div class="kpi-top"><span>Assessed Students</span></div><div class="kpi-value">1,980</div></div><div class="kpi"><div class="kpi-top"><span>Internship Ready</span></div><div class="kpi-value">68%</div></div><div class="kpi"><div class="kpi-top"><span>Placement Ready</span></div><div class="kpi-value">61%</div></div></div><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Top Student Skill Gaps</h3><button class="btn-plain" data-action="route" data-route="/institution/skills">View details →</button></div>${state.gaps.map((gap) => `<div class="skill"><div class="skill-line"><span>${esc(gap.name)}</span><span>${gap.score}%</span></div><div class="bar"><span style="width:${gap.score}%;background:var(--cyan)"></span></div></div>`).join('')}</section><section class="dash-panel"><div class="panel-head"><h3>Industry Collaboration</h3><button class="btn-plain" data-action="route" data-route="/institution/partnerships">Manage Partnerships →</button></div><div class="metric-row"><span>Active Industry Partners</span><strong>${state.partnerships.length}</strong></div><div class="metric-row"><span>Live Projects</span><strong>18</strong></div><div class="metric-row"><span>Workshops This Year</span><strong>27</strong></div></section></div>`); }
+		function industryDashboardPage() { return shell('industry', 'Industry Dashboard', `${pageIntro(state.company.title, state.company.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Active Opportunities</span></div><div class="kpi-value">${state.opportunities.length}</div><div class="kpi-note">${state.opportunities.length} published</div></div><div class="kpi"><div class="kpi-top"><span>Applications</span></div><div class="kpi-value">${state.applications.length}</div><div class="kpi-note">Live prototype data</div></div><div class="kpi"><div class="kpi-top"><span>Shortlisted</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Shortlisted').length}</div></div><div class="kpi"><div class="kpi-top"><span>Selected</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Selected').length}</div></div></div><div class="action-grid"><button class="action" data-action="route" data-route="/industry/post-opportunity">＋ Post Opportunity</button><button class="action" data-action="route" data-route="/industry/candidates">♙ View Candidates</button><button class="action" data-action="route" data-route="/industry/applications">▤ Manage Applications</button><button class="action" data-action="route" data-route="/industry/programs">◈ Industry Programs</button></div><section class="dash-panel"><div class="panel-head"><h3>Active Opportunities</h3><button class="btn-plain" data-action="route" data-route="/industry/opportunities">Manage all →</button></div>${state.opportunities.slice(0, 3).map((item) => `<div class="application-row"><div><b>${esc(item.title)}</b><p>${esc(item.company)} · ${esc(item.location)}</p></div><button class="btn-plain" data-action="view-opportunity" data-title="${esc(item.title)}">View →</button></div>`).join('')}</section>`); }
+		function authPage(type) {
+			const register = type === 'register';
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Connecting Skills, Academia &amp; Industry</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create a role-based workspace designed for the journey from learning to impact.' : 'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register ? 'Create your account' : 'Welcome back'}</h2><p>${register ? 'Set up your SkillBridge workspace in a few seconds.' : 'Enter your details or jump straight into a demo workspace.'}</p><form class="form" data-form="${register ? 'register' : 'login'}">${register ? '<label>Full Name</label><input name="name" placeholder="Your full name" required><label>Email</label><input name="email" type="email" placeholder="you@example.com" required><label>Password</label><input name="password" type="password" required><label>Confirm Password</label><input name="confirmPassword" type="password" required><label>Institution / Organization</label><input name="organization" required><label>Role</label><select name="role"><option>Student</option><option>Industry</option><option>Institution</option></select><button class="btn btn-primary" type="submit">Create Account</button>' : '<label>Email</label><input name="email" type="email" placeholder="you@example.com" required><label>Password</label><input name="password" type="password" required><div class="form-row"><label><input type="checkbox" name="remember"> Remember me</label><button class="btn-plain" type="button" data-action="forgot">Forgot password?</button></div><button class="btn btn-primary" type="submit">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="student">Demo Student</button><button class="demo-btn" type="button" data-demo="industry">Demo Industry</button><button class="demo-btn" type="button" data-demo="institution">Demo Institution</button></div>'}</form>${register ? '<div class="switch">Already have an account? <a href="#/login">Log in</a></div>' : '<div class="switch">New to SkillBridge? <a href="#/register">Create an account</a></div>'}</div></main></div>`;
+		}
+		function assessmentMarkup() { return `<section class="dash-panel assessment-card"><div class="panel-head"><h3>Skill assessment</h3><button class="btn-plain" data-action="close-assessment">Close</button></div><p>Answer these prototype questions to update your readiness signal.</p><form data-form="assessment"><label>Which tool is commonly used to manage source code?</label><select name="q1" required><option value="">Choose an answer</option><option value="1">Git</option><option value="0">Photoshop</option></select><label>Which language is widely used for web interactivity?</label><select name="q2" required><option value="">Choose an answer</option><option value="1">JavaScript</option><option value="0">SQL</option></select><label>What does SQL primarily work with?</label><select name="q3" required><option value="">Choose an answer</option><option value="1">Databases</option><option value="0">Images</option></select><button class="btn btn-primary" type="submit">Submit assessment</button></form></section>`; }
+		function navigateFromAction(action, sourceEvent) {
+			if (action === 'logout') { state.activeRole = null; saveState(); go('/login'); return; }
+			if (action === 'toggle-sidebar') { toggleSidebar(); return; }
+			if (action === 'route') { go(sourceEvent.currentTarget.dataset.route); return; }
+			if (action === 'focus-search') { document.querySelector('.page-search')?.focus(); return; }
+			if (action === 'notifications') { document.body.insertAdjacentHTML('beforeend', notificationPanel()); return; }
+			if (action === 'close-modal') { sourceEvent.currentTarget.closest('.modal-backdrop')?.remove(); return; }
+		}
+		function bindFunctionalEvents() {
+			document.querySelectorAll('[data-action]').forEach((element) => {
+				if (element.dataset.action === 'filter' || element.dataset.action === 'status') return;
+				element.addEventListener('click', (event) => {
+					event.stopPropagation();
+					const action = element.dataset.action;
+					if (action === 'view-opportunity') { const opportunity = opportunityByTitle(element.dataset.title); if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity)); return; }
+					if (action === 'apply') { addApplication(element.dataset.title); return; }
+					if (action === 'delete-opportunity') { if (confirm(`Delete ${element.dataset.title}?`)) { state.opportunities = state.opportunities.filter((item) => item.title !== element.dataset.title); saveState(); notify('Opportunity deleted.'); renderFunctional(); } return; }
+					if (action === 'add-skill') { const name = prompt('Skill name'); if (name?.trim()) { state.skills.push({ name: name.trim(), score: 25, status: 'Improve' }); saveState(); notify(`${name.trim()} added to your skills.`); renderFunctional(); } return; }
+					if (action === 'remove-skill') { state.skills = state.skills.filter((skill) => skill.name !== element.dataset.skill); saveState(); renderFunctional(); return; }
+					if (action === 'improve-skill') { showToast(`Keep practicing ${element.dataset.skill}, then retake the assessment.`); return; }
+					if (action === 'assessment') { document.getElementById('assessment-area').innerHTML = assessmentMarkup(); bindFunctionalEvents(); return; }
+					if (action === 'close-assessment') { document.getElementById('assessment-area').innerHTML = ''; return; }
+					if (action === 'candidate') { showToast(`${element.dataset.name}'s profile is ready for review.`); return; }
+					if (action === 'join-program') { notify(`You joined the ${element.dataset.name} program.`); showToast('Program added to your workspace.'); return; }
+					if (action === 'add-partnership') { const name = prompt('Partner organization'); if (name?.trim()) { state.partnerships.push({ id: `p-${Date.now()}`, name: name.trim(), type: 'New partnership', status: 'Pending' }); notify(`New partnership added with ${name.trim()}.`); saveState(); renderFunctional(); } return; }
+					if (action === 'remove-partnership') { if (confirm('Remove this partnership?')) { state.partnerships = state.partnerships.filter((item) => item.id !== element.dataset.id); saveState(); renderFunctional(); } return; }
+					if (action === 'read-notification') { const notification = state.notifications.find((item) => item.id === element.dataset.id); if (notification) notification.read = true; saveState(); element.closest('.notification-row')?.remove(); return; }
+					navigateFromAction(action, event);
+				});
+			});
+			document.querySelectorAll('[data-action="filter"]').forEach((input) => input.addEventListener('input', () => { const query = input.value.toLowerCase().trim(); const container = input.closest('.dash-content'); const results = [...container.querySelectorAll('[data-searchable]')]; results.forEach((item) => { item.hidden = query && !item.dataset.searchable.toLowerCase().includes(query); }); const visible = results.some((item) => !item.hidden); container.querySelector('.empty-state')?.remove(); if (!visible) container.insertAdjacentHTML('beforeend', emptyState('No results found.')); }));
+			document.querySelectorAll('[data-action="status"]').forEach((select) => select.addEventListener('change', () => { const application = state.applications.find((item) => item.id === select.dataset.id); if (application) { application.status = select.value; notify(`Application status updated to ${select.value}.`); saveState(); showToast('Application status updated.'); } }));
+			document.querySelectorAll('form[data-form]').forEach((form) => form.addEventListener('submit', (event) => { event.preventDefault(); handleForm(form); }));
+			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => { state.activeRole = button.dataset.demo; saveState(); go(`/${button.dataset.demo}/dashboard`); }));
+		}
+		function handleForm(form) {
+			const values = Object.fromEntries(new FormData(form).entries());
+			if (form.dataset.form === 'login') { if (!/^\S+@\S+\.\S+$/.test(values.email || '') || !values.password) return showFormError(form, 'Enter a valid email and password.'); state.activeRole = state.activeRole || 'student'; saveState(); go('/role-selection'); return; }
+			if (form.dataset.form === 'register') { if (values.password !== values.confirmPassword) return showFormError(form, 'Passwords do not match.'); state.activeRole = values.role.toLowerCase(); const target = state.activeRole === 'student' ? 'student' : state.activeRole === 'industry' ? 'company' : 'institution'; state[target].name = values.name; state[target].email = values.email; saveState(); notify('Your prototype account was created.'); go('/role-selection'); return; }
+			if (form.dataset.form === 'profile') { const person = personFor(form.dataset.role); person.name = values.name; person.email = values.email; if (form.dataset.role === 'student') person.college = values.details; else if (form.dataset.role === 'industry') person.industryType = values.details; else person.institutionType = values.details; saveState(); notify('Profile changes saved.'); showToast('Profile changes saved.'); return; }
+			if (form.dataset.form === 'settings') { state.settings = { emailUpdates: form.elements.emailUpdates.checked, profileVisibility: form.elements.profileVisibility.checked, compactView: form.elements.compactView.checked }; saveState(); notify('Settings saved.'); showToast('Settings saved.'); return; }
+			if (form.dataset.form === 'opportunity') { if (!values.title || !values.company || !values.location || !values.skills || !values.description || !values.duration || !values.deadline) return showFormError(form, 'Complete all required opportunity fields.'); state.opportunities.unshift({ title: values.title, company: values.company, location: values.location, type: values.type, skills: values.skills, description: values.description, duration: values.duration, deadline: values.deadline, match: 'New' }); saveState(); notify(`Opportunity posted: ${values.title}.`); showToast('Opportunity posted successfully.'); go('/industry/opportunities'); return; }
+			if (form.dataset.form === 'assessment') { const score = ['q1', 'q2', 'q3'].reduce((total, key) => total + (values[key] === '1' ? 1 : 0), 0); state.assessment = { score, completed: new Date().toISOString() }; const git = state.skills.find((skill) => skill.name === 'Git'); if (git) { git.score = Math.min(100, git.score + score * 5); git.status = score > 1 ? 'Verified' : git.status; } saveState(); notify('Assessment completed.'); showToast(`Assessment complete: ${score}/3 correct.`); renderFunctional(); return; }
+		}
+		function showFormError(form, message) { form.querySelector('.form-error')?.remove(); form.insertAdjacentHTML('afterbegin', `<div class="form-error">${esc(message)}</div>`); }
+		function mixColor(from, to, amount) {
+			const parse = (value) => value.match(/[\da-f]{2}/gi).map((part) => parseInt(part, 16));
+			const start = parse(from);
+			const end = parse(to);
+			return `rgb(${start.map((channel, index) => Math.round(channel + (end[index] - channel) * amount)).join(', ')})`;
+		}
+		function updateGlobalBackground() {
+			const background = document.getElementById('global-background');
+			const root = document.querySelector('.landing');
+			if (!background || !root || !document.body.classList.contains('home-page')) return;
+				const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+				const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+				const transitionLimit = .25;
+				const phase = progress <= transitionLimit ? progress / transitionLimit : progress >= 1 - transitionLimit ? (1 - progress) / transitionLimit : 1;
+				const normalized = Math.min(1, Math.max(0, phase));
+				const darkness = normalized * normalized * (3 - 2 * normalized);
+				const themeProgress = selectedTheme === 'dark' ? 1 - darkness : darkness;
+				const calculatedBackgroundColor = mixColor('#ffffff', '#000000', themeProgress);
+				const currentBackgroundColor = window.__skillBridgeBackgroundOverride || calculatedBackgroundColor;
+				background.style.backgroundColor = currentBackgroundColor;
+			root.style.setProperty('--scroll-ink', mixColor('#17333a', '#ffffff', themeProgress));
+			root.style.setProperty('--scroll-muted', mixColor('#668087', '#b7c4c5', themeProgress));
+			root.style.setProperty('--scroll-line', mixColor('#d7e9e9', '#35474b', themeProgress));
+			root.style.setProperty('--scroll-surface', mixColor('#ffffff', '#101719', themeProgress));
+			root.style.setProperty('--scroll-soft', mixColor('#f4fafa', '#0b1113', themeProgress));
+			document.body.style.setProperty('--scroll-ink', mixColor('#17333a', '#ffffff', themeProgress));
+			document.body.style.setProperty('--scroll-muted', mixColor('#668087', '#b7c4c5', themeProgress));
+			document.body.style.setProperty('--scroll-line', mixColor('#d7e9e9', '#35474b', themeProgress));
+			document.body.style.setProperty('--scroll-surface', mixColor('#ffffff', '#101719', themeProgress));
+			document.body.style.setProperty('--scroll-soft', mixColor('#f4fafa', '#0b1113', themeProgress));
+			document.body.style.setProperty('--scroll-header', mixColor('#17333a', '#000000', themeProgress));
+				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				const heroCopy = root.querySelector('.hero > .container:first-child');
+				const ecosystem = root.querySelector('.ecosystem');
+				if (!reducedMotion) {
+					if (heroCopy) heroCopy.style.transform = `translateY(${progress * -42}px)`;
+					if (ecosystem) ecosystem.style.transform = `translateY(${progress * 28}px)`;
+				}
+				const center = window.scrollY + window.innerHeight * .42;
+				let activeId = '';
+				root.querySelectorAll('section[id]').forEach((section) => {
+					if (section.offsetTop <= center) activeId = section.id;
+				});
+				root.querySelectorAll('.navlinks a').forEach((link) => {
+					const href = link.getAttribute('href');
+					const active = activeId ? href === `#${activeId}` : href === '#/';
+					link.classList.toggle('active', active);
+					if (active) link.setAttribute('aria-current', 'page');
+					else link.removeAttribute('aria-current');
+				});
+		}
+		function teardownLandingExperience() {
+			if (window.__skillBridgeScrollFrame) cancelAnimationFrame(window.__skillBridgeScrollFrame);
+			window.__skillBridgeScrollFrame = null;
+			if (window.__skillBridgeScrollHandler) window.removeEventListener('scroll', window.__skillBridgeScrollHandler);
+			if (window.__skillBridgeResizeHandler) window.removeEventListener('resize', window.__skillBridgeResizeHandler);
+			if (window.__skillBridgeRevealObserver) window.__skillBridgeRevealObserver.disconnect();
+			delete window.__skillBridgeScrollHandler;
+			delete window.__skillBridgeResizeHandler;
+			delete window.__skillBridgeBackgroundOverride;
+			document.body.classList.remove('home-page');
+			document.body.classList.remove('motion-page');
+			['--scroll-ink', '--scroll-muted', '--scroll-line', '--scroll-surface', '--scroll-soft', '--scroll-header']
+				.forEach((property) => document.body.style.removeProperty(property));
+			const background = document.getElementById('global-background');
+			if (background) background.style.removeProperty('background-color');
+		}
+
+		function homeEnhancementsMarkup() {
+			const skillDetails = {
+				Python: 'Automation, data, and backend foundations used across SkillBridge opportunities.',
+				JavaScript: 'The language behind interactive products, dashboards, and modern web experiences.',
+				React: 'A practical UI skill for building fast, composable product interfaces.',
+				SQL: 'The data layer skill that helps teams turn product questions into decisions.',
+				Git: 'A collaboration essential for shipping confidently with technical teams.',
+				Communication: 'The multiplier that helps strong technical work create real-world impact.'
+			};
+			return `<section class="home-stats section" aria-label="SkillBridge at a glance"><div class="container"><div class="home-section-kicker">The network in motion</div><div class="home-stats-grid">${[['2,450','Students building readiness','+'],['42','Industry partners','+'],['18','Live projects','+'],['72','Average readiness signal','%']].map(([value,label,suffix]) => `<div class="home-stat" data-stat-value="${value.replace(',','')}" data-stat-suffix="${suffix}"><strong>${value}${suffix}</strong><span>${label}</span></div>`).join('')}</div></div></section><section class="home-skills section soft" id="home-skills"><div class="container home-skill-layout"><div><div class="home-section-kicker">Skills with a signal</div><h2>See where potential becomes momentum.</h2><p class="home-section-copy">Explore the capabilities that connect classroom learning to meaningful opportunities.</p><div class="home-skill-tabs" role="list">${Object.keys(skillDetails).map((skill, index) => `<button type="button" class="home-skill-tab${index === 0 ? ' active' : ''}" data-home-skill="${skill}" role="listitem">${skill}</button>`).join('')}</div></div><div class="home-skill-detail" aria-live="polite"><span class="tag blue">Verified signal</span><h3>${data.skills[0][0]}</h3><p>${skillDetails[data.skills[0][0]]}</p><strong>${data.skills[0][1]}% readiness</strong><div class="bar"><span style="width:${data.skills[0][1]}%"></span></div></div></div></section><section class="home-opportunities section" id="home-opportunities"><div class="container"><div class="section-heading"><div class="eyebrow">A practical next step</div><h2>Opportunities matched to momentum.</h2><p>Move from a verified signal to a real conversation with industry.</p></div><div class="home-opportunity-grid">${state.opportunities.slice(0, 3).map((opportunity) => `<article class="home-opportunity-card" data-action="view-opportunity" data-title="${esc(opportunity.title)}" tabindex="0"><div class="home-opportunity-top"><span class="tag success">${esc(opportunity.match)} match</span><span>${esc(opportunity.location)}</span></div><h3>${esc(opportunity.title)}</h3><p>${esc(opportunity.company)} · ${esc(opportunity.duration)}</p><small>${esc(opportunity.skills)}</small><div class="home-opportunity-more"><span>Eligibility: relevant foundational skills</span><span>Deadline: ${esc(opportunity.deadline)}</span></div><button class="btn btn-light" type="button" data-action="view-opportunity" data-title="${esc(opportunity.title)}">View details →</button></article>`).join('')}</div></div></section><section class="home-ecosystem section soft" id="home-ecosystem"><div class="container home-ecosystem-grid"><div class="home-ecosystem-sticky"><div class="home-ecosystem-visual"><span class="home-ecosystem-node active">Students</span><span class="home-ecosystem-line"></span><span class="home-ecosystem-node">Academia</span><span class="home-ecosystem-line"></span><span class="home-ecosystem-node">Industry</span></div></div><div class="home-ecosystem-steps"><div class="home-section-kicker">The bridge in five moves</div>${[['01','Discover','Students find a clear next step based on their current signal.'],['02','Develop','Skills become visible, verifiable, and easier to improve.'],['03','Track','Academia sees readiness, gaps, and outcomes in one view.'],['04','Connect','Industry discovers candidates through meaningful evidence.'],['05','Move forward','Applications become the beginning of a stronger connection.']].map(([number,title,copy]) => `<article class="home-ecosystem-step" data-ecosystem-step="${number}"><span>${number}</span><div><h3>${title}</h3><p>${copy}</p></div></article>`).join('')}</div></div></section><section class="home-final-cta section"><div class="container"><div><div class="home-section-kicker">Make the next move</div><h2>Your skills. Your opportunities. Your future.</h2><p>Explore the SkillBridge workspace and turn readiness into momentum.</p></div><a class="btn btn-primary" href="#/student/opportunities">Explore SkillBridge →</a></div></section>`;
+		}
+
+		function enhanceHomePage(landingRoot) {
+			if (landingRoot.querySelector('.home-stats')) return;
+			landingRoot.querySelector('.cta')?.insertAdjacentHTML('beforebegin', homeEnhancementsMarkup());
+			landingRoot.querySelectorAll('[data-home-skill]').forEach((button) => {
+				button.addEventListener('click', () => {
+					const skill = data.skills.find((item) => item[0] === button.dataset.homeSkill);
+					if (!skill) return;
+					landingRoot.querySelectorAll('[data-home-skill]').forEach((item) => item.classList.toggle('active', item === button));
+					const detail = landingRoot.querySelector('.home-skill-detail');
+					const descriptions = { Python: 'Automation, data, and backend foundations used across SkillBridge opportunities.', JavaScript: 'The language behind interactive products, dashboards, and modern web experiences.', React: 'A practical UI skill for building fast, composable product interfaces.', SQL: 'The data layer skill that helps teams turn product questions into decisions.', Git: 'A collaboration essential for shipping confidently with technical teams.', Communication: 'The multiplier that helps strong technical work create real-world impact.' };
+					detail.querySelector('h3').textContent = skill[0];
+					detail.querySelector('p').textContent = descriptions[skill[0]];
+					detail.querySelector('strong').textContent = `${skill[1]}% readiness`;
+					detail.querySelector('.bar span').style.width = `${skill[1]}%`;
+				});
+			});
+			landingRoot.querySelectorAll('.home-opportunity-card').forEach((card) => card.addEventListener('keydown', (event) => {
+				if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.querySelector('[data-action="view-opportunity"]').click(); }
+			}));
+			landingRoot.querySelectorAll('.home-opportunity-card').forEach((card) => card.addEventListener('click', (event) => {
+				if (event.target.closest('button, a')) return;
+				card.querySelector('[data-action="view-opportunity"]').click();
+			}));
+			landingRoot.querySelectorAll('.home-opportunity-card [data-action="view-opportunity"]').forEach((button) => button.addEventListener('click', (event) => {
+				event.stopPropagation();
+				const opportunity = opportunityByTitle(button.dataset.title);
+				if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity));
+			}));
+			landingRoot.querySelectorAll('[data-stat-value]').forEach((stat) => {
+				stat.querySelector('strong').textContent = `0${stat.dataset.statSuffix || ''}`;
+			});
+			const statsObserver = new IntersectionObserver((entries, observer) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return;
+				landingRoot.querySelectorAll('[data-stat-value]').forEach((stat) => {
+					const target = Number(stat.dataset.statValue);
+					const value = stat.querySelector('strong');
+					const suffix = stat.dataset.statSuffix || '';
+					if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+						value.textContent = `${target.toLocaleString()}${suffix}`;
+						return;
+					}
+					const start = performance.now();
+					const animate = (now) => { const progress = Math.min(1, (now - start) / 700); value.textContent = `${Math.round(target * (1 - Math.pow(1 - progress, 3))).toLocaleString()}${suffix}`; if (progress < 1) requestAnimationFrame(animate); };
+					requestAnimationFrame(animate);
+				});
+				observer.disconnect();
+			}, { threshold: .35 });
+			statsObserver.observe(landingRoot.querySelector('.home-stats'));
+			const ecosystemSteps = [...landingRoot.querySelectorAll('.home-ecosystem-step')];
+			const ecosystemObserver = new IntersectionObserver((entries) => {
+				entries.forEach((entry) => {
+					if (!entry.isIntersecting) return;
+					const index = ecosystemSteps.indexOf(entry.target);
+					ecosystemSteps.forEach((step, stepIndex) => step.classList.toggle('active', stepIndex === index));
+					landingRoot.querySelectorAll('.home-ecosystem-node').forEach((node, nodeIndex) => node.classList.toggle('active', nodeIndex === Math.min(2, Math.floor(index / 2))));
+				});
+			}, { threshold: .55 });
+			ecosystemSteps.forEach((step) => ecosystemObserver.observe(step));
+		}
+
+		function animatePercentages(root = document) {
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const textNodes = [];
+			const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+			let node;
+			while ((node = walker.nextNode())) {
+				if (node.parentElement?.closest('[data-stat-value], script, style')) continue;
+				const match = node.nodeValue.match(/(\d+(?:\.\d+)?)%/);
+				if (match) textNodes.push({ node, value: Number(match[1]), source: node.nodeValue, token: match[0] });
+			}
+			const bars = [...root.querySelectorAll('.bar > span[style*="width"]')].map((bar) => ({
+				bar,
+				value: Number.parseFloat(bar.style.width) || 0
+			}));
+			if (reduceMotion) return;
+			textNodes.forEach((item) => { item.node.nodeValue = item.source.replace(item.token, '0%'); });
+			bars.forEach((item) => { item.bar.style.width = '0%'; });
+			const start = performance.now();
+			const duration = 650;
+			const tick = (now) => {
+				const progress = Math.min(1, (now - start) / duration);
+				const eased = 1 - Math.pow(1 - progress, 3);
+				textNodes.forEach((item) => {
+					item.node.nodeValue = item.source.replace(item.token, `${Math.round(item.value * eased)}%`);
+				});
+				bars.forEach((item) => { item.bar.style.width = `${item.value * eased}%`; });
+				if (progress < 1) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}
+
+		function setupLandingExperience() {
+			const landingRoot = document.querySelector('.landing');
+			if (!landingRoot) {
+				teardownLandingExperience();
+				return;
+			}
+			document.body.classList.add('home-page');
+			enhanceHomePage(landingRoot);
+			window.__skillBridgeScrollFrame = null;
+			window.__skillBridgeScrollHandler = () => {
+					if (window.__skillBridgeScrollFrame) return;
+					window.__skillBridgeScrollFrame = requestAnimationFrame(() => {
+						window.__skillBridgeScrollFrame = null;
+						updateGlobalBackground();
+					});
+				};
+			window.__skillBridgeResizeHandler = updateGlobalBackground;
+			window.addEventListener('scroll', window.__skillBridgeScrollHandler, { passive: true });
+			window.addEventListener('resize', window.__skillBridgeResizeHandler, { passive: true });
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const revealTargets = landingRoot.querySelectorAll('.hero > *, .section-heading, .section > .container > .grid-3 > *, .solution > *, .steps > *, .feature-grid > *, .cta .container, footer .footer-grid, .home-stats, .home-skill-layout, .home-opportunity-grid, .home-ecosystem-grid, .home-final-cta .container');
+			revealTargets.forEach((element) => element.classList.add('reveal'));
+			if (window.__skillBridgeRevealObserver) window.__skillBridgeRevealObserver.disconnect();
+			window.__skillBridgeRevealObserver = new IntersectionObserver((entries, observer) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('is-visible');
+						observer.unobserve(entry.target);
+					}
+				});
+			}, { threshold: .12, rootMargin: '0px 0px -8% 0px' });
+			revealTargets.forEach((element) => window.__skillBridgeRevealObserver.observe(element));
+			if (reducedMotion) revealTargets.forEach((element) => element.classList.add('is-visible'));
+
+			requestAnimationFrame(updateGlobalBackground);
+		}
+		function setupPageMotion() {
+			if (document.querySelector('.landing')) return;
+			const targets = document.querySelectorAll('.app .topbar, .app .sidebar, .app .dash-content > *, .app .kpi, .app .dash-panel > *, .app .opportunity-card, .app .mini-card, .app .action, .auth > *, .auth .form, .role-page .role-select, .role-page .role-option, .placeholder-card');
+			if (!targets.length) return;
+			document.body.classList.add('motion-page');
+			targets.forEach((element) => element.classList.add('page-reveal'));
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (reducedMotion) {
+				targets.forEach((element) => element.classList.add('is-visible'));
+				return;
+			}
+			window.__skillBridgeRevealObserver = new IntersectionObserver((entries, observer) => {
+				entries.forEach((entry) => {
+					if (!entry.isIntersecting) return;
+					entry.target.classList.add('is-visible');
+					observer.unobserve(entry.target);
+				});
+			}, { threshold: .08, rootMargin: '0px 0px -6% 0px' });
+			targets.forEach((element) => window.__skillBridgeRevealObserver.observe(element));
+		}
+		function bindThemeToggle() {
+			const toggleHost = document.querySelector('.auth-aside, .role-top');
+			if (toggleHost && !toggleHost.querySelector('[data-theme-toggle]')) toggleHost.insertAdjacentHTML('afterbegin', themeToggleMarkup());
+			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+				button.onclick = () => setTheme(selectedTheme === 'dark' ? 'light' : 'dark');
+			});
+		}
+		function renderFunctional() {
+			const path = location.hash.slice(1) || '/';
+			teardownLandingExperience();
+			if (path && !path.startsWith('/')) { if (document.querySelector('.landing')) document.getElementById(path)?.scrollIntoView(); return; }
+			const match = path.match(/^\/(student|industry|institution)\/(dashboard|profile|skills|opportunities|applications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs)$/);
+			if (path === '/') app.innerHTML = landing();
+			else if (path === '/login' || path === '/register') app.innerHTML = authPage(path.slice(1));
+			else if (path === '/role-selection') app.innerHTML = roleSelection();
+			else if (match) { const [, role, section] = match; const pages = { dashboard: role === 'student' ? studentDashboardPage : role === 'industry' ? industryDashboardPage : institutionDashboardPage, profile: () => profilePage(role), skills: role === 'student' ? skillsPage : institutionSkillsPage, opportunities: () => opportunitiesPage(role), applications: () => applicationsPage(role), settings: () => settingsPage(role), 'career-path': careerPage, candidates: candidatesPage, analytics: () => analyticsPage(role), partnerships: partnershipsPage, 'post-opportunity': postOpportunityPage, programs: programsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
+			else app.innerHTML = notFound();
+			bindFunctionalEvents();
+			setupLandingExperience();
+			setupPageMotion();
+			animatePercentages(app);
+			bindThemeToggle();
+			initChatbot();
+		}
+		window.removeEventListener('hashchange', render);
+		window.addEventListener('hashchange', renderFunctional);
+		renderFunctional();
