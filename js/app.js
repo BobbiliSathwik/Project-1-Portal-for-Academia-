@@ -66,6 +66,7 @@
 		};
 		const app = document.getElementById('app');
 		const AI_API_ENDPOINT = '';
+		let motionCleanup = null;
 		let chatbotState = {
 			lastOpportunity: null,
 			pendingApplication: null
@@ -77,7 +78,7 @@
 
 		function landing() {
 			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a><a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
-			<section class="hero"><div class="container"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><h1>Bridge the Gap Between <span>Skills</span> and Industry</h1><p>SkillBridge connects students, industries, and institutions through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillBridge ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
+			<section class="hero"><div class="container"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><h1><span class="hero-line">Bridge the Gap</span><span class="hero-line">Between <span>Skills</span></span><span class="hero-line">and Industry</span></h1><p>SkillBridge connects students, industries, and institutions through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary magnetic" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillBridge ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillBridge</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillBridge gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
@@ -531,22 +532,28 @@
 					'Your Skill Gaps': 'skills',
 					'Recommended Career Paths': 'career-path',
 					'Recommended Opportunities': 'opportunities',
-					'Recent Applications': 'applications'
+					'Recent Applications': 'applications',
+					'Manage skills →': 'skills',
+					'View all opportunities →': 'opportunities',
+					'View all →': 'applications'
 				},
 				industry: {
 					'Active Opportunities': 'opportunities',
 					'Top Matching Candidates': 'candidates',
-					'Academia Collaboration': 'programs'
+					'Academia Collaboration': 'programs',
+					'View all →': 'opportunities'
 				},
 				institution: {
 					'Top Student Skill Gaps': 'skills',
 					'Internship Participation': 'analytics',
 					'Placement Overview': 'analytics',
-					'Industry Collaboration': 'partnerships'
+					'Industry Collaboration': 'partnerships',
+					'View all →': 'analytics'
 				}
 			};
 
 			document.querySelectorAll('.main button').forEach((button) => {
+				if (button.classList.contains('mobile-dash-menu')) return;
 				const label = button.textContent.trim();
 				const panelTitle = button.closest('.dash-panel')
 					?.querySelector('.panel-head h3')
@@ -558,9 +565,15 @@
 						location.hash = `/${role}/${destination}`;
 					};
 				} else {
-					button.onclick = () => showToast(
-						`${label.replace(/[→＋♙▤◈]/g, '').trim()} is available in the next workspace update.`
-					);
+					button.onclick = () => {
+						const fallback = label.toLowerCase();
+						const fallbackRoute = fallback.includes('candidate') || fallback.includes('profile') ? 'candidates' :
+							fallback.includes('application') ? 'applications' :
+							fallback.includes('program') || fallback.includes('explore') ? 'programs' :
+							fallback.includes('career') ? 'career-path' :
+							fallback.includes('skill') ? 'skills' : 'dashboard';
+						location.hash = `/${role}/${fallbackRoute}`;
+					};
 				}
 			});
 
@@ -608,6 +621,124 @@
 			}
 		}
 
+		function initMotion() {
+			motionCleanup?.();
+			const cleanups = [];
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			let progress = document.querySelector('.scroll-progress');
+			if (!progress) {
+				progress = document.createElement('div');
+				progress.className = 'scroll-progress';
+				document.body.append(progress);
+			}
+			const updateProgress = () => {
+				const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+				progress.style.transform = `scaleX(${scrollable > 0 ? window.scrollY / scrollable : 0})`;
+			};
+			window.addEventListener('scroll', updateProgress, { passive: true });
+			updateProgress();
+			cleanups.push(() => window.removeEventListener('scroll', updateProgress));
+			document.querySelectorAll('.role-card, .role-option, .dash-panel').forEach((card) => {
+				card.classList.add('tilt-card');
+			});
+			const revealTargets = document.querySelectorAll(
+				'.section-heading, .problem-card, .solution > div, .step, .role-card, .feature, .cta .container, footer .footer-grid, .dash-intro, .kpi, .dash-panel, .placeholder-card, .form-wrap, .stack-row, .mini-card, .opportunity, .action'
+			);
+			const revealObserver = 'IntersectionObserver' in window ? new IntersectionObserver((entries, observer) => {
+				entries.forEach((entry) => {
+					const bars = entry.target.querySelectorAll('.bar span');
+					const value = entry.target.querySelector('.kpi-value');
+					if (entry.isIntersecting) {
+						entry.target.classList.add('is-visible');
+						bars.forEach((bar) => {
+							const targetWidth = bar.dataset.targetWidth || bar.style.width;
+							if (targetWidth) window.requestAnimationFrame(() => { bar.style.width = targetWidth; });
+						});
+						if (value && !reducedMotion) {
+							const target = Number(value.dataset.targetValue || 0);
+							const suffix = value.dataset.valueSuffix || '';
+							const start = performance.now();
+							const duration = 850;
+							const tick = (now) => {
+								const progressValue = Math.min((now - start) / duration, 1);
+								const eased = 1 - Math.pow(1 - progressValue, 3);
+								value.textContent = `${Math.round(target * eased).toLocaleString()}${suffix}`;
+								if (progressValue < 1 && entry.target.classList.contains('is-visible')) requestAnimationFrame(tick);
+							};
+							requestAnimationFrame(tick);
+						}
+					} else {
+						entry.target.classList.remove('is-visible');
+						bars.forEach((bar) => { bar.style.width = '0%'; });
+						if (value && value.dataset.targetValue) {
+							value.textContent = `0${value.dataset.valueSuffix || ''}`;
+						}
+					}
+				});
+			}, { threshold: .12, rootMargin: '0px 0px -35px' }) : null;
+
+			revealTargets.forEach((element, index) => {
+				element.classList.add('reveal');
+				element.querySelectorAll('.bar span').forEach((bar) => {
+					bar.dataset.targetWidth = bar.style.width;
+					if (!reducedMotion) bar.style.width = '0%';
+				});
+				const value = element.querySelector('.kpi-value');
+				if (value) {
+					const match = value.textContent.trim().match(/^([\d,]+)(.*)$/);
+					if (match) {
+						value.dataset.targetValue = match[1].replace(/,/g, '');
+						value.dataset.valueSuffix = match[2];
+						if (!reducedMotion) value.textContent = `0${match[2]}`;
+					}
+				}
+				if (index % 4 === 1) element.classList.add('delay-1');
+				if (index % 4 === 2) element.classList.add('delay-2');
+				if (index % 4 === 3) element.classList.add('delay-3');
+				if (element.matches('.solution > div:first-child, .cta .container')) element.classList.add('from-left');
+				if (element.matches('.solution > div:last-child, footer .footer-grid')) element.classList.add('from-right');
+				if (revealObserver) revealObserver.observe(element);
+				else {
+					element.classList.add('is-visible');
+					element.querySelectorAll('.bar span').forEach((bar) => { bar.style.width = bar.dataset.targetWidth || bar.style.width; });
+				}
+			});
+			if (revealObserver) cleanups.push(() => revealObserver.disconnect());
+
+			document.querySelectorAll('.btn').forEach((button) => {
+				button.addEventListener('click', (event) => {
+					const bounds = button.getBoundingClientRect();
+					const size = Math.max(bounds.width, bounds.height);
+					const ripple = document.createElement('span');
+					ripple.className = 'ripple';
+					ripple.style.width = `${size}px`;
+					ripple.style.height = `${size}px`;
+					ripple.style.left = `${event.clientX - bounds.left - size / 2}px`;
+					ripple.style.top = `${event.clientY - bounds.top - size / 2}px`;
+					button.append(ripple);
+					window.setTimeout(() => ripple.remove(), 600);
+				});
+			});
+
+			const canMagnetize = window.matchMedia('(pointer: fine) and (min-width: 851px)').matches &&
+				!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const magneticButtons = document.querySelectorAll('.magnetic, .hero-actions .btn-primary, .cta .btn-primary');
+			if (canMagnetize) {
+				magneticButtons.forEach((button) => {
+					const reset = () => { button.style.transform = ''; };
+					button.addEventListener('mousemove', (event) => {
+						const bounds = button.getBoundingClientRect();
+						const x = (event.clientX - (bounds.left + bounds.width / 2)) / bounds.width * 7;
+						const y = (event.clientY - (bounds.top + bounds.height / 2)) / bounds.height * 5;
+						button.style.transform = `translate3d(${x}px, ${y}px, 0) scale(1.015)`;
+					});
+					button.addEventListener('mouseleave', reset);
+				});
+			}
+
+			motionCleanup = () => cleanups.forEach((cleanup) => cleanup());
+		}
+
 		function render() {
 			const path = location.hash.slice(1) || '/';
 			if (path && !path.startsWith('/')) {
@@ -625,11 +756,16 @@
 				app.innerHTML = section === 'dashboard' ? dash(role) : placeholder(role, section);
 				if (section === 'dashboard') bindDashboardActions(role)
 			} else app.innerHTML = notFound();
+			app.classList.remove('route-transition');
+			void app.offsetWidth;
+			app.classList.add('route-transition');
+			window.setTimeout(() => app.classList.remove('route-transition'), 450);
 			document.querySelectorAll('a[href="#"]').forEach(link => link.href = '#/');
 			if (path === '/register') updateRoleFields('Student');
 			if (path === '/login' || path === '/register') bindFormValidation(path.slice(1));
 			window.scrollTo(0, 0)
 			initChatbot();
+			initMotion();
 		}
 		window.addEventListener('hashchange', render);
 		render();
