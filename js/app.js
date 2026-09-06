@@ -1892,21 +1892,25 @@
 				const phase = progress <= transitionLimit ? progress / transitionLimit : progress >= 1 - transitionLimit ? (1 - progress) / transitionLimit : 1;
 				const normalized = Math.min(1, Math.max(0, phase));
 				const darkness = normalized * normalized * (3 - 2 * normalized);
-				const themeProgress = selectedTheme === 'dark' ? 1 - darkness : darkness;
-				const calculatedBackgroundColor = mixColor('#ffffff', '#000000', themeProgress);
+				const calculatedBackgroundColor = selectedTheme === 'dark'
+					? mixColor('#101719', '#000000', darkness)
+					: mixColor('#ffffff', '#f4fafa', darkness);
 				const currentBackgroundColor = window.__skillAuraBackgroundOverride || calculatedBackgroundColor;
 				background.style.backgroundColor = currentBackgroundColor;
-			root.style.setProperty('--scroll-ink', mixColor('#17333a', '#ffffff', themeProgress));
-			root.style.setProperty('--scroll-muted', mixColor('#668087', '#b7c4c5', themeProgress));
-			root.style.setProperty('--scroll-line', mixColor('#d7e9e9', '#35474b', themeProgress));
-			root.style.setProperty('--scroll-surface', mixColor('#ffffff', '#101719', themeProgress));
-			root.style.setProperty('--scroll-soft', mixColor('#f4fafa', '#0b1113', themeProgress));
-			document.body.style.setProperty('--scroll-ink', mixColor('#17333a', '#ffffff', themeProgress));
-			document.body.style.setProperty('--scroll-muted', mixColor('#668087', '#b7c4c5', themeProgress));
-			document.body.style.setProperty('--scroll-line', mixColor('#d7e9e9', '#35474b', themeProgress));
-			document.body.style.setProperty('--scroll-surface', mixColor('#ffffff', '#101719', themeProgress));
-			document.body.style.setProperty('--scroll-soft', mixColor('#f4fafa', '#0b1113', themeProgress));
-			document.body.style.setProperty('--scroll-header', mixColor('#17333a', '#000000', themeProgress));
+			const scrollColors = selectedTheme === 'dark'
+				? { ink: mixColor('#f4f7f7', '#ffffff', darkness), muted: mixColor('#b7c4c5', '#91a5a7', darkness), line: mixColor('#35474b', '#243538', darkness), surface: mixColor('#101719', '#0b1113', darkness), soft: mixColor('#0b1113', '#070b0d', darkness), header: mixColor('#101719', '#000000', darkness) }
+				: { ink: mixColor('#17333a', '#17333a', darkness), muted: mixColor('#668087', '#668087', darkness), line: mixColor('#d7e9e9', '#c4dddd', darkness), surface: mixColor('#ffffff', '#f4fafa', darkness), soft: mixColor('#f4fafa', '#e8f4f3', darkness), header: mixColor('#17333a', '#123039', darkness) };
+			root.style.setProperty('--scroll-ink', scrollColors.ink);
+			root.style.setProperty('--scroll-muted', scrollColors.muted);
+			root.style.setProperty('--scroll-line', scrollColors.line);
+			root.style.setProperty('--scroll-surface', scrollColors.surface);
+			root.style.setProperty('--scroll-soft', scrollColors.soft);
+			document.body.style.setProperty('--scroll-ink', scrollColors.ink);
+			document.body.style.setProperty('--scroll-muted', scrollColors.muted);
+			document.body.style.setProperty('--scroll-line', scrollColors.line);
+			document.body.style.setProperty('--scroll-surface', scrollColors.surface);
+			document.body.style.setProperty('--scroll-soft', scrollColors.soft);
+			document.body.style.setProperty('--scroll-header', scrollColors.header);
 				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 				const heroCopy = root.querySelector('.hero > .container:first-child');
 				const ecosystem = root.querySelector('.ecosystem');
@@ -2113,8 +2117,11 @@
 		function renderFunctional() {
 			const path = location.hash.slice(1) || '/';
 			ensureEcosystem();
+			if (path && !path.startsWith('/')) {
+				if (document.querySelector('.landing')) document.getElementById(path)?.scrollIntoView();
+				return;
+			}
 			teardownLandingExperience();
-			if (path && !path.startsWith('/')) { if (document.querySelector('.landing')) document.getElementById(path)?.scrollIntoView(); return; }
 			const match = path.match(/^\/(student|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports)$/);
 			const session = currentStudentSession();
 			if (path.startsWith('/student/') && !currentStudentAccount()) { go('/login'); return; }

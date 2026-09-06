@@ -1879,14 +1879,76 @@
 		html[data-theme="dark"] .app .dash-panel,
 		html[data-theme="dark"] .app .kpi,
 		html[data-theme="dark"] .app .mini-card,
+		html[data-theme="dark"] .app .card,
+		html[data-theme="dark"] .app .feature,
+		html[data-theme="dark"] .app .stack,
+		html[data-theme="dark"] .app .flow-item,
 		html[data-theme="dark"] .auth .form,
+		html[data-theme="dark"] .auth .panel,
 		html[data-theme="dark"] .role-option,
 		html[data-theme="dark"] .placeholder-card,
-		html[data-theme="dark"] .modal-card {
+		html[data-theme="dark"] .modal-card,
+		html[data-theme="dark"] .ai-panel,
+		html[data-theme="dark"] .ai-message.assistant,
+		html[data-theme="dark"] .ai-result-card,
+		html[data-theme="dark"] .ai-suggestions,
+		html[data-theme="dark"] .ai-form {
 			background: var(--theme-surface);
 			border-color: var(--theme-border);
 			color: var(--theme-text);
 			transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+		}
+
+		html[data-theme="dark"] .ai-suggestions button,
+		html[data-theme="dark"] .ai-result-actions button,
+		html[data-theme="dark"] .ai-result-card strong,
+		html[data-theme="dark"] .ai-result-company,
+		html[data-theme="dark"] .ai-result-skills {
+			color: var(--theme-text);
+		}
+
+		html[data-theme="dark"] .ai-suggestions button,
+		html[data-theme="dark"] .ai-result-actions button {
+			background: var(--theme-surface-alt);
+			border-color: var(--theme-border);
+		}
+
+		html[data-theme="dark"] .home-page .ai-panel,
+		html[data-theme="dark"] .home-page .ai-suggestions,
+		html[data-theme="dark"] .home-page .ai-form,
+		html[data-theme="dark"] .home-page .ai-result-card,
+		html[data-theme="dark"] .home-page .ai-message.assistant {
+			background: var(--scroll-surface, var(--theme-surface));
+			border-color: var(--scroll-line, var(--theme-border));
+			color: var(--scroll-ink, var(--theme-text));
+		}
+
+		html[data-theme="dark"] .home-page .ai-header {
+			background: var(--scroll-header, #0a1115);
+			color: var(--theme-text);
+		}
+
+		html[data-theme="dark"] .home-page .ai-messages {
+			background: var(--scroll-soft, var(--theme-surface-alt));
+		}
+
+		html[data-theme="dark"] body:not(.home-page) .card,
+		html[data-theme="dark"] body:not(.home-page) .feature,
+		html[data-theme="dark"] body:not(.home-page) .flow-item,
+		html[data-theme="dark"] body:not(.home-page) .stack,
+		html[data-theme="dark"] body:not(.home-page) h1,
+		html[data-theme="dark"] body:not(.home-page) h2,
+		html[data-theme="dark"] body:not(.home-page) h3,
+		html[data-theme="dark"] body:not(.home-page) h4,
+		html[data-theme="dark"] body:not(.home-page) p,
+		html[data-theme="dark"] body:not(.home-page) label,
+		html[data-theme="dark"] body:not(.home-page) th,
+		html[data-theme="dark"] body:not(.home-page) td,
+		html[data-theme="dark"] body:not(.home-page) .user-meta,
+		html[data-theme="dark"] body:not(.home-page) .empty-state,
+		html[data-theme="dark"] body:not(.home-page) .notification-row,
+		html[data-theme="dark"] body:not(.home-page) .placeholder-card {
+			color: var(--theme-text);
 		}
 
 		html[data-theme="dark"] .role-page {
@@ -2171,6 +2233,13 @@
 			border-color: var(--scroll-line);
 			box-shadow: 0 24px 65px color-mix(in srgb, var(--scroll-ink) 12%, transparent);
 			transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
+		}
+
+		.landing .flow-item {
+			background: var(--scroll-surface);
+			border-color: var(--scroll-line);
+			color: var(--scroll-ink);
+			transition: background-color .25s ease, border-color .25s ease, color .25s ease;
 		}
 
 		.landing .stack-row {
