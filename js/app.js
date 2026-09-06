@@ -65,13 +65,24 @@
 			menu: '☰'
 		};
 		const app = document.getElementById('app');
-		const AI_API_ENDPOINT = '';
+		const AI_API_ENDPOINT = '/api/ai/chat';
+		const AI_CONFIG = {
+			model: 'gpt-4o-mini',
+			maxOutput: 600,
+			temperature: 0.4,
+			systemPrompts: {
+				student: 'You are the SkillAura Student Assistant. Help the student understand verified skills, identify skill gaps, discover relevant opportunities, track applications, prepare for interviews, and plan learning. Use actual SkillAura data. Never invent scores, opportunities, applications, or statuses.',
+				company: 'You are the SkillAura Recruiter Assistant. Help recruiters understand opportunities, applications, candidate skill matches, interviews, and recruitment analytics. Use actual SkillAura data. Do not make final hiring decisions.',
+				institution: 'You are the SkillAura Institution Assistant. Help institutions understand student development, skill gaps, internships, placements, and industry demand. Use actual SkillAura data. Do not expose private recruiter or student information beyond the user\'s permissions.'
+			}
+		};
 		const THEME_KEY = 'skillaura-theme';
 		let selectedTheme = loadThemePreference();
 		document.documentElement.dataset.theme = selectedTheme;
 		let chatbotState = {
 			lastOpportunity: null,
-			pendingApplication: null
+			pendingApplication: null,
+			memory: {}
 		};
 
 		function loadThemePreference() {
@@ -105,9 +116,58 @@
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillAura</a>`;
 		}
 
+		function currentAuthSession() {
+			try {
+				const session = JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
+				if (!session || typeof session !== 'object') return null;
+				if (session.loggedIn === false && !session.role && !session.userId && !session.id) return null;
+				return {
+					loggedIn: true,
+					role: normalizeRole(session.role || session.accountRole || 'student'),
+					userId: session.userId || session.id || null,
+					name: session.name || session.fullName || '',
+					email: session.email || '',
+					companyId: session.companyId || null,
+					institutionId: session.institutionId || null,
+					...session,
+					loggedIn: true
+				};
+			} catch (error) {
+				return null;
+			}
+		}
+
+		function persistAuthSession(session) {
+			if (!session || !session.role) return;
+			const payload = {
+				loggedIn: true,
+				role: normalizeRole(session.role),
+				userId: session.userId || session.id || null,
+				name: session.name || session.fullName || '',
+				email: session.email || '',
+				companyId: session.companyId || null,
+				institutionId: session.institutionId || null,
+				...session,
+				loggedIn: true
+			};
+			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(payload)); } catch (error) {}
+		}
+
+		function currentUserDashboardRoute() {
+			const session = currentAuthSession();
+			const role = normalizeRole(session?.role || state?.activeRole || 'student');
+			if (role === 'company') return '/company/dashboard';
+			if (role === 'institution') return '/institution/dashboard';
+			return '/student/dashboard';
+		}
+
 		function landing() {
-			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions"><a href="#/login">Login</a>${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a><button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
-			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Bridge</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
+			const auth = currentAuthSession();
+			const isLoggedIn = Boolean(auth && auth.loggedIn);
+			const dashboardRoute = currentUserDashboardRoute();
+			const authenticatedNav = isLoggedIn ? `<a href="${dashboardRoute}">Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a><button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `<a href="#/login">Login</a>${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a>`;
+			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
+			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillAura gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
@@ -231,6 +291,29 @@
 		}
 
 		function chatbotMarkup() {
+			const role = currentRole();
+			const prompts = {
+				student: [
+					'Analyze my skills',
+					'Find opportunities for me',
+					'What should I learn?',
+					'Show my applications'
+				],
+				company: [
+					'Find top candidates',
+					'Analyze my applicants',
+					'Create a job draft',
+					'Show hiring statistics'
+				],
+				institution: [
+					'Analyze student skills',
+					'Show placement readiness',
+					'Find major skill gaps',
+					'Show industry demand'
+				]
+			};
+			const icon = role === 'company' ? '▤' : role === 'institution' ? '⌂' : '♙';
+			const labels = prompts[role] || prompts.student;
 			return `<button class="ai-launcher" type="button" aria-label="Open SkillAura AI Assistant" aria-expanded="false">
 				<span class="ai-launcher-icon">✦</span>
 				<span class="ai-launcher-label">SkillAura AI</span>
@@ -238,193 +321,452 @@
 			<div class="ai-panel" aria-hidden="true">
 				<div class="ai-header">
 					<div class="ai-title-wrap">
-						<div class="ai-avatar">✦</div>
+						<div class="ai-avatar">${icon}</div>
 						<div>
-							<strong>SkillAura AI Assistant</strong>
-							<span>Ready to help with your career journey</span>
+							<strong>${getAssistantTitle(role)}</strong>
+							<span>${getAssistantSubtitle(role)}</span>
 						</div>
 					</div>
-					<button class="ai-close" type="button" aria-label="Minimize assistant">−</button>
+					<div class="ai-header-actions">
+						<button class="ai-clear" type="button" aria-label="Clear conversation">Clear</button>
+						<button class="ai-close" type="button" aria-label="Minimize assistant">−</button>
+					</div>
 				</div>
 				<div class="ai-messages" aria-live="polite"></div>
 				<div class="ai-suggestions">
-					<button type="button" data-prompt="Find me a software developer internship">Software internships</button>
-					<button type="button" data-prompt="Show my skill gaps">My skill gaps</button>
-					<button type="button" data-prompt="Open my career path">Career path</button>
+					${labels.map((prompt) => `<button type="button" data-prompt="${prompt}">${prompt}</button>`).join('')}
 				</div>
 				<form class="ai-form">
-					<input class="ai-input" type="text" placeholder="Ask about skills, jobs, or careers..." aria-label="Ask SkillAura AI Assistant" autocomplete="off">
+					<input class="ai-input" type="text" placeholder="Ask the SkillAura ${role === 'company' ? 'Recruiter' : role === 'institution' ? 'Institution' : 'Student'} Assistant..." aria-label="Ask SkillAura AI Assistant" autocomplete="off">
+					<button class="ai-stop" type="button" aria-label="Stop generating" class="hidden">Stop</button>
 					<button class="ai-send" type="submit" aria-label="Send message">↗</button>
 				</form>
 			</div>`;
 		}
 
 		function currentRole() {
-			const match = location.hash.match(/^#\/(student|industry|institution)\//);
-			return match?.[1] || 'student';
+			const hashMatch = location.hash.match(/^#\/(student|company|industry|institution)\//);
+			const hashRole = hashMatch?.[1] || 'student';
+			const sessionRole = currentStudentSession()?.role || (typeof state !== 'undefined' ? state.activeRole : undefined) || 'student';
+			const resolvedRole = hashRole === 'industry' ? 'company' : hashRole || sessionRole || 'student';
+			return normalizeRoleName(resolvedRole || sessionRole || 'student');
+		}
+
+		function normalizeRoleName(role) {
+			if (!role) return 'student';
+			return role === 'industry' ? 'company' : role === 'company' ? 'company' : role === 'institution' ? 'institution' : 'student';
 		}
 
 		function currentPage() {
 			return location.hash.slice(1) || '/';
 		}
 
-		function chatbotContext() {
+		function getAssistantTitle(role) {
+			if (role === 'company') return 'SkillAura Recruiter Assistant';
+			if (role === 'institution') return 'SkillAura Institution Assistant';
+			return 'SkillAura Student Assistant';
+		}
+
+		function getAssistantSubtitle(role) {
+			if (role === 'company') return 'Recruitment insights and candidate guidance';
+			if (role === 'institution') return 'Student performance and industry demand';
+			return 'Skills, opportunities, and career guidance';
+		}
+
+		function getRoleProfile(role) {
+			if (role === 'company') return currentCompanyAccount()?.profile || state.company || { name: 'Your Company', initials: 'TN' };
+			if (role === 'institution') return currentInstitutionAccount()?.profile || state.institution || { name: 'Your Institution', initials: 'AI' };
+			return currentStudentAccount()?.profile || state.student || { name: 'Rahul Kumar', initials: 'RK' };
+		}
+
+		function getPersonalizedGreeting() {
+			const role = currentRole();
+			const profile = getRoleProfile(role);
+			if (role === 'company') {
+				return `Welcome back, ${profile.name || 'Your company'} 👋\nI'm your SkillAura Recruiter Assistant. I can help analyze candidates, opportunities, and recruitment activity.`;
+			}
+			if (role === 'institution') {
+				return `Welcome to ${profile.name || 'your institution'} 👋\nI'm your SkillAura Institution Assistant. I can help analyze student skills, internships, placements, and industry demand.`;
+			}
+			return `Hi ${profile.name?.split(' ')[0] || 'there'} 👋\nI'm your SkillAura Student Assistant. I can help you understand your skills, find opportunities, and plan your career.`;
+		}
+
+		function extractSkillList(value) {
+			if (!value) return [];
+			if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+			return String(value).split(/[;,|\n]/).map((item) => item.trim()).filter(Boolean);
+		}
+
+		function buildStudentContext() {
+			const profile = currentStudentAccount()?.profile || state.student || {};
+			const assessments = state.assessments || [];
+			const applications = sharedEcosystem().applications.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
+			const interviews = sharedEcosystem().interviews.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
+			const offers = sharedEcosystem().offers.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
+			const skills = (state.skills || []).length ? state.skills : assessments.map((assessment) => ({ name: assessment.skill, score: assessment.score, status: assessment.rating }));
+			const gapList = (state.gaps || []).length ? state.gaps : skills.map((skill) => ({ name: skill.name, score: skill.score, target: 80 }));
+			const opportunities = state.opportunities.map((opportunity) => ({ ...opportunity, match: calculateCandidateMatch(opportunity, { ...profile, skills }) }));
 			return {
-				role: currentRole(),
-				currentPage: currentPage(),
-				student: data.student,
-				skills: data.skills,
-				skillGaps: data.gaps,
-				careers: data.careers,
-				opportunities: data.opportunities,
-				company: data.company,
-				candidates: data.candidates,
-				actions: [
-					'OPEN_DASHBOARD', 'OPEN_SKILLS', 'OPEN_OPPORTUNITIES', 'OPEN_APPLICATIONS',
-					'OPEN_CAREER', 'OPEN_COMPANY', 'OPEN_OPPORTUNITY', 'SHOW_SKILL_GAPS',
-					'START_ASSESSMENT', 'APPLY_TO_OPPORTUNITY'
-				]
+				role: 'student',
+				profile,
+				skills,
+				gaps: gapList,
+				applications,
+				interviews,
+				offers,
+				opportunities,
+				currentPage: currentPage()
 			};
+		}
+
+		function buildCompanyContext() {
+			const profile = currentCompanyAccount()?.profile || state.company || {};
+			const companyId = currentCompanyAccount()?.id || state.company?.id || currentStudentSession()?.companyId || null;
+			const opportunityList = (state.opportunities || []).filter((item) => item.companyId === companyId || item.company === profile.name);
+			const applications = (sharedEcosystem().applications || []).filter((item) => item.companyId === companyId || item.company === profile.name);
+			const candidates = loadStudentAccounts().map((account) => ({ ...account.profile, id: account.id, skills: account.workspace?.skills || state.skills || [] }));
+			return {
+				role: 'company',
+				profile,
+				opportunities: opportunityList,
+				applications,
+				candidates,
+				currentPage: currentPage()
+			};
+		}
+
+		function buildInstitutionContext() {
+			const profile = currentInstitutionAccount()?.profile || state.institution || {};
+			const students = institutionStudents();
+			const appList = institutionApplications();
+			const opportunities = (state.opportunities || []).filter((item) => item.status === 'Published' || item.companyId);
+			return {
+				role: 'institution',
+				profile,
+				students,
+				applications: appList,
+				opportunities,
+				currentPage: currentPage()
+			};
+		}
+
+		function chatbotContext() {
+			const role = currentRole();
+			if (role === 'company') return buildCompanyContext();
+			if (role === 'institution') return buildInstitutionContext();
+			return buildStudentContext();
 		}
 
 		async function askAI(message, context) {
-			if (!AI_API_ENDPOINT) return null;
+			if (!AI_API_ENDPOINT || window.location.protocol === 'file:') return null;
+			try {
+				const response = await fetch(AI_API_ENDPOINT, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						message,
+						context,
+						config: {
+							model: AI_CONFIG.model,
+							temperature: AI_CONFIG.temperature,
+							maxOutput: AI_CONFIG.maxOutput,
+							systemPrompt: AI_CONFIG.systemPrompts[context.role] || AI_CONFIG.systemPrompts.student
+						}
+					})
+				});
+				if (!response.ok) return null;
+				const payload = await response.json();
+				if (payload?.reply) return { text: payload.reply, cards: payload.cards || '', action: payload.action || null };
+				if (payload?.message) return { text: payload.message, cards: payload.cards || '', action: payload.action || null };
+				return null;
+			} catch (error) {
+				return null;
+			}
+		}
 
-			const response = await fetch(AI_API_ENDPOINT, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message, context })
+		function formatPercent(value) {
+			if (typeof value === 'number' && Number.isFinite(value)) return `${Math.round(value)}%`;
+			return 'N/A';
+		}
+
+		function findStudentSkillMap() {
+			const assessments = state.assessments || [];
+			const mapped = {};
+			(assessments || []).forEach((item) => {
+				mapped[String(item.skill).toLowerCase()] = Number(item.score) || 0;
 			});
-
-			if (!response.ok) throw new Error('AI service unavailable');
-			return response.json();
-		}
-
-		function findOpportunities(message) {
-			const query = message.toLowerCase();
-			const terms = ['python', 'javascript', 'react', 'git', 'sql', 'frontend', 'backend', 'software developer', 'data analyst'];
-			const matches = data.opportunities.filter((opportunity) => {
-				const searchable = opportunity.join(' ').toLowerCase();
-				return terms.some((term) => query.includes(term) && searchable.includes(term));
+			(state.skills || []).forEach((item) => {
+				if (!mapped[String(item.name).toLowerCase()]) mapped[String(item.name).toLowerCase()] = Number(item.score) || 0;
 			});
-			return matches.length ? matches : data.opportunities;
+			return mapped;
 		}
 
-		function findOpportunity(message) {
+		function studentStrongestSkill(skills) {
+			return [...(skills || [])].sort((a, b) => Number(b.score || 0) - Number(a.score || 0))[0];
+		}
+
+		function studentWeakestSkill(skills) {
+			return [...(skills || [])].sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
+		}
+
+		function roleAwareStudentResponse(message, context) {
 			const query = message.toLowerCase();
-			return data.opportunities.find((opportunity) => {
-				const searchable = opportunity.join(' ').toLowerCase();
-				return searchable.includes('technova') && query.includes('technova') ||
-					searchable.includes('software developer') && query.includes('software developer') ||
-					searchable.includes('frontend') && query.includes('frontend');
-			}) || chatbotState.lastOpportunity || data.opportunities[0];
-		}
+			const skills = context.skills || [];
+			const gaps = context.gaps || [];
+			const opportunities = context.opportunities || [];
+			const applications = context.applications || [];
+			const interviews = context.interviews || [];
+			const offers = context.offers || [];
+			const profile = context.profile || {};
+			const studentName = profile.name?.split(' ')[0] || 'there';
 
-		function chatbotResultCard(opportunity) {
-			const [name, company, location, skills, match] = opportunity;
-			return `<div class="ai-result-card">
-				<div class="ai-result-top"><span class="tag success">${match} match</span><span>${location}</span></div>
-				<strong>${name}</strong>
-				<span class="ai-result-company">${company}</span>
-				<span class="ai-result-skills">Required skills: ${skills}</span>
-				<div class="ai-result-actions">
-					<button type="button" data-chat-action="OPEN_OPPORTUNITY" data-opportunity="${name}">View Opportunity</button>
-					<button type="button" class="primary" data-chat-action="APPLY_TO_OPPORTUNITY" data-opportunity="${name}">Apply</button>
-				</div>
-			</div>`;
-		}
-
-		function chatbotSkillCards() {
-			return `<div class="ai-skill-list">${data.skills.map(([name, score, status]) =>
-				`<div class="ai-skill-row"><span>${name}</span><span><b>${score}%</b> <em class="${status === 'Verified' ? 'verified' : 'improve'}">${status}</em></span></div>`
-			).join('')}</div>`;
-		}
-
-		function chatbotResponse(message) {
-			const query = message.toLowerCase().trim();
-			const wantsApply = /\bapply|application\b/.test(query);
-			const wantsCompany = /company|technova|industry/.test(query);
-			const wantsSkills = /skills|skill gap|ready for/.test(query);
-			const wantsCareer = /career path|career guidance|career/.test(query);
-			const wantsApplications = /my applications|show applications|applications/.test(query);
-			const wantsAssessment = /assessment|assess my skills|take.*assessment/.test(query);
-			const wantsOpportunity = /internship|opportunit|job|developer|frontend|backend|python|sql|react/.test(query);
-
-			if (/^(yes|yeah|confirm|go ahead|apply now)$/.test(query) && chatbotState.pendingApplication) {
-				const opportunity = chatbotState.pendingApplication;
-				chatbotState.pendingApplication = null;
-				addApplication(opportunity[0]);
+			if (/(what should i learn|what should i improve|what skills am i weak in|weak in|skill gap|improve my)/.test(query)) {
+				const weakSkills = gaps.filter((item) => Number(item.score || 0) < 80).sort((a, b) => Number(a.score || 0) - Number(b.score || 0));
+				if (!weakSkills.length) return { text: `I do not see a major SkillAura skill gap in your current data. Your strongest skills look well aligned with your current profile.` };
+				const topGap = weakSkills[0];
+				const relevant = opportunities.filter((opportunity) => extractSkillList(opportunity.skills).some((skill) => skill.toLowerCase() === String(topGap.name).toLowerCase()));
 				return {
-					text: `Your application request for ${opportunity[0]} at ${opportunity[1]} is ready. I'll open your Applications workspace now.`,
-					action: { type: 'OPEN_APPLICATIONS' }
+					text: `${studentName}, your biggest gap is ${topGap.name}. Your current score is ${formatPercent(topGap.score)} and the target is ${formatPercent(topGap.target || 80)}. ${relevant.length ? `This skill appears in ${relevant[0].title || 'relevant opportunities'}, so improving it should help your match rate.` : 'Use your next assessment cycle to improve this skill and update your verified profile.'}`,
+					action: { type: 'OPEN_SKILLS' }
 				};
 			}
 
-			if (wantsApply) {
-				const opportunity = findOpportunity(message);
-				chatbotState.lastOpportunity = opportunity;
-				chatbotState.pendingApplication = opportunity;
-				return {
-					text: `I found ${opportunity[0]} at ${opportunity[1]}. Would you like to continue to the application workspace?`,
-					cards: chatbotResultCard(opportunity),
-					confirm: true
-				};
-			}
-
-			if (wantsCompany) {
-				const opportunity = findOpportunity(message);
-				chatbotState.lastOpportunity = opportunity;
-				return {
-					text: `${opportunity[1]} is connected to ${opportunity[0]}. I'll open the relevant industry opportunity page.`,
-					cards: chatbotResultCard(opportunity),
-					action: { type: 'OPEN_COMPANY', opportunity }
-				};
-			}
-
-			if (wantsApplications) {
-				return { text: 'Here is your Applications workspace.', action: { type: 'OPEN_APPLICATIONS' } };
-			}
-
-			if (wantsAssessment) {
-				return { text: 'I will open the skills workspace so you can begin your assessment.', action: { type: 'START_ASSESSMENT' } };
-			}
-
-			if (wantsCareer) {
-				return { text: 'Here is your personalized Career Path.', action: { type: 'OPEN_CAREER' } };
-			}
-
-			if (wantsSkills) {
-				if (chatbotState.lastOpportunity) {
-					const [name, company, location, skills, match] = chatbotState.lastOpportunity;
+			if (/(ready for frontend|am i ready|frontend development|am i ready for)/.test(query)) {
+				const frontendSkillScore = skills.filter((skill) => ['react', 'javascript', 'css', 'html', 'git'].includes(String(skill.name || '').toLowerCase())).reduce((total, skill) => total + Number(skill.score || 0), 0) / Math.max(1, skills.filter((skill) => ['react', 'javascript', 'css', 'html', 'git'].includes(String(skill.name || '').toLowerCase())).length);
+				const evidence = skills.find((skill) => String(skill.name || '').toLowerCase() === 'react');
+				if (Number.isFinite(frontendSkillScore) && frontendSkillScore < 70) {
 					return {
-						text: `${name} at ${company} requires ${skills}. Your current match is ${match}.`,
-						cards: chatbotResultCard(chatbotState.lastOpportunity)
+						text: `Based on your verified SkillAura data, your frontend readiness is around ${formatPercent(frontendSkillScore)}. The main gap is ${evidence ? evidence.name : 'frontend specific skills'} and Git/React are the most relevant improvements before a frontend application push.`,
+						action: { type: 'OPEN_SKILLS' }
 					};
 				}
-				return {
-					text: 'Your current skill profile shows the verified skills below. SQL is your clearest improvement area, along with the gaps shown on your skills page.',
-					cards: chatbotSkillCards(),
-					action: { type: 'SHOW_SKILL_GAPS' }
+				return { text: `Your current SkillAura signals suggest you are generally ready for frontend roles, but continue improving React and Git so you stay competitive for stronger opportunities.` };
+			}
+
+			if (/(jobs should i apply for|which jobs|match me|which opportunities|opportunities match my skills|what jobs)/.test(query)) {
+				const ranked = opportunities
+					.filter((opportunity) => Number(opportunity.match || 0) >= 55)
+					.sort((a, b) => Number(b.match || 0) - Number(a.match || 0));
+				if (!ranked.length) return { text: 'I do not see any current opportunities matching your verified profile strongly enough for a confident recommendation yet.' };
+				const top = ranked.slice(0, 3);
+				const cards = top.map((opportunity) => `<div class="ai-result-card"><div class="ai-result-top"><span class="tag success">${opportunity.match}% match</span><span>${opportunity.location}</span></div><strong>${opportunity.title}</strong><span class="ai-result-company">${opportunity.company}</span><span class="ai-result-skills">Required skills: ${opportunity.skills}</span></div>`).join('');
+				return { text: `I found ${ranked.length} opportunities that are relevant to your current skill profile. ${top.map((item) => `${item.title} (${item.match}%)`).join(', ')} are the strongest fits right now.`, cards, action: { type: 'OPEN_OPPORTUNITIES' } };
+			}
+
+			if (/(what is my current application status|what is my application status|application status|what are my applications|jobs have i applied for|applied for|do i have any interviews|which companies have shortlisted me|shortlisted me|interviews)/.test(query)) {
+				const total = applications.length;
+				const shortlisted = applications.filter((item) => /shortlisted|interview|selected|offer/i.test(item.status || item.stage || '')).length;
+				const underReview = applications.filter((item) => /under review|applied/i.test(item.status || item.stage || '')).length;
+				const interviewCount = interviews.length;
+				if (total === 0) return { text: `You currently do not have any SkillAura applications recorded. Explore opportunities to create your first application.` };
+				return { text: `You currently have ${total} application${total === 1 ? '' : 's'}. ${shortlisted} are shortlisted or beyond, ${underReview} are still pending, and you have ${interviewCount} upcoming interview${interviewCount === 1 ? '' : 's'}.`, action: { type: 'OPEN_APPLICATIONS' } };
+			}
+
+			if (/(which companies have shortlisted me|shortlisted me|who shortlisted)/.test(query)) {
+				const shortlisted = applications.filter((item) => /shortlisted|interview|selected|offer/i.test(item.status || item.stage || ''));
+				if (!shortlisted.length) return { text: 'No company currently shows your profile as shortlisted in the stored SkillAura data.' };
+				return { text: `Your active shortlists are from ${shortlisted.map((item) => item.company).join(', ')}. I can help you prepare the next steps for each opportunity if you want.`, action: { type: 'OPEN_APPLICATIONS' } };
+			}
+
+			if (/(what should i prepare|interview|placement readiness|improve my placement)/.test(query)) {
+				const topSkills = [...skills].sort((a, b) => Number(a.score || 0) - Number(b.score || 0)).slice(0, 3);
+				return { text: `Your biggest interview gaps are currently ${topSkills.map((skill) => `${skill.name} (${formatPercent(skill.score)})`).join(', ')}. Focus on communication, problem solving, and your weakest assessed technical area before the next interview cycle.`, action: { type: 'OPEN_CAREER' } };
+			}
+
+			if (/(what should i learn for a java developer role|what should i learn for a .*developer role|what should i learn for a .* role)/.test(query)) {
+				return { text: 'For a Java developer role, your next high-value priorities are Java fundamentals, Spring/REST APIs, SQL, and system design basics. Based on your verified SkillAura profile, Java and SQL are the clearest anchors to improve for that path.' };
+			}
+
+			if (/(how can i improve my python score|python score|improve my python)/.test(query)) {
+				const pythonSkill = skills.find((item) => String(item.name || '').toLowerCase() === 'python');
+				const score = pythonSkill ? Number(pythonSkill.score || 0) : 0;
+				return { text: `Your Python score is currently ${formatPercent(score)}. The best next steps are to practice control flow, data structures, file handling, and debugging patterns. These topics are especially important for backend and data roles.` };
+			}
+
+			if (/(why is my match score low|match score low)/.test(query)) {
+				const topGap = gaps.sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
+				return { text: `Your current match score is low because your verified profile is weaker in ${topGap ? topGap.name : 'the core skill areas'} required by the current opportunity set. Improve the missing skill areas and revisit the match after updating your assessment results.` };
+			}
+
+			if (/(what skills am i weak in|skills.*weak)/.test(query)) {
+				const weakSkills = gaps.filter((item) => Number(item.score || 0) < 80).map((item) => `${item.name} (${formatPercent(item.score)})`);
+				if (!weakSkills.length) return { text: 'Your active SkillAura profile appears strong; no major gaps are flagged right now.' };
+				return { text: `Your currently weakest skills are ${weakSkills.join(', ')}. Those are the best opportunities for improvement before your next application wave.`, action: { type: 'OPEN_SKILLS' } };
+			}
+
+			if (/(how does skillaura work|how do i take an assessment|how do i apply for an internship|how do i create an opportunity|how do i view my applications|where can i see my skill profile|how do i .*skill profile)/.test(query)) {
+				return { text: 'SkillAura works as a connected student-to-opportunity system: complete assessments to build a verified profile, compare your skill gaps, then explore relevant internships and jobs. To view your profile, open the Skills or Dashboard sections; to apply, open Opportunities and confirm the action before continuing.', action: { type: 'OPEN_DASHBOARD' } };
+			}
+
+			return { text: `I reviewed your actual SkillAura data for ${profile.name || 'your profile'}. Your strongest area is ${studentStrongestSkill(skills)?.name || 'your current assessment set'}, while your most relevant improvement area is ${studentWeakestSkill(gaps)?.name || 'your next target skill'}. Would you like to open the Skills dashboard or explore matching opportunities?`, action: { type: 'OPEN_SKILLS' } };
+		}
+
+		function roleAwareCompanyResponse(message, context) {
+			const query = message.toLowerCase();
+			const apps = context.applications || [];
+			const opportunities = context.opportunities || [];
+			const candidates = context.candidates || [];
+			const profile = context.profile || {};
+
+			if (/(show me the strongest candidates|strongest candidates|who are my strongest applicants|strongest applicant|who is strongest for this role)/.test(query)) {
+				const ranked = candidates
+					.map((candidate) => ({ ...candidate, match: candidate.skills && candidate.skills.length ? Math.round((candidate.skills.reduce((sum, skill) => sum + (Number(skill.score) || 0), 0) / candidate.skills.length)) : 0 }))
+					.sort((a, b) => Number(b.match || 0) - Number(a.match || 0));
+				if (!ranked.length) return { text: 'I do not have candidate data for this company workspace yet. Publish an opportunity first to start receiving applications.' };
+				const top = ranked.slice(0, 3);
+				return { text: `The strongest verified candidates in your active workspace are ${top.map((candidate) => `${candidate.name} (${candidate.match}%)`).join(', ')}. These candidates have the strongest aggregate skill alignment based on their current SkillAura records.`, action: { type: 'OPEN_CANDIDATES' } };
+			}
+
+			if (/(which applicants match this job best|which candidates should i shortlist|candidate.*shortlist|best match)/.test(query)) {
+				const target = opportunities[0];
+				if (!target) return { text: 'I do not see any active opportunities for this company workspace yet.' };
+				const requiredSkills = extractSkillList(target.requirements?.required || target.skills);
+				const ranked = candidates
+					.map((candidate) => {
+						const candidateSkills = (candidate.skills || []).map((skill) => String(skill.name || '').toLowerCase());
+						const matched = requiredSkills.filter((skill) => candidateSkills.includes(String(skill).toLowerCase()));
+						return { ...candidate, match: Math.round((matched.length / Math.max(1, requiredSkills.length)) * 100), matched };
+					})
+					.sort((a, b) => Number(b.match || 0) - Number(a.match || 0));
+				if (!ranked.length) return { text: 'I do not have enough candidate data to rank applicants for this opportunity yet.' };
+				const best = ranked[0];
+				return { text: `For ${target.title}, ${best.name} is the best current match at ${best.match}% because they match ${best.matched.join(', ') || 'the core skills'} from the opportunity requirements. Recommended for review rather than automatic selection.`, action: { type: 'OPEN_CANDIDATES' } };
+			}
+
+			if (/(what skills are most common among applicants|skills are missing among applicants|what skills are missing|missing among applicants|most common among applicants)/.test(query)) {
+				if (!apps.length) return { text: 'No applications are available in this workspace yet, so there is no applicant skill pattern to analyze.' };
+				const skillFrequency = {};
+				apps.forEach((item) => {
+					const required = extractSkillList(item.requirements?.required || item.skills || '');
+					required.forEach((skill) => {
+						skillFrequency[skill] = (skillFrequency[skill] || 0) + 1;
+					});
+				});
+				const mostCommon = Object.entries(skillFrequency).sort((a, b) => b[1] - a[1]).slice(0, 3);
+				return { text: `The most frequent skills across your current applicant pool are ${mostCommon.map(([skill, count]) => `${skill} (${count})`).join(', ')}. That suggests the strongest demand concentration is in these areas.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(how many applications do i have|how many candidates have been selected|which interviews are scheduled|show hiring statistics|how many candidates have been selected|how many applications)/.test(query)) {
+				const selected = apps.filter((item) => /selected|offer/i.test(item.status || item.stage || '')).length;
+				const shortlisted = apps.filter((item) => /shortlisted/i.test(item.status || item.stage || '')).length;
+				const interviews = sharedEcosystem().interviews.filter((item) => item.companyId === (currentCompanyAccount()?.id || ''));
+				return { text: `Your current workspace shows ${apps.length} application${apps.length === 1 ? '' : 's'}, ${shortlisted} shortlisted candidate${shortlisted === 1 ? '' : 's'}, ${interviews.length} scheduled interview${interviews.length === 1 ? '' : 's'}, and ${selected} selected candidate${selected === 1 ? '' : 's'}.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(help me create a frontend internship|create a job draft|create a .* internship|job draft)/.test(query)) {
+				const draft = {
+					title: 'Frontend Developer Intern',
+					description: 'Build user-facing interfaces, collaborate with the design and engineering teams, and contribute to a production-ready web application.',
+					responsibilities: ['Build responsive interfaces', 'Work with JavaScript and React', 'Collaborate with product and design teams'],
+					eligibility: 'Students in 2nd to 4th year of a relevant degree program',
+					requiredSkills: ['HTML', 'CSS', 'JavaScript', 'React', 'Git'],
+					preferredSkills: ['TypeScript', 'UI/UX awareness'],
+					interviewTopics: ['Frontend JavaScript', 'React components', 'Git workflow']
 				};
+				return { text: `Here is a draft opportunity. Review it before publishing: ${draft.title}. Required skills: ${draft.requiredSkills.join(', ')}. I have not published it automatically, and you can edit or confirm this draft before posting.`, action: { type: 'OPEN_OPPORTUNITIES' } };
 			}
 
-			if (wantsOpportunity) {
-				const opportunities = findOpportunities(message);
-				chatbotState.lastOpportunity = opportunities[0];
-				const opportunityLabel = opportunities.length === 1 ? 'opportunity' : 'opportunities';
-				return {
-					text: `I found ${opportunities.length} matching ${opportunityLabel} for you.`,
-					cards: opportunities.map(chatbotResultCard).join('')
-				};
+			if (/(how does skillaura work|how do i create an opportunity|where can i see my skill profile|how do i view my applications)/.test(query)) {
+				return { text: 'SkillAura lets recruiters publish opportunities, review application data, and compare candidates using verified skill signals. Use the Opportunities page to draft a role, review applicants in Applications, and open Analytics to compare match quality and hiring activity.', action: { type: 'OPEN_OPPORTUNITIES' } };
 			}
 
-			if (/dashboard|home|workspace/.test(query)) {
-				return { text: 'Opening your dashboard.', action: { type: 'OPEN_DASHBOARD' } };
+			return { text: `${profile.name || 'Your company'} currently has ${opportunities.length} active opportunity${opportunities.length === 1 ? '' : 'ies'} and ${apps.length} application${apps.length === 1 ? '' : 's'} in the current workspace. The strongest candidates are those with the highest verified match against your live requirements.`, action: { type: 'OPEN_CANDIDATES' } };
+		}
+
+		function roleAwareInstitutionResponse(message, context) {
+			const query = message.toLowerCase();
+			const students = context.students || [];
+			const applications = context.applications || [];
+			const opportunities = context.opportunities || [];
+			const assessed = students.filter((student) => (student.workspace?.assessments || student.assessments || []).length > 0).length;
+			const verified = students.filter((student) => (student.workspace?.skills || student.skills || []).length > 0).length;
+			const shortlisted = applications.filter((item) => /shortlisted|interview|selected|offer/i.test(item.status || item.stage || '')).length;
+			const placed = applications.filter((item) => /selected|offer|accepted/i.test(item.status || item.stage || '')).length;
+			const profile = context.profile || {};
+
+			if (/(how many students have completed assessments|completed assessments|assessed)/.test(query)) {
+				return { text: `${assessed} of ${students.length} students in your SkillAura institution record have completed at least one assessment.`, action: { type: 'OPEN_ANALYTICS' } };
 			}
 
-			return {
-				text: 'I can help you find opportunities, review your skills and gaps, open your career path, view applications, or start an assessment. Try “Find Python internships”.'
-			};
+			if (/(which skills are weakest among our students|what are our biggest skill gaps|biggest skill gap|skill gaps)/.test(query)) {
+				const grouped = {};
+				students.forEach((student) => {
+					(student.workspace?.skills || student.skills || []).forEach((skill) => {
+						const name = skill.name || 'Unknown';
+						if (!grouped[name]) grouped[name] = [];
+						grouped[name].push(Number(skill.score || 0));
+					});
+				});
+				const weak = Object.entries(grouped).map(([name, scores]) => ({ name, avg: scores.reduce((sum, value) => sum + value, 0) / scores.length })).sort((a, b) => a.avg - b.avg).slice(0, 3);
+				if (!weak.length) return { text: 'There is not enough student skill data yet to identify institutional gaps.' };
+				return { text: `The weakest measured skills across your current student pool are ${weak.map((item) => `${item.name} (${Math.round(item.avg)}%)`).join(', ')}. These are the most promising focus areas for campus training or workshops.`, action: { type: 'OPEN_SKILLS' } };
+			}
+
+			if (/(which students are placement ready|placement ready|students need skill development|need skill development)/.test(query)) {
+				const ready = students.filter((student) => (student.workspace?.skills || student.skills || []).some((skill) => Number(skill.score || 0) >= 75)).length;
+				const notReady = Math.max(0, students.length - ready);
+				return { text: `${ready} of ${students.length} students in your current institution record are above the placement-readiness threshold. ${notReady} still need additional skill development support.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(how many students applied for internships|how many students were shortlisted|how many students were placed|applied for internships|shortlisted|placed)/.test(query)) {
+				return { text: `Across your institution records, ${applications.length} student applications are visible, ${shortlisted} students are shortlisted or beyond, and ${placed} students are currently recorded as placed or selected.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(which companies recruited our students|companies recruited|which companies)/.test(query)) {
+				const companies = [...new Set(applications.map((item) => item.company).filter(Boolean))];
+				if (!companies.length) return { text: 'No company activity is linked to your institution yet.' };
+				return { text: `Current company activity linked to your students includes: ${companies.join(', ')}.`, action: { type: 'OPEN_INDUSTRY' } };
+			}
+
+			if (/(what skills are companies demanding|industry demand|demanding skills|most demanded skills)/.test(query)) {
+				const demand = {};
+				opportunities.forEach((item) => {
+					extractSkillList(item.requirements?.required || item.skills).forEach((skill) => {
+						demand[skill] = (demand[skill] || 0) + 1;
+					});
+				});
+				const top = Object.entries(demand).sort((a, b) => b[1] - a[1]).slice(0, 5);
+				if (!top.length) return { text: 'There are no current opportunity skill requirements available to analyze.' };
+				return { text: `The most demanded skills among current opportunities are ${top.map(([skill, count]) => `${skill} (${count})`).join(', ')}. React, SQL, and Git are frequently appearing in active roles.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(which department has the largest skill gap|largest skill gap|department)/.test(query)) {
+				return { text: 'The current SkillAura data does not yet segment student performance by department in a way that supports a department-level gap comparison. I would need department tags added to the student records for a precise answer.' };
+			}
+
+			if (/(students have upcoming interviews|upcoming interviews|which students have upcoming interviews)/.test(query)) {
+				const interviews = sharedEcosystem().interviews.filter((item) => item.institutionId === (currentInstitutionAccount()?.id || ''));
+				if (!interviews.length) return { text: 'There are no recorded student interviews linked to your institution yet.' };
+				return { text: `There are ${interviews.length} recorded student interview${interviews.length === 1 ? '' : 's'} in your institution workspace.`, action: { type: 'OPEN_ANALYTICS' } };
+			}
+
+			if (/(how does skillaura work|how do i take an assessment|how do i apply for an internship|how do i create an opportunity|how do i view my applications|where can i see my skill profile)/.test(query)) {
+				return { text: 'SkillAura connects the institution to student assessment outcomes, internship opportunities, and placement results. Use the Students section to review student records, the Skills section to inspect gaps, and Opportunities to align campus readiness with live industry demand.', action: { type: 'OPEN_DASHBOARD' } };
+			}
+
+			return { text: `Institution overview: ${students.length} students are in your SkillAura records, ${assessed} have completed assessments, ${verified} have verified skills, and ${applications.length} applications are currently tracked. The fastest path to improvement is to focus on the weakest skills mentioned in active opportunity demand.`, action: { type: 'OPEN_ANALYTICS' } };
+		}
+
+		function roleAwareFallbackResponse(message, context) {
+			const role = context.role || currentRole();
+			if (role === 'company') return roleAwareCompanyResponse(message, context);
+			if (role === 'institution') return roleAwareInstitutionResponse(message, context);
+			return roleAwareStudentResponse(message, context);
+		}
+
+		function generateRoleAwareResponse(message) {
+			const role = currentRole();
+			const context = chatbotContext();
+			if (role === 'company' && !context.applications.length && !context.opportunities.length) {
+				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Add an opportunity or invite candidate activity before I can rank applicants or summarize hiring metrics.' };
+			}
+			if (role === 'institution' && !context.students.length) {
+				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Add student records or complete assessments before I can analyze institutional readiness.' };
+			}
+			if (role === 'student' && (!context.skills || !context.skills.length) && (!state.assessments || !state.assessments.length)) {
+				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Please complete at least one assessment first so I can analyze your skills and recommendations.' };
+			}
+			return roleAwareFallbackResponse(message, context);
 		}
 
 		function chatbotNavigate(type, opportunity) {
@@ -435,10 +777,13 @@
 				OPEN_OPPORTUNITIES: `/${role}/opportunities`,
 				OPEN_APPLICATIONS: `/${role}/applications`,
 				OPEN_CAREER: `/${role}/career-path`,
+				OPEN_ANALYTICS: `/${role}/analytics`,
 				OPEN_COMPANY: `/${role}/opportunities`,
 				OPEN_OPPORTUNITY: `/${role}/opportunities`,
 				SHOW_SKILL_GAPS: `/${role}/skills`,
-				START_ASSESSMENT: `/${role}/skills`
+				START_ASSESSMENT: `/${role}/skills`,
+				OPEN_CANDIDATES: `/${role}/candidates`,
+				OPEN_INDUSTRY: `/${role}/industry`
 			};
 
 			if (type === 'APPLY_TO_OPPORTUNITY') {
@@ -457,9 +802,11 @@
 			const launcher = assistant.querySelector('.ai-launcher');
 			const panel = assistant.querySelector('.ai-panel');
 			const close = assistant.querySelector('.ai-close');
+			const clearButton = assistant.querySelector('.ai-clear');
 			const messages = assistant.querySelector('.ai-messages');
 			const form = assistant.querySelector('.ai-form');
 			const input = assistant.querySelector('.ai-input');
+			const stopButton = assistant.querySelector('.ai-stop');
 
 			const addMessage = (content, sender = 'assistant', cards = '') => {
 				const message = document.createElement('div');
@@ -474,14 +821,14 @@
 
 			const showWelcome = () => {
 				if (!messages.children.length) {
-					addMessage('Hi! I am your SkillAura AI Assistant. I can help you explore opportunities, understand your skills, and navigate your workspace.');
+					addMessage(getPersonalizedGreeting().replace(/\n/g, ' '));
 				}
 			};
 
 			const handleMessage = async (message) => {
 				const cleanMessage = message.trim();
 				if (!cleanMessage) return;
-
+				const role = currentRole();
 				addMessage(cleanMessage, 'user');
 				input.value = '';
 				const typing = document.createElement('div');
@@ -490,15 +837,21 @@
 				messages.append(typing);
 				messages.scrollTop = messages.scrollHeight;
 
-				let response;
+				let response = null;
 				try {
-					response = await askAI(cleanMessage, chatbotContext()) || chatbotResponse(cleanMessage);
+					const externalResponse = await askAI(cleanMessage, chatbotContext());
+					response = externalResponse || generateRoleAwareResponse(cleanMessage);
 				} catch (error) {
-					response = chatbotResponse(cleanMessage);
+					response = generateRoleAwareResponse(cleanMessage);
 				}
-				typing.remove();
-				addMessage(response.text, 'assistant', response.cards || '');
 
+				typing.remove();
+				if (!response || !response.text) {
+					response = {
+						text: 'Sorry, I\'m having trouble connecting right now. Please try again.'
+					};
+				}
+				addMessage(response.text, 'assistant', response.cards || '');
 				if (response.action) chatbotNavigate(response.action.type, response.action.opportunity);
 			};
 
@@ -515,6 +868,15 @@
 				assistant.classList.remove('open');
 				launcher.setAttribute('aria-expanded', 'false');
 				panel.setAttribute('aria-hidden', 'true');
+			};
+			clearButton.onclick = () => {
+				messages.innerHTML = '';
+				showWelcome();
+			};
+			stopButton.onclick = () => {
+				const typing = messages.querySelector('.ai-typing');
+				if (typing) typing.textContent = 'Stopped generating.';
+				setTimeout(() => typing?.remove(), 700);
 			};
 			form.onsubmit = (event) => {
 				event.preventDefault();
@@ -678,10 +1040,10 @@
 			initChatbot();
 		}
 		window.addEventListener('hashchange', render);
-		render();
 
 		/* Functional prototype layer: keeps the original visual shell and hash routes. */
 		const STATE_KEY = 'skillaura-prototype-state';
+		var state;
 		const defaultState = {
 			student: { ...data.student, email: 'rahul@example.com', college: 'ABC Institute of Technology', degree: 'B.Tech', branch: 'Computer Science', year: '3rd Year' },
 			company: { ...data.company, email: 'talent@technova.example', industryType: 'Software & Technology' },
@@ -703,7 +1065,12 @@
 			institutionWorkspaces: {},
 			ecosystem: { opportunities: [], applications: [], interviews: [], offers: [], internships: [], placements: [], notifications: [] }
 		};
-		let state = loadState();
+		state = loadState();
+		const restoredSession = currentAuthSession();
+		if (restoredSession && restoredSession.loggedIn) {
+			state.activeRole = normalizeRole(restoredSession.role || 'student');
+		}
+
 		const STUDENT_ACCOUNTS_KEY = 'skillaura_students';
 		const LEGACY_STUDENT_ACCOUNTS_KEY = 'skillaura_student_accounts';
 		const COMPANY_ACCOUNTS_KEY = 'skillaura_companies';
@@ -919,8 +1286,8 @@
 		function blankInstitutionWorkspace(account) { return { institutionId: account.id, students: [], programs: [], internships: [], collaborations: [], notifications: [], reports: [], admins: [{ name: account.profile.contactPerson, email: account.email, role: 'Owner', permissions: 'All', status: 'Active' }], settings: { academicYear: '', departments: '', courses: '' }, onboarding: { status: 'Pending', completed: false } }; }
 		function getInstitutionWorkspace(institutionId) { const workspaces = loadInstitutionWorkspaces(); return workspaces[institutionId] || blankInstitutionWorkspace({ id: institutionId, email: '', profile: { contactPerson: 'Administrator' } }); }
 		function saveInstitutionWorkspace(workspace) { const workspaces = loadInstitutionWorkspaces(); workspaces[workspace.institutionId] = workspace; try { localStorage.setItem(INSTITUTION_WORKSPACES_KEY, JSON.stringify(workspaces)); } catch (error) { showToast('Institution workspace changes could not be saved.'); } }
-		function currentStudentSession() { try { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); } catch (error) { return null; } }
-		function currentStudentAccount() { const session = currentStudentSession(); return session ? loadStudentAccounts().find((account) => account.id === session.id) : null; }
+		function currentStudentSession() { return currentAuthSession(); }
+		function currentStudentAccount() { const session = currentStudentSession(); return session ? loadStudentAccounts().find((account) => account.id === session.userId || account.id === session.id) : null; }
 		function currentCompanyAccount() { const session = currentStudentSession(); return session && normalizeRole(session.role) === 'company' ? loadCompanyAccounts().find((account) => account.id === session.companyId || account.id === session.id) : null; }
 		function currentCompanyWorkspace() { const account = currentCompanyAccount(); return account ? getCompanyWorkspace(account.id) : null; }
 		function currentInstitutionAccount() { const session = currentStudentSession(); return session && session.role === 'institution' ? loadInstitutionAccounts().find((account) => account.id === session.institutionId || account.id === session.id) : null; }
@@ -928,7 +1295,10 @@
 		function normalizeRole(role) { return role === 'industry' ? 'company' : role; }
 		function resolveAccountRole(account) { return normalizeRole((account && account.role) || (currentStudentSession() && currentStudentSession().role) || 'student'); }
 		function dashboardRouteForRole(role) { const normalized = normalizeRole(role); return normalized === 'company' ? '/company/dashboard' : normalized === 'institution' ? '/institution/dashboard' : '/student/dashboard'; }
-		function clearStudentSession() { try { localStorage.removeItem(CURRENT_USER_KEY); } catch (error) { } state.activeRole = null; }
+		function clearStudentSession() {
+			try { localStorage.removeItem(CURRENT_USER_KEY); } catch (error) { }
+			if (state) state.activeRole = null;
+		}
 		function studentWorkspace() { return { skills: clone(state.skills), gaps: clone(state.gaps), applications: clone(state.applications), assessments: clone(state.assessments || []), preferences: {} }; }
 		function newStudentWorkspace() { return { skills: [], gaps: [], applications: [], assessments: [], preferences: {} }; }
 		function hydrateStudentAccount(account) {
@@ -963,7 +1333,7 @@
 			if (!account) return;
 			const normalizedRole = normalizeRole(role);
 			account.role = normalizedRole;
-			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: account.id, email: account.email, role: normalizedRole })); } catch (error) { }
+			persistAuthSession({ id: account.id, userId: account.id, email: account.email, role: normalizedRole, name: account.profile?.name || account.fullName || account.name || 'Student' });
 			const accounts = loadStudentAccounts();
 			const index = accounts.findIndex((item) => item.id === account.id);
 			if (index >= 0) { accounts[index].role = normalizedRole; saveStudentAccounts(accounts); }
@@ -975,7 +1345,7 @@
 		function startCompanySession(account) {
 			if (!account) return;
 			account.role = 'company';
-			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: account.id, companyId: account.id, email: account.email, role: 'company' })); } catch (error) { }
+			persistAuthSession({ id: account.id, userId: account.id, companyId: account.id, email: account.email, role: 'company', name: account.profile?.name || account.name || 'Company' });
 			state.activeRole = 'company';
 			state.company = { ...state.company, ...account.profile, email: account.email };
 			saveCompanyAccounts(loadCompanyAccounts().map((item) => item.id === account.id ? account : item));
@@ -984,7 +1354,7 @@
 		function startInstitutionSession(account) {
 			if (!account) return;
 			account.role = 'institution';
-			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: account.id, institutionId: account.id, email: account.email, role: 'institution' })); } catch (error) { }
+			persistAuthSession({ id: account.id, userId: account.id, institutionId: account.id, email: account.email, role: 'institution', name: account.profile?.name || account.name || 'Institution' });
 			state.activeRole = 'institution';
 			state.institution = { ...state.institution, ...account.profile, email: account.email };
 			saveInstitutionAccounts(loadInstitutionAccounts().map((item) => item.id === account.id ? account : item));
@@ -1524,7 +1894,7 @@
 				const darkness = normalized * normalized * (3 - 2 * normalized);
 				const themeProgress = selectedTheme === 'dark' ? 1 - darkness : darkness;
 				const calculatedBackgroundColor = mixColor('#ffffff', '#000000', themeProgress);
-				const currentBackgroundColor = window.__skillBridgeBackgroundOverride || calculatedBackgroundColor;
+				const currentBackgroundColor = window.__skillAuraBackgroundOverride || calculatedBackgroundColor;
 				background.style.backgroundColor = currentBackgroundColor;
 			root.style.setProperty('--scroll-ink', mixColor('#17333a', '#ffffff', themeProgress));
 			root.style.setProperty('--scroll-muted', mixColor('#668087', '#b7c4c5', themeProgress));
@@ -1558,14 +1928,14 @@
 				});
 		}
 		function teardownLandingExperience() {
-			if (window.__skillBridgeScrollFrame) cancelAnimationFrame(window.__skillBridgeScrollFrame);
-			window.__skillBridgeScrollFrame = null;
-			if (window.__skillBridgeScrollHandler) window.removeEventListener('scroll', window.__skillBridgeScrollHandler);
-			if (window.__skillBridgeResizeHandler) window.removeEventListener('resize', window.__skillBridgeResizeHandler);
-			if (window.__skillBridgeRevealObserver) window.__skillBridgeRevealObserver.disconnect();
-			delete window.__skillBridgeScrollHandler;
-			delete window.__skillBridgeResizeHandler;
-			delete window.__skillBridgeBackgroundOverride;
+			if (window.__skillAuraScrollFrame) cancelAnimationFrame(window.__skillAuraScrollFrame);
+			window.__skillAuraScrollFrame = null;
+			if (window.__skillAuraScrollHandler) window.removeEventListener('scroll', window.__skillAuraScrollHandler);
+			if (window.__skillAuraResizeHandler) window.removeEventListener('resize', window.__skillAuraResizeHandler);
+			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
+			delete window.__skillAuraScrollHandler;
+			delete window.__skillAuraResizeHandler;
+			delete window.__skillAuraBackgroundOverride;
 			document.body.classList.remove('home-page');
 			document.body.classList.remove('motion-page');
 			['--scroll-ink', '--scroll-muted', '--scroll-line', '--scroll-surface', '--scroll-soft', '--scroll-header']
@@ -1685,22 +2055,22 @@
 			}
 			document.body.classList.add('home-page');
 			enhanceHomePage(landingRoot);
-			window.__skillBridgeScrollFrame = null;
-			window.__skillBridgeScrollHandler = () => {
-					if (window.__skillBridgeScrollFrame) return;
-					window.__skillBridgeScrollFrame = requestAnimationFrame(() => {
-						window.__skillBridgeScrollFrame = null;
+			window.__skillAuraScrollFrame = null;
+			window.__skillAuraScrollHandler = () => {
+					if (window.__skillAuraScrollFrame) return;
+					window.__skillAuraScrollFrame = requestAnimationFrame(() => {
+						window.__skillAuraScrollFrame = null;
 						updateGlobalBackground();
 					});
 				};
-			window.__skillBridgeResizeHandler = updateGlobalBackground;
-			window.addEventListener('scroll', window.__skillBridgeScrollHandler, { passive: true });
-			window.addEventListener('resize', window.__skillBridgeResizeHandler, { passive: true });
+			window.__skillAuraResizeHandler = updateGlobalBackground;
+			window.addEventListener('scroll', window.__skillAuraScrollHandler, { passive: true });
+			window.addEventListener('resize', window.__skillAuraResizeHandler, { passive: true });
 			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 			const revealTargets = landingRoot.querySelectorAll('.hero > *, .section-heading, .section > .container > .grid-3 > *, .solution > *, .steps > *, .feature-grid > *, .cta .container, footer .footer-grid, .home-stats, .home-skill-layout, .home-opportunity-grid, .home-ecosystem-grid, .home-final-cta .container');
 			revealTargets.forEach((element) => element.classList.add('reveal'));
-			if (window.__skillBridgeRevealObserver) window.__skillBridgeRevealObserver.disconnect();
-			window.__skillBridgeRevealObserver = new IntersectionObserver((entries, observer) => {
+			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
+			window.__skillAuraRevealObserver = new IntersectionObserver((entries, observer) => {
 				entries.forEach((entry) => {
 					if (entry.isIntersecting) {
 						entry.target.classList.add('is-visible');
@@ -1708,7 +2078,7 @@
 					}
 				});
 			}, { threshold: .12, rootMargin: '0px 0px -8% 0px' });
-			revealTargets.forEach((element) => window.__skillBridgeRevealObserver.observe(element));
+			revealTargets.forEach((element) => window.__skillAuraRevealObserver.observe(element));
 			if (reducedMotion) revealTargets.forEach((element) => element.classList.add('is-visible'));
 
 			requestAnimationFrame(updateGlobalBackground);
@@ -1724,14 +2094,14 @@
 				targets.forEach((element) => element.classList.add('is-visible'));
 				return;
 			}
-			window.__skillBridgeRevealObserver = new IntersectionObserver((entries, observer) => {
+			window.__skillAuraRevealObserver = new IntersectionObserver((entries, observer) => {
 				entries.forEach((entry) => {
 					if (!entry.isIntersecting) return;
 					entry.target.classList.add('is-visible');
 					observer.unobserve(entry.target);
 				});
 			}, { threshold: .08, rootMargin: '0px 0px -6% 0px' });
-			targets.forEach((element) => window.__skillBridgeRevealObserver.observe(element));
+			targets.forEach((element) => window.__skillAuraRevealObserver.observe(element));
 		}
 		function bindThemeToggle() {
 			const toggleHost = document.querySelector('.auth-aside, .role-top');
