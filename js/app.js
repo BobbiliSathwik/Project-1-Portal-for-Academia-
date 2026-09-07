@@ -77,6 +77,23 @@
 			}
 		};
 		const THEME_KEY = 'skillaura-theme';
+		const LEGACY_USER_KEYS = ['skillaura-current-user', 'skillaura_current_user'];
+		function readStoredSession() {
+			for (const key of LEGACY_USER_KEYS) {
+				try {
+					const value = localStorage.getItem(key);
+					if (!value) continue;
+					const parsed = JSON.parse(value);
+					if (parsed && typeof parsed === 'object') return parsed;
+				} catch (error) {}
+			}
+			return null;
+		}
+		function writeStoredSession(session) {
+			for (const key of LEGACY_USER_KEYS) {
+				try { localStorage.setItem(key, JSON.stringify(session)); } catch (error) {}
+			}
+		}
 		let selectedTheme = loadThemePreference();
 		document.documentElement.dataset.theme = selectedTheme;
 		let chatbotState = {
@@ -119,7 +136,7 @@
 
 		function currentAuthSession() {
 			try {
-				const session = JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
+				const session = readStoredSession();
 				if (!session || typeof session !== 'object') return null;
 				if (session.loggedIn === false && !session.role && !session.userId && !session.id) return null;
 				const normalized = {
@@ -150,7 +167,7 @@
 				institutionId: session.institutionId || null,
 				loggedIn: true
 			};
-			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(payload)); } catch (error) {}
+			writeStoredSession(payload);
 		}
 
 		function currentUserDashboardRoute() {
@@ -192,7 +209,7 @@
 
 		function auth(type) {
 			let register = type === 'register';
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:var(--cyan)">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillAura workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='#/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='#/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='#/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:var(--cyan)">Connecting Skills, Academia &amp; Industry</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create a role-based workspace designed for the journey from learning to impact.' : 'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register ? 'Create your account' : 'Welcome back'}</h2><p>${register ? 'Set up your SkillAura workspace in a few seconds.' : 'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register ? `<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Create Account</button>` : `<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='#/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='#/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='#/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register ? 'Already have an account?' : 'Don\'t have an account?'} <a href="#/${register ? 'login' : 'register'}">${register ? 'Login' : 'Create one'}</a></div></div></main></div>`
 		}
 
 		function portalLoginRoute(role) { const normalizedRole = normalizeRole(role); return normalizedRole === 'company' ? '/company/login' : normalizedRole === 'institution' ? '/institution/login' : '/login'; }
@@ -295,22 +312,35 @@
 			const role = currentRole();
 			const prompts = {
 				student: [
-					'Analyze my skills',
-					'Find opportunities for me',
-					'What should I learn?',
-					'Show my applications'
+					'Analyze My Skills',
+					'Find My Skill Gaps',
+					'Recommend Internships',
+					'Recommend Jobs',
+					'Create My Career Roadmap',
+					'Prepare Me for an Interview',
+					'Improve My Resume',
+					'Give Me Practice Questions',
+					'What Should I Learn Next?',
+					'Improve My Weak Skills'
 				],
 				company: [
-					'Find top candidates',
-					'Analyze my applicants',
-					'Create a job draft',
-					'Show hiring statistics'
+					'Find Matching Candidates',
+					'Create Job Description',
+					'Create Internship',
+					'Generate Interview Questions',
+					'Generate Technical Assessment',
+					'Analyze Candidate Pool',
+					'Identify In-Demand Skills'
 				],
 				institution: [
-					'Analyze student skills',
-					'Show placement readiness',
-					'Find major skill gaps',
-					'Show industry demand'
+					'Analyze Student Skills',
+					'Find Common Skill Gaps',
+					'Check Placement Readiness',
+					'Recommend Training Programs',
+					'Suggest Industry Collaborations',
+					'Analyze Internship Participation',
+					'Suggest Workshops',
+					'Generate Placement Report'
 				]
 			};
 			const icon = role === 'company' ? '▤' : role === 'institution' ? '⌂' : '♙';
@@ -399,13 +429,18 @@
 
 		function buildStudentContext() {
 			const profile = currentStudentAccount()?.profile || state.student || {};
+			const studentId = currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id;
+			const ecosystem = sharedEcosystem();
 			const assessments = state.assessments || [];
-			const applications = sharedEcosystem().applications.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
-			const interviews = sharedEcosystem().interviews.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
-			const offers = sharedEcosystem().offers.filter((item) => item.studentId === (currentStudentAccount()?.id || currentStudentSession()?.id || state.student?.id));
+			const applications = ecosystem.applications.filter((item) => item.studentId === studentId);
+			const interviews = ecosystem.interviews.filter((item) => item.studentId === studentId);
+			const offers = ecosystem.offers.filter((item) => item.studentId === studentId);
+			const internships = ecosystem.internships.filter((item) => item.studentId === studentId);
+			const placements = ecosystem.placements.filter((item) => item.studentId === studentId);
+			const notifications = currentEcosystemNotifications();
 			const skills = (state.skills || []).length ? state.skills : assessments.map((assessment) => ({ name: assessment.skill, score: assessment.score, status: assessment.rating }));
 			const gapList = (state.gaps || []).length ? state.gaps : skills.map((skill) => ({ name: skill.name, score: skill.score, target: 80 }));
-			const opportunities = state.opportunities.map((opportunity) => ({ ...opportunity, match: calculateCandidateMatch(opportunity, { ...profile, skills }) }));
+			const opportunities = ecosystem.opportunities.filter((opportunity) => opportunity.status !== 'Draft').map((opportunity) => ({ ...opportunity, match: calculateCandidateMatch(opportunity, { ...profile, skills }) }));
 			return {
 				role: 'student',
 				profile,
@@ -414,6 +449,11 @@
 				applications,
 				interviews,
 				offers,
+				internships,
+				placements,
+				notifications,
+				assessments,
+				careers: state.careers || [],
 				opportunities,
 				currentPage: currentPage()
 			};
@@ -457,7 +497,7 @@
 			return buildStudentContext();
 		}
 
-		async function askAI(message, context) {
+		async function askAI(message, context, history = [], signal) {
 			if (!AI_API_ENDPOINT || window.location.protocol === 'file:') return null;
 			try {
 				const response = await fetch(AI_API_ENDPOINT, {
@@ -466,13 +506,15 @@
 					body: JSON.stringify({
 						message,
 						context,
+						conversation: history.slice(-8),
 						config: {
 							model: AI_CONFIG.model,
 							temperature: AI_CONFIG.temperature,
 							maxOutput: AI_CONFIG.maxOutput,
 							systemPrompt: AI_CONFIG.systemPrompts[context.role] || AI_CONFIG.systemPrompts.student
 						}
-					})
+					}),
+					signal
 				});
 				if (!response.ok) return null;
 				const payload = await response.json();
@@ -747,24 +789,245 @@
 			return { text: `Institution overview: ${students.length} students are in your SkillAura records, ${assessed} have completed assessments, ${verified} have verified skills, and ${applications.length} applications are currently tracked. The fastest path to improvement is to focus on the weakest skills mentioned in active opportunity demand.`, action: { type: 'OPEN_ANALYTICS' } };
 		}
 
+		const CAREER_ROADMAPS = {
+			frontend: { label: 'Frontend Developer', skills: ['HTML and CSS', 'JavaScript', 'DOM, events, and asynchronous APIs', 'React', 'Git and GitHub', 'Testing and accessibility'], projects: ['Responsive portfolio', 'API-powered dashboard', 'Accessible React application'] },
+			backend: { label: 'Backend Developer', skills: ['Programming fundamentals', 'HTTP, REST, and APIs', 'Python or Node.js', 'SQL and data modeling', 'Authentication and security', 'Testing and deployment'], projects: ['REST API with authentication', 'Database-backed service', 'Deployed backend for a real client'] },
+			data: { label: 'Data Analyst', skills: ['Excel or spreadsheets', 'SQL', 'Statistics', 'Python for data cleaning', 'Power BI or Tableau', 'Portfolio storytelling'], projects: ['SQL business analysis', 'Clean and visualize a public dataset', 'End-to-end KPI dashboard'] },
+			ai: { label: 'AI / Machine Learning Engineer', skills: ['Python', 'Linear algebra and probability', 'Data preparation', 'Machine learning fundamentals', 'Model evaluation', 'Deployment and MLOps basics'], projects: ['Prediction model with evaluation', 'NLP or computer vision prototype', 'Deployed model API'] },
+			fullstack: { label: 'Full Stack Developer', skills: ['HTML, CSS, and JavaScript', 'React', 'Node.js or Python', 'SQL', 'APIs and authentication', 'Git, testing, and deployment'], projects: ['Full-stack task manager', 'Role-based application', 'Deployed product with documentation'] },
+			java: { label: 'Java Developer', skills: ['Java fundamentals', 'Object-oriented design', 'Collections and DSA', 'Spring and REST APIs', 'SQL', 'Testing and deployment'], projects: ['Spring CRUD API', 'Authentication service', 'Production-style backend'] }
+		};
+
+		const SKILL_ALIASES = {
+			javascript: ['javascript', 'js', 'java script'], python: ['python', 'pyhton', 'py'], react: ['react', 'reactjs', 'react.js'], html: ['html', 'html/css', 'html5'], css: ['css', 'html/css'], sql: ['sql'], git: ['git', 'github'], node: ['node', 'node.js', 'nodejs'], java: ['java'], excel: ['excel', 'spreadsheets'], statistics: ['statistics', 'stats'], typescript: ['typescript', 'ts'], dsa: ['dsa', 'data structures', 'algorithms'], machineLearning: ['machine learning', 'ml', 'machne learning', 'ai'], frontend: ['frontend', 'front end', 'front-end'], backend: ['backend', 'back end', 'back-end'], data: ['data analyst', 'data analysis', 'data science']
+		};
+
+		function normalizedAssistantText(value) {
+			return String(value || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9/.+#\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+		}
+
+		function assistantMentions(message, aliases = SKILL_ALIASES) {
+			const query = normalizedAssistantText(message);
+			return Object.entries(aliases).filter(([, terms]) => terms.some((term) => query.includes(normalizedAssistantText(term)))).map(([key]) => key);
+		}
+
+		function assistantCareerKey(message, memory = {}) {
+			const query = normalizedAssistantText(message);
+			if (/(front ?end|ui developer|web interface)/.test(query)) return 'frontend';
+			if (/(back ?end|server side|api developer)/.test(query)) return 'backend';
+			if (/(data analyst|data analysis)/.test(query)) return 'data';
+			if (/(machine learning|\bai\b|artificial intelligence)/.test(query)) return 'ai';
+			if (/(full ?stack)/.test(query)) return 'fullstack';
+			if (/(java developer|spring boot)/.test(query)) return 'java';
+			return memory.careerKey || null;
+		}
+
+		function assistantSkillLabel(key) {
+			return { javascript: 'JavaScript', python: 'Python', react: 'React', html: 'HTML', css: 'CSS', sql: 'SQL', git: 'Git', node: 'Node.js', java: 'Java', excel: 'Excel', statistics: 'Statistics', typescript: 'TypeScript', dsa: 'Data Structures and Algorithms', machineLearning: 'Machine Learning' }[key] || key;
+		}
+
+		function assistantStudentSkill(context, key) {
+			const labels = SKILL_ALIASES[key] || [key];
+			return (context.skills || []).find((item) => labels.some((label) => normalizedAssistantText(item.name).includes(normalizedAssistantText(label)) || normalizedAssistantText(label).includes(normalizedAssistantText(item.name))));
+		}
+
+		function assistantOpportunityCards(opportunities) {
+			return opportunities.slice(0, 5).map((item) => `<div class="ai-result-card"><div class="ai-result-top"><span class="tag success">${esc(item.match ?? calculateCandidateMatch(item))}% match</span><span>${esc(item.location || 'Location not listed')}</span></div><strong>${esc(item.title || 'Opportunity')}</strong><span class="ai-result-company">${esc(item.company || 'Company not listed')}</span><span class="ai-result-skills">Required skills: ${esc(item.skills || extractSkillList(item.requirements?.required).join(', ') || 'Not listed')}</span></div>`).join('');
+		}
+
+		function assistantWebsiteResponse(message, context) {
+			const query = normalizedAssistantText(message);
+			const pages = { dashboard: ['Dashboard', 'Open Dashboard for your readiness overview and current activity.', 'OPEN_DASHBOARD'], profile: ['Profile', 'Open Profile to update your name, email, college, and other workspace details.', 'OPEN_PROFILE'], skills: ['My Skills', 'Open My Skills to review assessment results and take another skill assessment.', 'OPEN_SKILLS'], opportunities: ['Opportunities', 'Open Opportunities to search roles, view details, check requirements, and apply.', 'OPEN_OPPORTUNITIES'], applications: ['Applications', 'Open Applications to track opportunities you have applied for and their current status.', 'OPEN_APPLICATIONS'], interviews: ['Interviews', 'Open Interviews to see interview schedules shared by companies.', 'OPEN_INTERVIEWS'], offers: ['Offers', 'Open Offers to review offers connected to your applications.', 'OPEN_OFFERS'], internships: ['Internships', 'Open Internships to track active and completed internships.', 'OPEN_INTERNSHIPS'], placements: ['Placements', 'Open Placements to track accepted job outcomes.', 'OPEN_PLACEMENTS'], notifications: ['Notifications', 'Open Notifications to review updates from companies and institutions.', 'OPEN_NOTIFICATIONS'], 'career-path': ['Career Path', 'Open Career Path to compare directions matched to your current skills.', 'OPEN_CAREER'], settings: ['Settings', 'Open Settings to manage workspace preferences and log out.', 'OPEN_SETTINGS'] };
+			const currentSection = context.currentPage.split('/')[2];
+			const requested = Object.keys(pages).find((page) => query.includes(page.replace('-', ' ')) || (page === 'skills' && /skill profile/.test(query)));
+			const page = pages[requested || (/(this page|this section|what is this|where am i)/.test(query) ? currentSection : '')];
+			if (!page) return null;
+			return { text: `**${page[0]}**\n\n${page[1]}`, action: { type: page[2] } };
+		}
+
+		function enhancedStudentResponse(message, context) {
+			const query = normalizedAssistantText(message);
+			const memory = chatbotState.memory || {};
+			const careerKey = assistantCareerKey(message, memory);
+			const mentionedSkills = assistantMentions(message);
+			const skills = context.skills || [];
+			const gaps = [...(context.gaps || [])].sort((a, b) => Number(a.score || 0) - Number(b.score || 0));
+			const websiteAnswer = assistantWebsiteResponse(message, context);
+			if (websiteAnswer && !/(what should i learn|roadmap|plan|skill|career|internship|application)/.test(query)) return websiteAnswer;
+
+			if (/^\s*(roadmap|career roadmap|make me a roadmap|give me a roadmap)\s*[?.!]*$/.test(query)) {
+				return { text: 'I can build that. Which career are you targeting: Frontend Development, Backend Development, Data Analysis, AI/ML, Full Stack, Java, or another path?' };
+			}
+
+			if (/(roadmap|path to become|how do i become|become a|career path)/.test(query)) {
+				if (!careerKey || !CAREER_ROADMAPS[careerKey]) return { text: 'Which career should I target for the roadmap? Tell me the role you want, your current skills, and how much time you can study each week.' };
+				const roadmap = CAREER_ROADMAPS[careerKey];
+				const known = [...new Set((memory.knownSkills || []).map(assistantSkillLabel).concat(mentionedSkills.map(assistantSkillLabel), skills.map((item) => item.name)))];
+				const remaining = roadmap.skills.filter((item) => !known.some((skill) => normalizedAssistantText(item).includes(normalizedAssistantText(skill))));
+				chatbotState.memory.careerKey = careerKey;
+				return { text: `**${roadmap.label} roadmap**\n\n**Already in your context**\n${known.length ? known.map((item) => `- ${item}`).join('\n') : '- No current skills were identified yet.'}\n\n**Recommended order**\n${remaining.map((item, index) => `${index + 1}. **${item}** — build this before the next stage.`).join('\n')}\n\n**Projects**\n${roadmap.projects.map((item) => `- ${item}`).join('\n')}\n\nStart with **${remaining[0] || roadmap.skills[0]}**. Share your weekly study time and I can turn this into a 7-, 30-, 60-, or 90-day plan.`, action: { type: 'OPEN_CAREER' } };
+			}
+
+			if (/(7 day|30 day|60 day|90 day|learning plan|study plan)/.test(query)) {
+				if (!careerKey) return { text: 'What skill or career should the plan target? For example, “a 30-day JavaScript plan” or “a 90-day backend plan.”' };
+				const roadmap = CAREER_ROADMAPS[careerKey] || CAREER_ROADMAPS.frontend;
+				const duration = query.match(/(7|30|60|90)\s*-?day/)?.[1] || '30';
+				const weeks = Math.max(1, Math.ceil(Number(duration) / 7));
+				return { text: `**${duration}-day ${roadmap.label} plan**\n\n${Array.from({ length: weeks }, (_, index) => `**Week ${index + 1}**\n- Study: ${roadmap.skills[index % roadmap.skills.length]}\n- Practice: complete one focused exercise and write down what you learned\n- Deliverable: add progress to a small project or portfolio note`).join('\n\n')}\n\nAt the end, review your weakest SkillAura area and build one project that demonstrates the target role.`, action: { type: 'OPEN_SKILLS' } };
+			}
+
+			if (/(find|show|search|available).*(internship|opportunit)|internship.*(available|python|javascript|react|sql|backend|frontend)/.test(query)) {
+				const requested = mentionedSkills.filter((key) => !['frontend', 'backend', 'data', 'ai'].includes(key));
+				const matches = (context.opportunities || []).filter((item) => !requested.length || requested.every((key) => normalizedAssistantText(`${item.title} ${item.skills} ${item.description}`).includes(normalizedAssistantText(assistantSkillLabel(key)))));
+				if (!matches.length) return { text: 'I do not see a matching published opportunity in the current SkillAura data. Try another skill or open Opportunities to browse the available records.', action: { type: 'OPEN_OPPORTUNITIES' } };
+				chatbotState.memory.lastOpportunityQuery = requested;
+				return { text: `I found ${matches.length} published opportunity${matches.length === 1 ? '' : 'ies'} in SkillAura matching your request.`, cards: assistantOpportunityCards(matches), action: { type: 'OPEN_OPPORTUNITIES' } };
+			}
+
+			if (/(what should i learn next|learn next|next step|recommend.*skill|skill gap|weak|improve)/.test(query)) {
+				const explicit = mentionedSkills.map((key) => assistantStudentSkill(context, key)).filter(Boolean);
+				const next = explicit.find((item) => Number(item.score || 0) < 80) || gaps.find((item) => Number(item.score || 0) < 80) || skills.find((item) => Number(item.score || 0) < 80);
+				if (!next) return { text: 'I do not have a measured skill gap below 80% in the current SkillAura record. Choose a target career and I can compare its requirements with your assessed skills.', action: { type: 'OPEN_SKILLS' } };
+				const target = Number(next.target || 80);
+				return { text: `**Next priority: ${next.name}**\n\nYour current SkillAura score is **${formatPercent(next.score)}**${target ? ` against a ${formatPercent(target)} target` : ''}.\n\n1. Review the fundamentals and complete 3 focused exercises.\n2. Build a small project that uses this skill.\n3. Reassess it in **My Skills** and then compare relevant opportunities.`, action: { type: 'OPEN_SKILLS' } };
+			}
+
+			if (/(what is|explain|difference between|why should i learn|do i need).*/.test(query) && mentionedSkills.length) {
+				const skill = assistantSkillLabel(mentionedSkills[0]);
+				const uses = { JavaScript: 'interactive web interfaces, servers, and APIs', Python: 'backend services, automation, data, and AI', React: 'component-based web interfaces', SQL: 'querying and organizing relational data', Git: 'tracking code changes and collaborating safely', 'Machine Learning': 'learning patterns from data to make predictions or classifications' }[skill] || 'real software projects in that area';
+				return { text: `**${skill}** is a tool or skill used in ${uses}.\n\nIt matters because it helps you build evidence for the career path you choose. Learn its fundamentals, practice with a small project, and then compare the requirements in current SkillAura opportunities. A good next step is to tell me your target role so I can explain the relevant depth.` };
+			}
+
+			if (/(interview|mock interview|prepare me)/.test(query)) return { text: `**Interview preparation**\n\n- Review the technical topics required by your target role.\n- Prepare two project stories using the problem, your contribution, and the result.\n- Practice explaining one weak area honestly and describe how you are improving it.\n- Rehearse behavioral questions about teamwork, debugging, and learning.\n\nI can run a mock interview one question at a time if you tell me the target role.`, action: { type: 'OPEN_INTERVIEWS' } };
+			if (/(resume|cv|portfolio|github|linkedin)/.test(query)) return { text: `**Resume and portfolio checklist**\n\n- Lead with the target role and the strongest verified skills you actually have.\n- Describe projects with the problem, technologies, your contribution, and measurable result.\n- Link only to work you can explain in an interview.\n- Keep claims specific; SkillAura can guide you, but it has not evaluated a resume unless you provide its contents.` };
+
+			if (/(application|where.*appl|status|interview|offer|internship|placement)/.test(query)) {
+				const counts = { applications: context.applications.length, interviews: context.interviews.length, offers: context.offers.length, internships: context.internships.length, placements: context.placements.length };
+				return { text: `Your current SkillAura records contain **${counts.applications} application${counts.applications === 1 ? '' : 's'}**, **${counts.interviews} interview${counts.interviews === 1 ? '' : 's'}**, **${counts.offers} offer${counts.offers === 1 ? '' : 's'}**, **${counts.internships} internship${counts.internships === 1 ? '' : 's'}**, and **${counts.placements} placement${counts.placements === 1 ? '' : 's'}**. Open **Applications** for application statuses, **Interviews** for schedules, **Offers** for offers, **Internships** for active placements, and **Placements** for accepted outcomes.`, action: { type: 'OPEN_APPLICATIONS' } };
+			}
+
+			if (/(which career|best career|choose a career|dont know.*career|don't know.*career)/.test(query)) return { text: 'I can help narrow that down. What kind of work sounds most interesting, which skills do you already enjoy using, and do you prefer building products, analyzing data, working with people, or researching systems?' };
+			return { text: `I can help with career paths, skill explanations, roadmaps, learning plans, interviews, resumes, and the real records in SkillAura. Tell me your target role or the decision you are trying to make, and I will use your current context rather than guessing.` };
+		}
+
 		function roleAwareFallbackResponse(message, context) {
 			const role = context.role || currentRole();
 			if (role === 'company') return roleAwareCompanyResponse(message, context);
 			if (role === 'institution') return roleAwareInstitutionResponse(message, context);
-			return roleAwareStudentResponse(message, context);
+			return enhancedStudentResponse(message, context);
 		}
 
 		function generateRoleAwareResponse(message) {
 			const role = currentRole();
 			const context = chatbotContext();
+			const query = normalizedAssistantText(message);
+			if (role === 'student') {
+				const skills = context.skills || [];
+				const gaps = [...(context.gaps || [])].sort((a, b) => Number(a.score || 0) - Number(b.score || 0));
+				const opportunities = context.opportunities || [];
+				const strongest = skills.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, 3).map((item) => `${item.name} (${formatPercent(item.score)})`).join(', ');
+				const weakest = gaps.slice(0, 3).map((item) => `${item.name} (${formatPercent(item.score)})`).join(', ');
+				if (/(analyze my skills|analyze my skill|my skill profile|current profile)/.test(query)) {
+					return { text: `Your verified SkillAura profile shows strong areas in ${strongest || 'your current assessments'}. The biggest improvement areas are ${weakest || 'not yet flagged'}.`, action: { type: 'OPEN_SKILLS' } };
+				}
+				if (/(find my skill gaps|skill gaps|what am i missing|missing.*role)/.test(query)) {
+					const nextGaps = gaps.slice(0, 3).map((item) => `${item.name}: ${formatPercent(item.score)} / ${formatPercent(item.target || 80)}`).join('; ');
+					return { text: `Your current gap analysis shows: ${nextGaps || 'No major gaps are currently identified.'} Prioritize the weakest skill first and re-assess after targeted practice.`, action: { type: 'OPEN_SKILLS' } };
+				}
+				if (/(recommend internships|find internships|internships for me|internship recommendations)/.test(query)) {
+					const matches = opportunities.slice().sort((a, b) => Number(b.match || 0) - Number(a.match || 0)).slice(0, 3);
+					if (!matches.length) return { text: 'I do not see published internships in your current SkillAura data that are a strong match yet. Open Opportunities to review new roles as they appear.', action: { type: 'OPEN_OPPORTUNITIES' } };
+					return { text: `The strongest internship matches for your profile are ${matches.map((item) => `${item.title} (${item.match || 0}%)`).join(', ')}. These are the best opportunities to target based on your current skills and the opportunity requirements.`, cards: assistantOpportunityCards(matches), action: { type: 'OPEN_OPPORTUNITIES' } };
+				}
+				if (/(recommend jobs|job recommendations|find jobs|jobs for me)/.test(query)) {
+					const jobs = opportunities.slice().sort((a, b) => Number(b.match || 0) - Number(a.match || 0)).slice(0, 3);
+					if (!jobs.length) return { text: 'I do not see a job opportunity match in your current SkillAura records. Try improving a weak skill and then revisit this recommendation.', action: { type: 'OPEN_OPPORTUNITIES' } };
+					return { text: `Based on your current SkillAura data, the best-fit roles are ${jobs.map((item) => `${item.title} (${item.match || 0}%)`).join(', ')}. Focus on the skills those roles require and then reapply to the most relevant openings.`, cards: assistantOpportunityCards(jobs), action: { type: 'OPEN_OPPORTUNITIES' } };
+				}
+				if (/(create my career roadmap|career roadmap|roadmap)/.test(query)) {
+					const mappedCareer = assistantCareerKey(message, chatbotState.memory) || 'frontend';
+					const roadmap = CAREER_ROADMAPS[mappedCareer] || CAREER_ROADMAPS.frontend;
+					return { text: `Your roadmap toward ${roadmap.label} starts with ${roadmap.skills.slice(0, 3).join(', ')}. Build one small project in each phase, then reassess your skill profile before moving to the next milestone.`, action: { type: 'OPEN_CAREER' } };
+				}
+				if (/(prepare me for an interview|interview prep|mock interview)/.test(query)) {
+					const weak = gaps.slice(0, 2).map((item) => `${item.name} (${formatPercent(item.score)})`).join(', ') || 'your strongest gaps';
+					return { text: `For interview prep, focus on ${weak}. Practice explaining your projects, your approach, and how you solved problems. Keep your answers structured around the problem, action, and result.`, action: { type: 'OPEN_INTERVIEWS' } };
+				}
+				if (/(improve my resume|resume improvement|resume)/.test(query)) {
+					return { text: `Use the strongest verified skills in your profile—${strongest || 'your current data'}—and pair them with specific projects and measurable results. Keep the resume role-focused, trim generic statements, and show the problem, tools, and outcome for each project.`, action: { type: 'OPEN_PROFILE' } };
+				}
+				if (/(practice questions|give me practice questions|question.*practice)/.test(query)) {
+					return { text: 'Practice questions to work on next:\n1. Write a function to reverse a string without using in-built methods.\n2. Explain the difference between var, let, and const in JavaScript.\n3. How would you optimize a slow SQL query?\n4. What is the difference between props and state in React?\n5. How would you explain a project you built and the impact it had?', action: { type: 'OPEN_SKILLS' } };
+				}
+				if (/(what should i learn next|improve my weak skills|weak skills)/.test(query)) {
+					const nextSkill = gaps[0];
+					return { text: `Your next learning priority is ${nextSkill ? nextSkill.name : 'your weakest tracked skill'}. Build a focused study block around the fundamentals, then test it with one small project before reassessing your SkillAura score.`, action: { type: 'OPEN_SKILLS' } };
+				}
+			}
+			if (role === 'company') {
+				const candidates = context.candidates || [];
+				const apps = context.applications || [];
+				const opportunities = context.opportunities || [];
+				if (/(find matching candidates|matching candidates|top candidates)/.test(query)) {
+					const ranked = candidates.slice().sort((a, b) => Number(b.skills?.length || 0) - Number(a.skills?.length || 0)).slice(0, 3);
+					return { text: `The strongest current candidate matches in your workspace are ${ranked.map((item) => `${item.name || 'Candidate'} (${(item.skills || []).length} skills)`).join(', ')}. These profiles have the most verified skill coverage based on their current SkillAura records.`, action: { type: 'OPEN_CANDIDATES' } };
+				}
+				if (/(create job description|job description|create a job)/.test(query)) {
+					return { text: 'Job description draft:\nRole: Frontend Developer\nSummary: Build responsive user interfaces and collaborate with product and engineering teams.\nCore requirements: JavaScript, React, Git, UI fundamentals, and communication.\nResponsibilities: Implement features, optimize UX, and support code review.\nGood for: students with strong frontend and product-focused work.', action: { type: 'OPEN_OPPORTUNITIES' } };
+				}
+				if (/(create internship|internship description|internship)/.test(query)) {
+					return { text: 'Internship draft:\nTitle: Product Engineering Intern\nScope: Build, test, and improve one feature end-to-end with design and engineering mentorship.\nSkills: JavaScript, React, Git, problem solving, and teamwork.\nEligibility: Students in relevant STEM or design programs with strong project evidence.', action: { type: 'OPEN_OPPORTUNITIES' } };
+				}
+				if (/(generate interview questions|interview questions)/.test(query)) {
+					return { text: 'Interview question set:\n1. Walk me through a project you built and the decisions you made.\n2. How do you debug a UI issue that only appears on mobile?\n3. Explain a time you worked through a conflict in a team project.\n4. What tradeoffs would you make between speed and maintainability?\n5. How do you validate whether a feature is actually solving the user problem?', action: { type: 'OPEN_INTERVIEWS' } };
+				}
+				if (/(generate technical assessment|technical assessment)/.test(query)) {
+					return { text: 'Technical assessment ideas:\n- JS debugging task\n- React component challenge\n- SQL query problem\n- Git workflow scenario\n- Data structures and algorithm short test\nUse the results to compare problem-solving depth and communication quality.', action: { type: 'OPEN_ANALYTICS' } };
+				}
+				if (/(analyze candidate pool|candidate pool|pool analysis)/.test(query)) {
+					return { text: `Your current candidate pool includes ${candidates.length} connected candidate profile${candidates.length === 1 ? '' : 's'} and ${apps.length} application${apps.length === 1 ? '' : 's'} in SkillAura. Use the strongest skill overlap and verified assessments to narrow the shortlist before interviews.`, action: { type: 'OPEN_CANDIDATES' } };
+				}
+				if (/(identify in-demand skills|in-demand skills|demand.*skills)/.test(query)) {
+					const demand = {};
+					opportunities.forEach((item) => { (item.skills || '').split(/[•,]/).map((skill) => skill.trim()).filter(Boolean).forEach((skill) => { demand[skill] = (demand[skill] || 0) + 1; }); });
+					const topSkills = Object.entries(demand).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(', ') || 'No active opportunity skills available yet';
+					return { text: `The current opportunity demand in your workspace is concentrated around ${topSkills}. Prioritize candidates with those skills and confirm if the requirement is truly necessary before screening.`, action: { type: 'OPEN_ANALYTICS' } };
+				}
+			}
+			if (role === 'institution') {
+				const students = context.students || [];
+				const assessed = students.filter((student) => (student.workspace?.assessments || student.assessments || []).length > 0).length;
+				const verified = students.filter((student) => (student.workspace?.skills || student.skills || []).length > 0).length;
+				if (/(analyze student skills|student skills|skill analysis)/.test(query)) {
+					return { text: `${assessed} of ${students.length} students have completed assessments and ${verified} have verified skill records. Review the weakest skills by cohort and use those insights to plan training or workshop interventions.`, action: { type: 'OPEN_SKILLS' } };
+				}
+				if (/(find common skill gaps|common skill gaps|skill gaps)/.test(query)) {
+					return { text: 'The strongest recurring skill gaps in the current institution dataset are usually weak SQL, communication, and role-specific technical depth. Use these as the focus for training programs and skill-integration workshops.', action: { type: 'OPEN_SKILLS' } };
+				}
+				if (/(check placement readiness|placement read|readiness)/.test(query)) {
+					return { text: `Based on the current institution records, ${verified} students have active verified skills, which is a good foundation for placement readiness. I would still validate weak areas such as role-specific technical depth and communication before high-volume placement drives.`, action: { type: 'OPEN_ANALYTICS' } };
+				}
+				if (/(recommend training programs|training programs|recommend.*program)/.test(query)) {
+					return { text: 'Recommended training programs:\n- React & frontend fundamentals\n- SQL and data workflows\n- Communication and interview readiness\n- Career-specific hackathons and mock rounds\n- Domain-specific workshops aligned to active company demand', action: { type: 'OPEN_LEARNING' } };
+				}
+				if (/(suggest industry collaborations|industry collaborations|collaboration)/.test(query)) {
+					return { text: 'Suggested collaborations:\n- Invite local product companies for mock interviews\n- Run a placement readiness workshop with hiring partners\n- Partner with engineering teams for guest lectures\n- Create an internship review feedback loop with active recruiters', action: { type: 'OPEN_INDUSTRY' } };
+				}
+				if (/(analyze internship participation|internship participation|internship)/.test(query)) {
+					return { text: 'Internship participation should be reviewed by cohort, department, and application success. Track how many students are eligible, how many apply, and which roles are recurring to identify the next improvement loop.', action: { type: 'OPEN_INTERNSHIPS' } };
+				}
+				if (/(suggest workshops|workshops)/.test(query)) {
+					return { text: 'Workshop recommendations:\n- Resume and profile review sessions\n- Mock interviews for target roles\n- Git and project collaboration labs\n- SQL and data handling clinics\n- Industry panel and employer Q&A sessions', action: { type: 'OPEN_ANALYTICS' } };
+				}
+				if (/(generate placement report|placement report)/.test(query)) {
+					return { text: 'Placement report outline:\n- Students assessed\n- Verified skill coverage\n- Placement readiness by role\n- Internship participation\n- Weakest skills by cohort\n- Next training priorities', action: { type: 'OPEN_ANALYTICS' } };
+				}
+			}
 			if (role === 'company' && !context.applications.length && !context.opportunities.length) {
 				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Add an opportunity or invite candidate activity before I can rank applicants or summarize hiring metrics.' };
 			}
 			if (role === 'institution' && !context.students.length) {
 				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Add student records or complete assessments before I can analyze institutional readiness.' };
-			}
-			if (role === 'student' && (!context.skills || !context.skills.length) && (!state.assessments || !state.assessments.length)) {
-				return { text: 'I do not have enough SkillAura data to answer that accurately yet. Please complete at least one assessment first so I can analyze your skills and recommendations.' };
 			}
 			return roleAwareFallbackResponse(message, context);
 		}
@@ -778,6 +1041,14 @@
 				OPEN_APPLICATIONS: `/${role}/applications`,
 				OPEN_CAREER: `/${role}/career-path`,
 				OPEN_ANALYTICS: `/${role}/analytics`,
+				OPEN_PROFILE: `/${role}/profile`,
+				OPEN_INTERVIEWS: `/${role}/interviews`,
+				OPEN_OFFERS: `/${role}/offers`,
+				OPEN_INTERNSHIPS: `/${role}/internships`,
+				OPEN_PLACEMENTS: `/${role}/placements`,
+				OPEN_NOTIFICATIONS: `/${role}/notifications`,
+				OPEN_SETTINGS: `/${role}/settings`,
+				OPEN_LEARNING: `/${role}/learning`,
 				OPEN_COMPANY: `/${role}/opportunities`,
 				OPEN_OPPORTUNITY: `/${role}/opportunities`,
 				SHOW_SKILL_GAPS: `/${role}/skills`,
@@ -806,12 +1077,15 @@
 			const messages = assistant.querySelector('.ai-messages');
 			const form = assistant.querySelector('.ai-form');
 			const input = assistant.querySelector('.ai-input');
+			const sendButton = assistant.querySelector('.ai-send');
 			const stopButton = assistant.querySelector('.ai-stop');
 			const launcherPositionKey = 'skillaura-ai-launcher-position';
 			const dragThreshold = 5;
 			let dragStart = null;
 			let dragged = false;
 			let suppressClick = false;
+			let activeRequestController = null;
+			chatbotState.memory = { history: [], ...(chatbotState.memory || {}) };
 
 			const readLauncherPosition = () => {
 				try {
@@ -881,21 +1155,37 @@
 					const position = setLauncherPosition(launcher.getBoundingClientRect().left, launcher.getBoundingClientRect().top, true);
 					suppressClick = true;
 					launcher.setAttribute('data-position-x', String(position.x));
+					event.preventDefault();
 				}
 				dragStart = null;
+				dragged = false;
 				launcher.releasePointerCapture?.(event.pointerId);
 			});
-			launcher.addEventListener('pointercancel', () => { dragStart = null; dragged = false; });
+			launcher.addEventListener('pointercancel', (event) => {
+				if (dragStart?.pointerId === event.pointerId) {
+					dragStart = null;
+					dragged = false;
+				}
+			});
 
-			const addMessage = (content, sender = 'assistant', cards = '') => {
+			const renderAssistantMarkdown = (content) => {
+				let html = esc(content).replace(/^### (.+)$/gm, '<h4>$1</h4>').replace(/^## (.+)$/gm, '<h3>$1</h3>').replace(/^# (.+)$/gm, '<h3>$1</h3>');
+				html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+				html = html.replace(/(?:^|\n)((?:- .+(?:\n|$))+)/g, (_, block) => `<ul>${block.trim().split('\n').map((line) => `<li>${line.replace(/^- /, '')}</li>`).join('')}</ul>`);
+				html = html.replace(/(?:^|\n)((?:\d+\. .+(?:\n|$))+)/g, (_, block) => `<ol>${block.trim().split('\n').map((line) => `<li>${line.replace(/^\d+\. /, '')}</li>`).join('')}</ol>`);
+				return html.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+			};
+			const addMessage = (content, sender = 'assistant', cards = '', remember = true) => {
 				const message = document.createElement('div');
 				message.className = `ai-message ${sender}`;
 				const text = document.createElement('p');
-				text.textContent = content;
+				text.innerHTML = renderAssistantMarkdown(content);
 				message.append(text);
 				if (cards) message.insertAdjacentHTML('beforeend', cards);
 				messages.append(message);
 				messages.scrollTop = messages.scrollHeight;
+				if (remember && (sender === 'user' || sender === 'assistant')) chatbotState.memory.history.push({ role: sender, content: String(content) });
+				if (chatbotState.memory.history.length > 12) chatbotState.memory.history = chatbotState.memory.history.slice(-12);
 			};
 
 			const showWelcome = () => {
@@ -907,7 +1197,14 @@
 			const handleMessage = async (message) => {
 				const cleanMessage = message.trim();
 				if (!cleanMessage) return;
+				if (sendButton.disabled) return;
+				sendButton.disabled = true;
+				chatbotState.lastUserMessage = cleanMessage;
 				const role = currentRole();
+				const detectedCareer = assistantCareerKey(cleanMessage, chatbotState.memory);
+				const detectedSkills = assistantMentions(cleanMessage).filter((key) => !['frontend', 'backend', 'data', 'ai'].includes(key));
+				if (detectedCareer) chatbotState.memory.careerKey = detectedCareer;
+				if (detectedSkills.length) chatbotState.memory.knownSkills = [...new Set([...(chatbotState.memory.knownSkills || []), ...detectedSkills])];
 				addMessage(cleanMessage, 'user');
 				input.value = '';
 				const typing = document.createElement('div');
@@ -917,21 +1214,34 @@
 				messages.scrollTop = messages.scrollHeight;
 
 				let response = null;
+				let requestTimeout = null;
 				try {
-					const externalResponse = await askAI(cleanMessage, chatbotContext());
+					activeRequestController = new AbortController();
+					requestTimeout = window.setTimeout(() => activeRequestController?.abort(), 26_000);
+					const context = chatbotContext();
+					context.conversation = chatbotState.memory.history.slice(-8);
+					const externalResponse = await askAI(cleanMessage, context, chatbotState.memory.history, activeRequestController.signal);
 					response = externalResponse || generateRoleAwareResponse(cleanMessage);
 				} catch (error) {
-					response = generateRoleAwareResponse(cleanMessage);
+					response = { text: 'Sorry, I could not process that right now. Please try again.' };
+				} finally {
+					window.clearTimeout(requestTimeout);
+					activeRequestController = null;
 				}
 
 				typing.remove();
 				if (!response || !response.text) {
 					response = {
-						text: 'Sorry, I\'m having trouble connecting right now. Please try again.'
+						text: 'SkillAura AI is temporarily unavailable. Please try again.',
+						cards: '<div class="ai-result-actions"><button type="button" class="primary" data-chat-action="RETRY_LAST">Retry</button></div>'
 					};
+				} else if (/temporarily unavailable|try again|unable to connect/i.test(response.text)) {
+					response.cards = response.cards || '<div class="ai-result-actions"><button type="button" class="primary" data-chat-action="RETRY_LAST">Retry</button></div>';
 				}
 				addMessage(response.text, 'assistant', response.cards || '');
 				if (response.action) chatbotNavigate(response.action.type, response.action.opportunity);
+				sendButton.disabled = false;
+				input.focus();
 			};
 
 			launcher.addEventListener('click', (event) => {
@@ -952,12 +1262,15 @@
 					input.focus();
 				}
 			});
-			window.addEventListener('resize', () => {
+			const handleViewportChange = () => {
 				const rect = launcher.getBoundingClientRect();
 				setLauncherPosition(rect.left, rect.top, true);
 				if (assistant.classList.contains('open')) positionChatPanel();
 				positionChatPanel();
-			});
+			};
+			window.addEventListener('resize', handleViewportChange, { passive: true });
+			window.addEventListener('orientationchange', handleViewportChange, { passive: true });
+			window.visualViewport?.addEventListener('resize', handleViewportChange, { passive: true });
 			close.onclick = () => {
 				assistant.classList.remove('open');
 				launcher.setAttribute('aria-expanded', 'false');
@@ -968,9 +1281,11 @@
 			};
 			clearButton.onclick = () => {
 				messages.innerHTML = '';
+				chatbotState.memory = { history: [] };
 				showWelcome();
 			};
 			stopButton.onclick = () => {
+				activeRequestController?.abort();
 				const typing = messages.querySelector('.ai-typing');
 				if (typing) typing.textContent = 'Stopped generating.';
 				setTimeout(() => typing?.remove(), 700);
@@ -987,6 +1302,10 @@
 				if (!actionButton) return;
 				const opportunity = data.opportunities.find((item) => item[0] === actionButton.dataset.opportunity);
 				const action = actionButton.dataset.chatAction;
+				if (action === 'RETRY_LAST') {
+					if (chatbotState.lastUserMessage) handleMessage(chatbotState.lastUserMessage);
+					return;
+				}
 				if (action === 'APPLY_TO_OPPORTUNITY') {
 					chatbotState.pendingApplication = opportunity;
 					addMessage(`Please confirm that you want to apply for ${opportunity[0]} at ${opportunity[1]}. Type “Yes” to continue.`);
@@ -1122,6 +1441,7 @@
 			if (path === '/') app.innerHTML = landing();
 			else if (path === '/login' || path === '/register') app.innerHTML = auth(path.slice(1));
 			else if (path === '/role-selection') app.innerHTML = roleSelection();
+			else if (path === '/student/mock-interview') app.innerHTML = mockInterviewPage();
 			else if (match) {
 				const [, role, section] = match;
 				app.innerHTML = section === 'dashboard' ? dash(role) : placeholder(role, section);
@@ -1155,6 +1475,8 @@
 			learningProgress: {},
 			activeRole: null,
 			assessment: null,
+			mockInterviews: [],
+			mockInterviewSession: null,
 			companyWorkspaces: {},
 			institutionWorkspaces: {},
 			ecosystem: { opportunities: [], applications: [], interviews: [], offers: [], internships: [], placements: [], notifications: [] }
@@ -1174,6 +1496,43 @@
 		const CURRENT_USER_KEY = 'skillaura_current_user';
 		const RESET_CANDIDATE_KEY = 'skillaura_reset_candidate';
 		const ECOSYSTEM_STATUSES = ['Applied', 'Under Review', 'Shortlisted', 'Assessment', 'Interview', 'Selected', 'Offer Sent', 'Accepted', 'Rejected', 'Withdrawn'];
+		const MOCK_INTERVIEW_QUESTIONS = {
+			'Frontend Developer': {
+				Easy: [{ question: 'What is the difference between HTML and CSS?', concepts: ['html', 'structure', 'css', 'style', 'presentation'] }, { question: 'What is the DOM?', concepts: ['document', 'object', 'model', 'tree', 'javascript'] }],
+				Medium: [{ question: 'How would you improve the performance of a slow web page?', concepts: ['measure', 'profile', 'image', 'lazy', 'cache', 'bundle', 'network'] }, { question: 'Explain how React components manage changing data.', concepts: ['state', 'props', 'render', 'component', 'hook'] }],
+				Hard: [{ question: 'How would you design an accessible, scalable frontend application?', concepts: ['accessibility', 'semantic', 'component', 'testing', 'performance', 'architecture'] }, { question: 'How do you prevent unnecessary React renders?', concepts: ['memo', 'state', 'props', 'memoization', 'profile', 'context'] }]
+			},
+			'Backend Developer': {
+				Easy: [{ question: 'What is an API?', concepts: ['interface', 'request', 'response', 'server', 'client'] }, { question: 'Why do applications use databases?', concepts: ['store', 'query', 'data', 'persist', 'database'] }],
+				Medium: [{ question: 'How would you secure a login endpoint?', concepts: ['hash', 'password', 'session', 'token', 'validation', 'rate', 'https'] }, { question: 'What makes a REST endpoint reliable?', concepts: ['status', 'validation', 'error', 'idempotent', 'logging', 'test'] }],
+				Hard: [{ question: 'How would you scale a service receiving heavy traffic?', concepts: ['cache', 'queue', 'database', 'load', 'horizontal', 'monitor', 'stateless'] }, { question: 'How would you design an idempotent payment request?', concepts: ['idempotency', 'key', 'transaction', 'retry', 'duplicate', 'consistent'] }]
+			},
+			'Full Stack Developer': {
+				Easy: [{ question: 'What happens when a browser requests a web page?', concepts: ['dns', 'http', 'request', 'server', 'response', 'browser'] }, { question: 'Why is version control useful?', concepts: ['git', 'history', 'branch', 'collaborate', 'rollback'] }],
+				Medium: [{ question: 'How would you connect a frontend form to a backend API?', concepts: ['form', 'request', 'api', 'validation', 'response', 'error'] }, { question: 'How do you model users and their orders?', concepts: ['user', 'order', 'relation', 'foreign', 'database', 'index'] }],
+				Hard: [{ question: 'How would you deploy and monitor a full-stack application?', concepts: ['build', 'environment', 'deploy', 'monitor', 'logs', 'health', 'rollback'] }, { question: 'How would you protect data across a full-stack system?', concepts: ['auth', 'authorization', 'validation', 'encrypt', 'secret', 'https'] }]
+			},
+			'Python Developer': {
+				Easy: [{ question: 'What is a Python list and when would you use it?', concepts: ['ordered', 'collection', 'mutable', 'items', 'sequence'] }, { question: 'What is the purpose of a function?', concepts: ['reuse', 'parameter', 'return', 'logic', 'call'] }],
+				Medium: [{ question: 'How would you handle errors in a Python service?', concepts: ['exception', 'try', 'except', 'logging', 'validation', 'finally'] }, { question: 'When would you use a class in Python?', concepts: ['object', 'state', 'method', 'encapsulation', 'reuse'] }],
+				Hard: [{ question: 'How would you improve a slow Python data pipeline?', concepts: ['profile', 'algorithm', 'batch', 'memory', 'parallel', 'database'] }, { question: 'How would you design a maintainable Python package?', concepts: ['module', 'test', 'dependency', 'interface', 'documentation', 'structure'] }]
+			},
+			'Java Developer': {
+				Easy: [{ question: 'What are the main ideas of object-oriented programming?', concepts: ['class', 'object', 'inheritance', 'polymorphism', 'encapsulation'] }, { question: 'What is the purpose of an interface in Java?', concepts: ['contract', 'method', 'implement', 'abstraction'] }],
+				Medium: [{ question: 'How does exception handling work in Java?', concepts: ['try', 'catch', 'finally', 'throw', 'exception'] }, { question: 'Why are collections useful in Java?', concepts: ['list', 'set', 'map', 'data', 'collection', 'generic'] }],
+				Hard: [{ question: 'How would you design a thread-safe Java service?', concepts: ['thread', 'lock', 'synchronization', 'immutable', 'concurrency', 'test'] }, { question: 'How would you structure a Spring REST service?', concepts: ['controller', 'service', 'repository', 'api', 'validation', 'test'] }]
+			},
+			'Data Analyst': {
+				Easy: [{ question: 'What is the difference between a row and a column?', concepts: ['row', 'record', 'column', 'field', 'table'] }, { question: 'Why do analysts clean data?', concepts: ['missing', 'duplicate', 'error', 'consistent', 'quality'] }],
+				Medium: [{ question: 'How would you investigate a sudden drop in sales?', concepts: ['segment', 'compare', 'time', 'data', 'hypothesis', 'visualize'] }, { question: 'When would you use a JOIN in SQL?', concepts: ['table', 'relate', 'key', 'combine', 'rows'] }],
+				Hard: [{ question: 'How would you design a trustworthy KPI dashboard?', concepts: ['metric', 'definition', 'source', 'validation', 'filter', 'stakeholder'] }, { question: 'How would you explain correlation versus causation?', concepts: ['relationship', 'cause', 'experiment', 'confound', 'evidence'] }]
+			},
+			'Software Engineer': {
+				Easy: [{ question: 'What makes code maintainable?', concepts: ['readable', 'test', 'simple', 'name', 'document', 'modular'] }, { question: 'Why are tests valuable?', concepts: ['regression', 'confidence', 'behavior', 'bug', 'automation'] }],
+				Medium: [{ question: 'How would you debug a failing production feature?', concepts: ['reproduce', 'logs', 'monitor', 'isolate', 'test', 'rollback'] }, { question: 'How do you choose a data structure?', concepts: ['operation', 'complexity', 'memory', 'requirement', 'tradeoff'] }],
+				Hard: [{ question: 'How would you design a reliable notification system?', concepts: ['queue', 'retry', 'idempotent', 'delivery', 'failure', 'monitor'] }, { question: 'How do you make a technical tradeoff with incomplete information?', concepts: ['requirement', 'risk', 'measure', 'prototype', 'tradeoff', 'document'] }]
+			}
+		};
 		const ASSESSMENT_QUESTIONS = {
 			Python: [
 				{q: 'Which keyword defines a function?', o: ['function', 'def', 'func', 'define'], a: 1, t: 'Functions'},
@@ -1390,11 +1749,14 @@
 		function resolveAccountRole(account) { return normalizeRole((account && account.role) || (currentStudentSession() && currentStudentSession().role) || 'student'); }
 		function dashboardRouteForRole(role) { const normalized = normalizeRole(role); return normalized === 'company' ? '/company/dashboard' : normalized === 'institution' ? '/institution/dashboard' : '/student/dashboard'; }
 		function clearStudentSession() {
-			try { localStorage.removeItem(CURRENT_USER_KEY); } catch (error) { }
+			for (const key of LEGACY_USER_KEYS) {
+				try { localStorage.removeItem(key); } catch (error) {}
+			}
+			try { localStorage.removeItem(CURRENT_USER_KEY); } catch (error) {}
 			if (state) state.activeRole = null;
 		}
-		function studentWorkspace() { return { skills: clone(state.skills), gaps: clone(state.gaps), applications: clone(state.applications), assessments: clone(state.assessments || []), preferences: {} }; }
-		function newStudentWorkspace() { return { skills: [], gaps: [], applications: [], assessments: [], preferences: {} }; }
+		function studentWorkspace() { return { skills: clone(state.skills), gaps: clone(state.gaps), applications: clone(state.applications), assessments: clone(state.assessments || []), mockInterviews: clone(state.mockInterviews || []), preferences: {} }; }
+		function newStudentWorkspace() { return { skills: [], gaps: [], applications: [], assessments: [], mockInterviews: [], preferences: {} }; }
 		function hydrateStudentAccount(account) {
 			if (!account) return;
 			const workspace = account.workspace || {};
@@ -1403,6 +1765,7 @@
 			state.gaps = clone(workspace.gaps || state.gaps);
 			state.applications = clone(workspace.applications || []);
 			state.assessments = clone(workspace.assessments || []);
+			state.mockInterviews = clone(workspace.mockInterviews || state.mockInterviews || []);
 			state.student.preferences = workspace.preferences || {};
 			state.activeRole = resolveAccountRole(account);
 		}
@@ -1410,7 +1773,7 @@
 			const session = currentStudentSession();
 			if (!session) return;
 			const accounts = loadStudentAccounts();
-			const index = accounts.findIndex((account) => account.id === session.id);
+			const index = accounts.findIndex((account) => account.id === (session.userId || session.id));
 			if (index < 0) return;
 			accounts[index].profile = { ...accounts[index].profile, ...state.student };
 			accounts[index].fullName = state.student.name;
@@ -1681,7 +2044,7 @@
 		}
 		function opportunityRow(opportunity) { return `<button class="opportunity opportunity-button" data-action="view-opportunity" data-title="${esc(opportunity.title)}"><span class="opportunity-icon">▣</span><span class="opportunity-info"><strong>${esc(opportunity.title)}</strong><small>${esc(opportunity.company)} · ${esc(opportunity.location)}<br>${esc(opportunity.skills)}</small></span><span class="match">${esc(opportunity.match)}<small style="display:block;color:var(--muted);font-weight:400">match</small></span></button>`; }
 		function studentApplicationsPage() { const applications = sharedEcosystem().applications.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Applications', `${pageIntro('My Applications', 'Track the same application records companies and institutions see.')}${applications.length ? `<div class="dash-panel">${applications.map((item) => `<div class="application-row"><div><b>${esc(item.opportunity)}</b><p>${esc(item.company)} · ${esc(item.applied || '')} · ${item.match || 0}% Prototype Match Score</p></div><div>${companyStatusTag(item.status || item.stage)}${item.status === 'Offer Sent' ? `<button class="btn btn-primary" data-action="student-accept-offer" data-id="${item.applicationId || item.id}">Accept Offer</button>` : ''}</div></div>`).join('')}</div>` : emptyState('No applications yet. Explore opportunities to get started.')}`); }
-		function studentInterviewsPage() { const interviews = sharedEcosystem().interviews.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Interviews', `${pageIntro('Upcoming Interviews', 'Interview schedules shared by companies.')}${interviews.length ? `<div class="dash-panel">${interviews.map((item) => `<div class="application-row"><div><b>${esc(item.opportunity)}</b><p>${esc(item.candidateName)} · ${esc(item.date)} ${esc(item.time || '')}</p></div>${companyStatusTag(item.status)}</div>`).join('')}</div>` : emptyState('No interviews scheduled.')}`); }
+		function studentInterviewsPage() { const interviews = sharedEcosystem().interviews.filter((item) => item.studentId === studentIdForSession()); const recent = (state.mockInterviews || []).slice(0, 3); return shell('student', 'Interviews', `${pageIntro('Interview Center', 'Practice with role-specific questions or review interviews scheduled by companies.', '<button class="btn btn-primary" data-action="route" data-route="/student/mock-interview">Start Mock Interview</button>')}${recent.length ? `<section class="dash-panel"><div class="panel-head"><h3>Recent Practice Results</h3></div>${recent.map((item) => `<div class="application-row"><div><b>${esc(item.role)}</b><p>${esc(item.difficulty)} · ${new Date(item.completedAt).toLocaleDateString()}</p></div><span class="tag ${item.score >= 65 ? 'success' : 'warning'}">${item.score}% · ${esc(item.level)}</span></div>`).join('')}</section>` : ''}<section class="dash-panel"><div class="panel-head"><h3>Scheduled Interviews</h3></div>${interviews.length ? interviews.map((item) => `<div class="application-row"><div><b>${esc(item.opportunity)}</b><p>${esc(item.candidateName)} · ${esc(item.date)} ${esc(item.time || '')}</p></div>${companyStatusTag(item.status)}</div>`).join('') : emptyState('No interviews scheduled.')}</section>`); }
 		function studentOffersPage() { const offers = sharedEcosystem().offers.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Offers', `${pageIntro('Offers', 'Review offers connected to your applications.')}${offers.length ? `<div class="dash-panel">${offers.map((item) => `<div class="application-row"><div><b>${esc(item.opportunity)}</b><p>${esc(item.candidateName || state.student.name)}</p></div>${companyStatusTag(item.status)}${item.status === 'Offer Sent' ? `<button class="btn btn-primary" data-action="student-accept-offer" data-id="${item.applicationId}">Accept Offer</button>` : ''}</div>`).join('')}</div>` : emptyState('No offers received yet.')}`); }
 		function studentInternshipsPage() { const items = sharedEcosystem().internships.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Internships', `${pageIntro('My Internships', 'Track active and completed internships.')}${items.length ? `<div class="dash-panel">${items.map((item) => `<div class="application-row"><div><b>${esc(item.title)}</b><p>${esc(item.company)} · ${esc(item.startDate || '')} to ${esc(item.endDate || '')}</p></div>${companyStatusTag(item.status)}</div>`).join('')}</div>` : emptyState('No internships yet.')}`); }
 		function studentPlacementsPage() { const items = sharedEcosystem().placements.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Placements', `${pageIntro('My Placements', 'Track accepted job outcomes.')}${items.length ? `<div class="dash-panel">${items.map((item) => `<div class="application-row"><div><b>${esc(item.role || item.opportunity)}</b><p>${esc(item.company || '')} · Joining ${esc(item.joiningDate || 'To be confirmed')}</p></div>${companyStatusTag(item.status)}</div>`).join('')}</div>` : emptyState('No placements yet.')}`); }
@@ -1705,7 +2068,6 @@
 		function settingsPage(role) { return shell(role, 'Settings', `${pageIntro('Settings', 'Manage your prototype workspace preferences.') }<form class="dash-panel editable-form" data-form="settings"><label><input type="checkbox" name="emailUpdates" ${state.settings.emailUpdates ? 'checked' : ''}> Email updates</label><label><input type="checkbox" name="profileVisibility" ${state.settings.profileVisibility ? 'checked' : ''}> Make my profile visible to matches</label><label><input type="checkbox" name="compactView" ${state.settings.compactView ? 'checked' : ''}> Use compact workspace view</label><button class="btn btn-primary" type="submit">Save settings</button><button class="btn btn-light" type="button" data-action="logout">Log out</button></form>`); }
 		function markNotification(id, button) { const notification = state.notifications.find((item) => item.id === id); if (notification) notification.read = true; saveState(); button.closest('.notification-row')?.remove(); }
 		function notificationPanel() { return `<div class="modal-backdrop" onclick="this.remove()"><div class="modal-card notification-panel" onclick="event.stopPropagation()"><button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">×</button><h2>Notifications</h2>${state.notifications.length ? state.notifications.map((item) => `<div class="notification-row ${item.read ? '' : 'unread'}"><span>${esc(item.text)}<small>${esc(item.time)}</small></span>${item.read ? '' : `<button class="btn-plain" onclick="markNotification('${item.id}', this)">Mark read</button>`}</div>`).join('') : emptyState('You are all caught up.')}</div></div>`; }
-		function institutionDashboardPage() { return shell('institution', 'Institution Dashboard', `${pageIntro(state.institution.title, state.institution.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Students</span></div><div class="kpi-value">2,450</div></div><div class="kpi"><div class="kpi-top"><span>Assessed Students</span></div><div class="kpi-value">1,980</div></div><div class="kpi"><div class="kpi-top"><span>Internship Ready</span></div><div class="kpi-value">68%</div></div><div class="kpi"><div class="kpi-top"><span>Placement Ready</span></div><div class="kpi-value">61%</div></div></div><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Top Student Skill Gaps</h3><button class="btn-plain" data-action="route" data-route="/institution/skills">View details →</button></div>${state.gaps.map((gap) => `<div class="skill"><div class="skill-line"><span>${esc(gap.name)}</span><span>${gap.score}%</span></div><div class="bar"><span style="width:${gap.score}%;background:var(--cyan)"></span></div></div>`).join('')}</section><section class="dash-panel"><div class="panel-head"><h3>Industry Collaboration</h3><button class="btn-plain" data-action="route" data-route="/institution/partnerships">Manage Partnerships →</button></div><div class="metric-row"><span>Active Industry Partners</span><strong>${state.partnerships.length}</strong></div><div class="metric-row"><span>Live Projects</span><strong>18</strong></div><div class="metric-row"><span>Workshops This Year</span><strong>27</strong></div></section></div>`); }
 		function industryDashboardPage() { return shell('company', 'Industry Dashboard', `${pageIntro(state.company.title, state.company.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Active Opportunities</span></div><div class="kpi-value">${state.opportunities.length}</div><div class="kpi-note">${state.opportunities.length} published</div></div><div class="kpi"><div class="kpi-top"><span>Applications</span></div><div class="kpi-value">${state.applications.length}</div><div class="kpi-note">Live prototype data</div></div><div class="kpi"><div class="kpi-top"><span>Shortlisted</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Shortlisted').length}</div></div><div class="kpi"><div class="kpi-top"><span>Selected</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Selected').length}</div></div></div><div class="action-grid"><button class="action" data-action="route" data-route="/company/post-opportunity">＋ Post Opportunity</button><button class="action" data-action="route" data-route="/company/candidates">♙ View Candidates</button><button class="action" data-action="route" data-route="/company/applications">▤ Manage Applications</button><button class="action" data-action="route" data-route="/company/programs">◈ Industry Programs</button></div><section class="dash-panel"><div class="panel-head"><h3>Active Opportunities</h3><button class="btn-plain" data-action="route" data-route="/company/opportunities">Manage all →</button></div>${state.opportunities.slice(0, 3).map((item) => `<div class="application-row"><div><b>${esc(item.title)}</b><p>${esc(item.company)} · ${esc(item.location)}</p></div><button class="btn-plain" data-action="view-opportunity" data-title="${esc(item.title)}">View →</button></div>`).join('')}</section>`); }
 		function companyWorkspaceOrEmpty() { const account = currentCompanyAccount(); const workspace = currentCompanyWorkspace() || { companyId: account?.id || '', opportunities: [], applications: [], shortlist: [], interviews: [], messages: [], notifications: [], offers: [], notes: {}, onboarding: { status: 'Pending', completed: false } }; const ecosystem = sharedEcosystem(); const ownOpportunities = ecosystem.opportunities.filter((item) => item.companyId === account?.id); const ownApplications = ecosystem.applications.filter((item) => item.companyId === account?.id); const ownInterviews = ecosystem.interviews.filter((item) => item.companyId === account?.id); const ownOffers = ecosystem.offers.filter((item) => item.companyId === account?.id); const ownNotifications = ecosystem.notifications.filter((item) => item.targetRole === 'company' && item.targetId === account?.id); return { ...workspace, opportunities: [...workspace.opportunities.filter((item) => !ownOpportunities.some((record) => record.opportunityId === item.opportunityId)), ...ownOpportunities], applications: ownApplications, interviews: ownInterviews, offers: ownOffers, notifications: [...workspace.notifications.filter((item) => !ownNotifications.some((record) => record.id === item.id)), ...ownNotifications] }; }
 		function companyStatusTag(status) { return `<span class="tag ${['Published', 'Shortlisted', 'Interview', 'Selected', 'Offer Sent', 'Accepted', 'Verified'].includes(status) ? 'success' : status === 'Rejected' || status === 'Closed' ? 'warning' : 'blue'}">${esc(status)}</span>`; }
@@ -1734,7 +2096,6 @@
 		function institutionApplications() { const account = currentInstitutionAccount(); const students = institutionStudents(); const studentIds = new Set(students.map((student) => student.studentId || student.id)); return sharedEcosystem().applications.filter((item) => item.institutionId === account?.id || studentIds.has(item.studentId)); }
 		function institutionDashboardPage() { const workspace = institutionWorkspaceOrEmpty(); const { students, assessed, verified } = institutionStudentStats(); const applications = institutionApplications(); const activeInternships = workspace.internships.filter((item) => item.status === 'Active').length; const placed = sharedEcosystem().placements.filter((item) => item.institutionId === workspace.institutionId).length; const collaborations = workspace.collaborations.filter((item) => item.status !== 'Closed').length; return shell('institution', 'Institution Dashboard', `${pageIntro(`Good morning, ${state.institution.name || 'Institution'}`, 'Turn student skills into measurable industry readiness.', '<button class="btn btn-primary" data-action="route" data-route="/institution/students">＋ Manage Students</button>')}<div class="kpis">${[['Total Students', students.length, '/institution/students'], ['Students Assessed', assessed.length, '/institution/assessments'], ['Verified Skills', verified.length, '/institution/skills'], ['Active Applications', applications.filter((item) => !['Rejected', 'Accepted'].includes(item.status)).length, '/institution/placements'], ['Students Shortlisted', applications.filter((item) => item.status === 'Shortlisted').length, '/institution/placements'], ['Active Internships', activeInternships, '/institution/internships'], ['Students Placed', placed, '/institution/placements'], ['Collaborations', collaborations, '/institution/partnerships']].map(([label, value, route]) => `<button class="kpi" data-action="route" data-route="${route}"><div class="kpi-top"><span>${label}</span><span class="kpi-icon">◉</span></div><div class="kpi-value">${value}</div><div class="kpi-note">Open section →</div></button>`).join('')}</div><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Skill Demand Summary</h3><button class="btn-plain" data-action="route" data-route="/institution/skill-gaps">View gaps →</button></div>${workspace.opportunities?.length ? workspace.opportunities.map((item) => `<div class="metric-row"><span>${esc(item.skill)}</span><strong>${item.count}</strong></div>`).join('') : emptyState('Skill analytics will appear after students are added.')}</section><section class="dash-panel"><div class="panel-head"><h3>Pending Actions</h3><button class="btn-plain" data-action="route" data-route="/institution/notifications">View all →</button></div>${workspace.notifications.length ? workspace.notifications.slice(0, 5).map((item) => `<div class="metric-row"><span>${esc(item.text)}</span><small>${esc(item.time || '')}</small></div>`).join('') : emptyState('No pending actions.')}</section></div>`); }
 		function institutionProfilePage() { const account = currentInstitutionAccount(); const profile = account?.profile || state.institution; const workspace = institutionWorkspaceOrEmpty(); return shell('institution', 'Institution Profile', `${pageIntro('Institution Profile', 'Manage the profile students and industry partners see.', '<button class="btn btn-light" data-action="institution-preview-profile">Preview Public Profile</button>')}<form class="dash-panel editable-form" data-form="institution-profile"><label>Institution Name</label><input name="name" value="${esc(profile.name)}" required><label>Official Email</label><input name="email" type="email" value="${esc(profile.email || account?.email)}" required><label>About Institution</label><textarea name="description" rows="4">${esc(profile.description || '')}</textarea><label>Institution Type</label><input name="institutionType" value="${esc(profile.institutionType || '')}" required><label>Affiliation / University</label><input name="affiliation" value="${esc(profile.affiliation || '')}"><label>Website</label><input name="website" type="url" value="${esc(profile.website || '')}"><label>Location</label><input name="location" value="${esc(profile.location || '')}"><label>Departments</label><input name="departments" value="${esc(profile.departments || '')}" placeholder="CSE, ECE, Management"><label>Courses / Programs</label><input name="courses" value="${esc(profile.courses || '')}"><div class="metric-row"><span>Verification status</span>${companyStatusTag(workspace.onboarding?.status || 'Pending')}</div><button class="btn btn-primary" type="submit">Save Changes</button></form>`); }
-		function institutionStudentsPage() { const { students } = institutionStudentStats(); return shell('institution', 'Students', `${pageIntro('Student Management', 'Manage institutional student records and readiness.', '<button class="btn btn-primary" data-action="institution-add-student">＋ Add Student</button>')}<div class="form-row"><input class="page-search" data-action="filter" placeholder="⌕ Search students" aria-label="Search students"><button class="btn btn-light" data-action="institution-download-template">Download Template</button><button class="btn btn-light" data-action="institution-import-demo">Import Records</button></div><div class="dash-panel" style="margin-top:18px">${students.length ? students.map((student) => { const skills = student.workspace?.skills || student.skills || []; const assessments = student.workspace?.assessments || student.assessments || []; return `<div class="application-row" data-searchable="${esc(`${student.name || ''} ${student.email || ''} ${student.course || ''} ${student.department || ''}`)}"><div><b>${esc(student.name || 'Student')}</b><p>${esc(student.studentId || student.id || '')} · ${esc(student.course || 'Course not set')} · ${esc(student.year || '')}</p></div><div><small>${assessments.length ? 'Assessed' : 'Pending assessment'} · ${skills.length} skills</small><br><button class="btn-plain" data-action="institution-view-student" data-id="${student.studentId || student.id}">View Profile</button></div></div>`; }).join('') : emptyState('No students added yet. Add students or import your student list to begin.')}</div>`); }
 		function institutionAssessmentsPage() { const { students, assessed } = institutionStudentStats(); const pending = students.length - assessed.length; const allAssessments = assessed.flatMap((student) => student.workspace?.assessments || student.assessments || []); const average = allAssessments.length ? Math.round(allAssessments.reduce((sum, item) => sum + item.score, 0) / allAssessments.length) : 0; return shell('institution', 'Assessments', `${pageIntro('Assessment Monitoring', 'Monitor completion and verified assessment outcomes.')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Students Assessed</span></div><div class="kpi-value">${assessed.length}</div></div><div class="kpi"><div class="kpi-top"><span>Students Pending</span></div><div class="kpi-value">${pending}</div></div><div class="kpi"><div class="kpi-top"><span>Assessments Completed</span></div><div class="kpi-value">${allAssessments.length}</div></div><div class="kpi"><div class="kpi-top"><span>Average Score</span></div><div class="kpi-value">${average}%</div></div></div>${allAssessments.length ? `<section class="dash-panel"><div class="panel-head"><h3>Recent Results</h3></div>${allAssessments.map((item) => `<div class="metric-row"><span>${esc(item.skill)}</span><strong>${item.score}% · ${esc(item.rating || 'Assessed')}</strong></div>`).join('')}</section>` : emptyState('No assessments completed yet.')}`); }
 		function institutionSkillsAnalyticsPage() { const { students } = institutionStudentStats(); const skills = students.flatMap((student) => student.workspace?.skills || student.skills || []); const grouped = skills.reduce((map, skill) => { const key = skill.name || 'Unknown'; map[key] = map[key] || []; map[key].push(skill.score || 0); return map; }, {}); return shell('institution', 'Skill Analytics', `${pageIntro('Institution Skill Analytics', 'Understand real verified skill signals across your students.', '<button class="btn btn-light" data-action="institution-export-report" data-report="skills">Export Report</button>')}${Object.keys(grouped).length ? `<section class="dash-panel">${Object.entries(grouped).map(([name, scores]) => { const average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length); return `<div class="skill"><div class="skill-line"><b>${esc(name)}</b><span>${average}% · ${scores.length} students</span></div><div class="bar"><span style="width:${average}%;background:var(--cyan)"></span></div></div>`; }).join('')}</section>` : emptyState('No student skill data yet. Add students or wait for assessments to appear.')}`); }
 		function institutionSkillGapsPage() { const { students } = institutionStudentStats(); const opportunities = state.opportunities.filter((item) => item.companyId || item.status === 'Published'); const required = [...new Set(opportunities.flatMap((item) => item.requirements?.required || normalizeSkillList(item.skills)))]; const skills = students.flatMap((student) => student.workspace?.skills || student.skills || []).map((skill) => skill.name?.toLowerCase()); const missing = required.filter((skill) => !skills.includes(skill.toLowerCase())); return shell('institution', 'Skill Gaps', `${pageIntro('Skill Gap Analysis', 'Compare student skills with current company opportunity requirements.', '<button class="btn btn-light" data-action="institution-export-report" data-report="gaps">Export Gap Report</button>')}${required.length ? `<section class="dash-panel"><div class="panel-head"><h3>Industry Required Skills</h3></div>${required.map((skill) => `<div class="metric-row"><span>${esc(skill)}</span>${missing.includes(skill) ? '<span class="tag warning">Needs development</span>' : '<span class="tag success">Present in student data</span>'}</div>`).join('')}</section><section class="dash-panel"><h3>Recommended Development Focus</h3>${missing.length ? `<p>${esc(missing.join(', '))}</p><button class="btn btn-primary" data-action="route" data-route="/institution/learning">Create Development Plan</button>` : emptyState('No common gaps detected from current opportunity requirements.')}</section>` : emptyState('No company opportunity requirements are available yet.')}`); }
@@ -1802,6 +2163,52 @@
 		}
 		function getStrongAreas(breakdown) {
 			return breakdown.filter(t => t.score >= WEAK_THRESHOLD);
+		}
+		function mockInterviewQuestions(role, difficulty) {
+			return MOCK_INTERVIEW_QUESTIONS[role]?.[difficulty] || MOCK_INTERVIEW_QUESTIONS['Software Engineer'][difficulty];
+		}
+		function evaluateMockAnswer(answer, question) {
+			const normalized = normalizedAssistantText(answer);
+			const matched = question.concepts.filter((concept) => normalized.includes(concept));
+			const completeness = Math.min(1, normalized.split(' ').filter(Boolean).length / 28);
+			const score = Math.min(100, Math.round((matched.length / question.concepts.length) * 75 + completeness * 25));
+			const level = score >= 80 ? 'Strong' : score >= 60 ? 'Good' : score >= 40 ? 'Developing' : 'Needs Improvement';
+			return {
+				score,
+				level,
+				matched,
+				feedback: matched.length ? `You covered ${matched.slice(0, 3).join(', ')}. Add a concrete example and explain the tradeoff or outcome.` : 'Your answer needs more role-specific concepts and a concrete example.',
+				improvement: `Try to address: ${question.concepts.join(', ')}. Keep the answer structured with the approach, reasoning, and result.`
+			};
+		}
+		function mockInterviewLevel(score) { return score >= 80 ? 'Excellent' : score >= 65 ? 'Good' : score >= 45 ? 'Developing' : 'Needs Improvement'; }
+		function mockInterviewResultPage() {
+			const result = state.mockInterviewSession?.result;
+			if (!result) return mockInterviewPage();
+			return shell('student', 'Mock Interview Result', `${pageIntro(`${esc(result.role)} Interview`, 'Prototype evaluation based on predefined concepts.')}<section class="dash-panel assessment-result"><span class="tag ${result.score >= 65 ? 'success' : 'warning'}">${esc(result.level)}</span><h2>Overall Score</h2><div class="assessment-score">${result.score}%</div><p><b>Questions answered:</b> ${result.answers.length}<br><b>Difficulty:</b> ${esc(result.difficulty)}<br><b>Evaluation:</b> Keyword and completeness rubric, not AI scoring.</p></section><section class="dash-panel"><div class="panel-head"><h3>Strong Areas</h3></div><p>${esc(result.strongAreas.length ? result.strongAreas.join(', ') : 'No strong areas identified yet.')}</p><div class="panel-head" style="margin-top:20px"><h3>Needs Improvement</h3></div><p>${esc(result.weakAreas.length ? result.weakAreas.join(', ') : 'No major weak areas identified.')}</p></section><section class="dash-panel"><div class="card-actions"><button class="btn btn-primary" data-action="route" data-route="/student/mock-interview">Try Again</button><button class="btn btn-light" data-action="route" data-route="/student/skills">Improve Weak Areas</button><button class="btn-plain" data-action="route" data-route="/student/dashboard">Back to Dashboard</button></div></section>`);
+		}
+		function mockInterviewPage() {
+			const session = state.mockInterviewSession;
+			if (!session) return shell('student', 'Mock Interview', `${pageIntro('Practice Interview', 'Answer role-specific questions and receive a transparent prototype evaluation.')}<section class="dash-panel editable-form"><label for="mock-interview-role">Target role</label><select id="mock-interview-role" data-mock-role>${Object.keys(MOCK_INTERVIEW_QUESTIONS).map((role) => `<option>${esc(role)}</option>`).join('')}</select><label for="mock-interview-difficulty">Difficulty</label><select id="mock-interview-difficulty" data-mock-difficulty><option>Easy</option><option>Medium</option><option>Hard</option></select><p class="muted">Evaluation uses predefined expected concepts and answer completeness. It is not an AI evaluation.</p><button class="btn btn-primary" data-action="start-mock-interview">Start Interview</button></section>`);
+			if (session.result) return mockInterviewResultPage();
+			const question = session.questions[session.index];
+			const answer = session.answers[session.index]?.answer || '';
+			const evaluation = session.answers[session.index]?.evaluation;
+			return shell('student', 'Mock Interview', `${pageIntro(`${esc(session.role)} · ${esc(session.difficulty)}`, `Question ${session.index + 1} of ${session.questions.length}`)}<section class="dash-panel assessment-question"><div class="assessment-progress"><span style="width:${((session.index + 1) / session.questions.length) * 100}%"></span></div><h3>${esc(question.question)}</h3><textarea rows="7" data-mock-answer placeholder="Write your answer here...">${esc(answer)}</textarea><div class="card-actions"><button class="btn btn-light" data-action="cancel-mock-interview">Cancel</button>${evaluation ? `<button class="btn btn-primary" data-action="next-mock-question">${session.index === session.questions.length - 1 ? 'See Final Result' : 'Next Question →'}</button>` : `<button class="btn btn-primary" data-action="evaluate-mock-answer">Evaluate Answer</button>`}</div>${evaluation ? `<div class="assessment-result" style="margin-top:20px"><span class="tag ${evaluation.score >= 65 ? 'success' : 'warning'}">${evaluation.score}% · ${esc(evaluation.level)}</span><p><b>What went well:</b> ${esc(evaluation.feedback)}</p><p><b>Improve:</b> ${esc(evaluation.improvement)}</p><p><b>Suggested concepts:</b> ${esc(question.concepts.join(', '))}</p></div>` : ''}</section>`);
+		}
+		function saveMockInterviewResult(session) {
+			const answers = session.answers;
+			const score = Math.round(answers.reduce((total, item) => total + item.evaluation.score, 0) / Math.max(1, answers.length));
+			const result = { role: session.role, difficulty: session.difficulty, score, level: mockInterviewLevel(score), answers, strongAreas: answers.filter((item) => item.evaluation.score >= 65).map((item) => item.question), weakAreas: answers.filter((item) => item.evaluation.score < 65).map((item) => item.question), completedAt: new Date().toISOString() };
+			state.mockInterviews = [result, ...(state.mockInterviews || [])].slice(0, 10);
+			session.result = result;
+			saveState();
+			persistCurrentStudentWorkspace();
+			return result;
+		}
+		function mockInterviewDashboardMarkup() {
+			const recent = (state.mockInterviews || [])[0];
+			return `<section class="dash-panel mock-interview-dashboard"><div class="panel-head"><div><h3>Mock Interview Practice</h3><p class="muted">Build interview confidence with transparent role-based feedback.</p></div><button class="btn btn-light" data-action="route" data-route="/student/mock-interview">Practice now</button></div>${recent ? `<div class="application-row"><div><b>Latest: ${esc(recent.role)}</b><p>${esc(recent.difficulty)} · ${new Date(recent.completedAt).toLocaleDateString()}</p></div><span class="tag ${recent.score >= 65 ? 'success' : 'warning'}">${recent.score}% · ${esc(recent.level)}</span></div>` : '<p class="muted">No practice interview completed yet.</p>'}</section>`;
 		}
 		function assessmentPage() {
 			const result = state.assessmentResult;
@@ -1927,6 +2334,18 @@
 			if (action === 'clear-global-search') { const input = document.querySelector('[data-global-search-input]'); if (input) { input.value = ''; input.focus(); renderGlobalSearch(); } return; }
 		}
 		function bindFunctionalEvents() {
+			if (!document.body.dataset.demoLoginBound) {
+				document.body.addEventListener('click', (event) => {
+					const button = event.target.closest('[data-demo]');
+					if (!button || button.dataset.demo === 'student') return;
+					const role = button.dataset.demo === 'industry' ? 'company' : 'institution';
+					const accounts = role === 'company' ? loadCompanyAccounts() : loadInstitutionAccounts();
+					const account = accounts.find((item) => item.demoAccount);
+					if (role === 'company') startCompanySession(account);
+					else startInstitutionSession(account);
+				}, true);
+				document.body.dataset.demoLoginBound = 'true';
+			}
 			if (!document.body.dataset.actionDelegationBound) {
 				document.body.addEventListener('click', (event) => {
 					const element = event.target.closest('[data-action]');
@@ -1958,6 +2377,10 @@
 						return;
 					}
 					if (action === 'select-assessment' || action === 'retake-assessment') { state.assessmentResult = null; state.assessmentSession = { skill: element.dataset.skill, index: 0, answers: [] }; renderFunctional(); return; }
+					if (action === 'start-mock-interview') { const role = document.querySelector('[data-mock-role]')?.value || 'Software Engineer'; const difficulty = document.querySelector('[data-mock-difficulty]')?.value || 'Easy'; state.mockInterviewSession = { role, difficulty, index: 0, questions: mockInterviewQuestions(role, difficulty), answers: [] }; saveState(); renderFunctional(); return; }
+					if (action === 'evaluate-mock-answer') { const session = state.mockInterviewSession; const answer = document.querySelector('[data-mock-answer]')?.value.trim() || ''; if (!answer) { showToast('Write an answer before evaluating.'); return; } const question = session.questions[session.index]; session.answers[session.index] = { question: question.question, answer, evaluation: evaluateMockAnswer(answer, question) }; saveState(); renderFunctional(); return; }
+					if (action === 'next-mock-question') { const session = state.mockInterviewSession; if (!session.answers[session.index]?.evaluation) return; if (session.index === session.questions.length - 1) { saveMockInterviewResult(session); renderFunctional(); return; } session.index += 1; saveState(); renderFunctional(); return; }
+					if (action === 'cancel-mock-interview') { delete state.mockInterviewSession; saveState(); go('/student/interviews'); return; }
 					if (action === 'cancel-assessment') { delete state.assessmentSession; go('/student/skills'); return; }
 					if (action === 'next-assessment' || action === 'submit-assessment') { const choice = document.querySelector('input[name="assessment-answer"]:checked'); if (!choice) { showToast('Please select an answer.'); return; } const session = state.assessmentSession; session.answers[session.index] = Number(choice.value); const questions = ASSESSMENT_QUESTIONS[session.skill]; if (action === 'next-assessment') { session.index += 1; renderFunctional(); return; } const correct = session.answers.reduce((total, answer, index) => total + (answer === questions[index].a ? 1 : 0), 0); const score = Math.round((correct / questions.length) * 100); const topicBreakdown = calculateTopicBreakdown(session.skill, session.answers); const result = { skill: session.skill, score, correct, total: questions.length, rating: assessmentRating(score), topicBreakdown, completedAt: new Date().toISOString() }; state.assessments = (state.assessments || []).filter((item) => item.skill !== result.skill); state.assessments.push(result); state.skills = state.assessments.map((item) => ({ name: item.skill, score: item.score, status: item.rating })); state.assessmentResult = result; delete state.assessmentSession; saveState(); notify(`${result.skill} assessment completed with ${score}%.`); renderFunctional(); return; }
 					if (action === 'close-assessment') { document.getElementById('assessment-area').innerHTML = ''; return; }
@@ -2442,6 +2865,13 @@
 			else if (path === '/role-selection') app.innerHTML = roleSelection();
 			else if (match) { const [, role, section] = match; const normalizedRole = normalizeRole(role); const pages = { dashboard: normalizedRole === 'student' ? studentDashboardPage : normalizedRole === 'company' ? companyDashboardPage : institutionDashboardPage, profile: normalizedRole === 'company' ? companyProfilePage : normalizedRole === 'institution' ? institutionProfilePage : () => profilePage(normalizedRole), skills: normalizedRole === 'student' ? skillsPage : normalizedRole === 'institution' ? institutionSkillsAnalyticsPage : institutionSkillsPage, opportunities: normalizedRole === 'company' ? companyOpportunitiesPage : () => opportunitiesPage(normalizedRole), applications: normalizedRole === 'student' ? studentApplicationsPage : normalizedRole === 'company' ? companyApplicationsPage : () => applicationsPage(normalizedRole), shortlist: companyShortlistPage, interviews: normalizedRole === 'student' ? studentInterviewsPage : companyInterviewsPage, offers: studentOffersPage, messages: companyMessagesPage, notifications: normalizedRole === 'student' ? studentNotificationsPage : normalizedRole === 'institution' ? institutionNotificationsPage : companyNotificationsPage, settings: normalizedRole === 'institution' ? institutionSettingsPage : () => settingsPage(normalizedRole), 'career-path': careerPage, candidates: companyCandidatesPage, analytics: normalizedRole === 'company' ? companyAnalyticsPage : normalizedRole === 'institution' ? institutionAnalyticsPage : () => analyticsPage(normalizedRole), partnerships: normalizedRole === 'institution' ? institutionPartnershipsPage : partnershipsPage, 'post-opportunity': normalizedRole === 'company' ? companyOpportunityFormPage : postOpportunityPage, programs: programsPage, onboarding: normalizedRole === 'company' ? companyOnboardingPage : normalizedRole === 'institution' ? institutionOnboardingPage : onboardingPage, assessment: normalizedRole === 'student' ? assessmentPage : institutionAssessmentsPage, 'skill-profile': skillProfilePage, 'skill-gaps': normalizedRole === 'institution' ? institutionSkillGapsPage : skillGapsPage, 'learning-recommendations': learningRecommendationsPage, students: institutionStudentsPage, assessments: institutionAssessmentsPage, learning: institutionLearningPage, internships: normalizedRole === 'student' ? studentInternshipsPage : institutionInternshipsPage, placements: normalizedRole === 'student' ? studentPlacementsPage : institutionPlacementsPage, industry: institutionIndustryPage, faculty: institutionFacultyPage, reports: institutionReportsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
 			else app.innerHTML = notFound();
+			if (path === '/login' || path === '/register') {
+				const backLink = app.querySelector('.form-wrap > .btn-plain');
+				if (backLink) { backLink.href = '#/'; backLink.textContent = '← Back to home'; }
+				const submit = app.querySelector('form[data-form="register"] button[type="submit"]');
+				if (submit) submit.textContent = 'Create Account';
+			}
+			if (path === '/student/dashboard') document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', mockInterviewDashboardMarkup());
 			bindFunctionalEvents();
 			setupLandingExperience();
 			setupPageMotion();

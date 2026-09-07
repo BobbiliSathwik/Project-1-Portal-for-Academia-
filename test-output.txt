@@ -1,0 +1,20 @@
+
+Running 40 tests using 1 worker
+
+  ✓   1 [chromium] › tests/skillaura.spec.ts:5:3 › Homepage & Navigation › Homepage loads successfully (3.5s)
+  ✓   2 [chromium] › tests/skillaura.spec.ts:15:3 › Homepage & Navigation › Navigation links are visible (2.1s)
+  ✘   3 [chromium] › tests/skillaura.spec.ts:26:3 › Homepage & Navigation › Back to home button works (30.5s)
+  ✓   4 [chromium] › tests/skillaura.spec.ts:43:3 › Theme Switching › White/Black theme toggle works (12.0s)
+  ✘   5 [chromium] › tests/skillaura.spec.ts:69:3 › Theme Switching › Theme preference persists across page navigation (95ms)
+  ✘   6 [chromium] › tests/skillaura.spec.ts:86:3 › Theme Switching › Text and icons remain visible in dark theme (104ms)
+  ✓   7 [chromium] › tests/skillaura.spec.ts:102:3 › Theme Switching › Scroll background transition exists (12.2s)
+  ✓   8 [chromium] › tests/skillaura.spec.ts:113:3 › Authentication - Login › Login page loads successfully (5.9s)
+  ✘   9 [chromium] › tests/skillaura.spec.ts:127:3 › Authentication - Login › Login with demo student account (30.4s)
+  ✘  10 [chromium] › tests/skillaura.spec.ts:146:3 › Authentication - Login › Demo company account can login (1.7s)
+  ✘  11 [chromium] › tests/skillaura.spec.ts:165:3 › Authentication - Login › Demo institution account can login (2.2s)
+  ✘  12 [chromium] › tests/skillaura.spec.ts:186:3 › Student Registration › Registration page loads successfully (1.5s)
+  ✘  13 [chromium] › tests/skillaura.spec.ts:202:3 › Student Registration › Registration form requires all fields (30.5s)
+  ✘  14 [chromium] › tests/skillaura.spec.ts:216:3 › Student Registration › Registration can be completed with valid data (30.1s)
+  ✘  15 [chromium] › tests/skillaura.spec.ts:256:3 › Student Dashboard › Student dashboard opens correctly (30.5s)
+  ✘  16 [chromium] › tests/skillaura.spec.ts:265:3 › Student Dashboard › Sidebar navigation is visible (30.5s)
+  ✘  17 [chromium] › tests/skillaura.spec.ts:273:3 › Student Dashboard › Logout button is present and works (30.4s)

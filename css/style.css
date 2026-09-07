@@ -3176,6 +3176,29 @@
 			margin: 0;
 		}
 
+		.ai-message h3,
+		.ai-message h4 {
+			margin: 0 0 8px;
+			font-size: 14px;
+		}
+
+		.ai-message ul,
+		.ai-message ol {
+			margin: 7px 0;
+			padding-left: 20px;
+		}
+
+		.ai-message li + li {
+			margin-top: 4px;
+		}
+
+		.ai-message code {
+			padding: 1px 4px;
+			border-radius: 4px;
+			background: var(--theme-bg);
+			font-size: .92em;
+		}
+
 		.ai-message.assistant {
 			border: 1px solid var(--line);
 			background: #fff;
@@ -3290,7 +3313,7 @@
 			background: var(--blue);
 		}
 
-		.ai-skill-list {
+		.ainpm run dev-skill-list {
 			margin-top: 10px;
 			border-top: 1px solid var(--line);
 		}
