@@ -1117,6 +1117,9 @@
 		}
 
 		.role-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 			padding: 28px 0;
 		}
 
@@ -1173,6 +1176,13 @@
 			line-height: 1.6;
 			font-size: 14px;
 			margin-bottom: 20px;
+		}
+
+		.role-option strong {
+			margin-bottom: 22px;
+			color: var(--cyan);
+			font-size: 12px;
+			line-height: 1.5;
 		}
 
 		.app {
@@ -1235,6 +1245,8 @@
 		}
 
 		.topbar {
+			position: relative;
+			z-index: 30;
 			height: 76px;
 			display: flex;
 			align-items: center;
@@ -1254,7 +1266,188 @@
 			gap: 19px;
 		}
 
-		.search {
+		.global-search {
+			position: relative;
+			z-index: 60;
+			width: min(310px, 32vw);
+		}
+
+		.global-search-input-wrap {
+			position: relative;
+			display: flex;
+			align-items: center;
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			background: var(--theme-surface-alt);
+		}
+
+		.global-search.is-focused .global-search-input-wrap,
+		.global-search-input-wrap:focus-within {
+			border-color: var(--blue);
+			background: var(--theme-surface);
+		}
+
+		.global-search-icon {
+			padding-left: 12px;
+			color: var(--blue);
+			font-size: 18px;
+			line-height: 1;
+		}
+
+		.global-search .search {
+			width: 100%;
+			border: 0;
+			padding: 10px 8px;
+			outline: 0;
+			color: var(--theme-text);
+			background: transparent;
+			font-size: 13px;
+			transition: none;
+		}
+
+		.global-search .search::placeholder {
+			color: var(--theme-muted);
+		}
+
+		.global-search kbd {
+			margin-right: 8px;
+			padding: 2px 5px;
+			border: 1px solid var(--line);
+			border-radius: 4px;
+			color: var(--muted);
+			background: var(--theme-surface);
+			font-size: 10px;
+			white-space: nowrap;
+		}
+
+		.global-search-clear {
+			margin-right: 7px;
+			padding: 1px 5px;
+			border-radius: 50%;
+			color: var(--theme-muted);
+			background: transparent;
+			font-size: 18px;
+			line-height: 1;
+		}
+
+		.global-search-clear:hover {
+			color: var(--theme-text);
+			background: var(--line);
+		}
+
+		.global-search-results {
+			position: absolute;
+			z-index: 1;
+			top: calc(100% + 8px);
+			left: 0;
+			right: 0;
+			padding: 7px;
+			border: 1px solid var(--line);
+			border-radius: 10px;
+			background: var(--theme-surface);
+			color: var(--theme-text);
+			box-shadow: 0 18px 42px #17333a24;
+			max-height: min(520px, calc(100vh - 110px));
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+
+		.global-search-result,
+		.global-search-all {
+			display: flex;
+			align-items: center;
+			width: 100%;
+			gap: 10px;
+			padding: 10px;
+			border-radius: 7px;
+			text-align: left;
+			color: var(--theme-text);
+			background: transparent;
+		}
+
+		.global-search-result:hover,
+		.global-search-result.active {
+			background: var(--theme-surface-alt);
+		}
+
+		.global-search-result-icon {
+			display: grid;
+			place-items: center;
+			width: 28px;
+			height: 28px;
+			flex: none;
+			border-radius: 7px;
+			color: var(--blue);
+			background: color-mix(in srgb, var(--blue) 22%, var(--theme-surface));
+		}
+
+		.global-search-result>span:nth-child(2) {
+			min-width: 0;
+			flex: 1;
+		}
+
+		.global-search-result strong,
+		.global-search-result small {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.global-search-result strong {
+			font-size: 12px;
+		}
+
+		.global-search-result small {
+			margin-top: 3px;
+			color: var(--theme-muted);
+			font-size: 10px;
+		}
+
+		.global-search-result small b {
+			color: var(--blue);
+		}
+
+		.global-search-result mark {
+			padding: 0 1px;
+			border-radius: 2px;
+			color: var(--theme-text);
+			background: color-mix(in srgb, var(--blue) 34%, var(--theme-surface));
+		}
+
+		.global-search-arrow {
+			color: var(--theme-muted);
+			font-size: 14px;
+		}
+
+		.global-search-all {
+			justify-content: space-between;
+			margin-top: 3px;
+			border-top: 1px solid var(--line);
+			border-radius: 0 0 7px 7px;
+			padding-top: 11px;
+			color: var(--blue);
+			font-size: 11px;
+			font-weight: 700;
+		}
+
+		.global-search-empty {
+			display: grid;
+			gap: 5px;
+			padding: 18px 12px;
+			text-align: center;
+		}
+
+		.global-search-empty strong {
+			font-size: 13px;
+		}
+
+		.global-search-empty span {
+			color: var(--theme-muted);
+			font-size: 11px;
+		}
+
+		.legacy-search {
 			border: 1px solid var(--line);
 			border-radius: 7px;
 			padding: 9px 13px;
@@ -1735,7 +1928,15 @@
 				padding: 0 18px;
 			}
 
-			.search {
+			.topbar-right {
+				gap: 9px;
+			}
+
+			.global-search {
+				width: min(220px, 42vw);
+			}
+
+			.global-search kbd {
 				display: none;
 			}
 
@@ -1757,6 +1958,31 @@
 		}
 
 		@media(max-width:520px) {
+			.topbar-right {
+				min-width: 0;
+				max-width: 100%;
+			}
+
+			.topbar-right > .tag.blue {
+				display: none;
+			}
+
+			.global-search {
+				width: min(180px, 58vw);
+			}
+
+			.global-search-results {
+				position: fixed;
+				top: 68px;
+				left: 12px;
+				right: 12px;
+				width: auto;
+			}
+
+			.global-search-result {
+				padding: 11px 9px;
+			}
+
 			.container {
 				padding: 0 18px;
 			}
@@ -1932,6 +2158,18 @@
 			background: var(--scroll-soft, var(--theme-surface-alt));
 		}
 
+		html[data-theme="dark"] .landing {
+			--scroll-ink: #f4f7f7;
+			--scroll-muted: #b7c4c5;
+			--scroll-line: #35474b;
+			--scroll-surface: #101719;
+			--scroll-soft: #0b1113;
+		}
+
+		html[data-theme="dark"] #global-background {
+			background: #101719;
+		}
+
 		html[data-theme="dark"] body:not(.home-page) .card,
 		html[data-theme="dark"] body:not(.home-page) .feature,
 		html[data-theme="dark"] body:not(.home-page) .flow-item,
@@ -1955,6 +2193,28 @@
 		background: var(--theme-bg);
 	}
 
+		html[data-theme="light"] .role-page {
+		background: linear-gradient(135deg, #f4fafa, #b8f3ee);
+		color: var(--theme-text);
+	}
+
+		html[data-theme="light"] .role-select h1,
+		html[data-theme="light"] .role-option h2,
+		html[data-theme="light"] .role-option p {
+		color: var(--theme-text);
+	}
+
+		html[data-theme="light"] .role-select > p,
+		html[data-theme="light"] .role-option p {
+		color: var(--theme-muted);
+	}
+
+		html[data-theme="light"] .role-option {
+		background: var(--theme-surface);
+		border-color: var(--theme-border);
+		color: var(--theme-text);
+	}
+
 		html[data-theme="dark"] .auth-aside {
 			color: #fff;
 			background: #000;
@@ -1962,11 +2222,42 @@
 
 		html[data-theme="dark"] input,
 		html[data-theme="dark"] select,
-		html[data-theme="dark"] textarea,
-		html[data-theme="dark"] .search {
+		html[data-theme="dark"] textarea {
 		color: var(--theme-text);
 		background: var(--theme-surface-alt);
 		border-color: var(--theme-border);
+	}
+
+		html[data-theme="dark"] .global-search-input-wrap {
+		background: var(--theme-surface-alt);
+		border-color: var(--theme-border);
+	}
+
+		html[data-theme="dark"] .global-search-input-wrap:focus-within,
+		html[data-theme="dark"] .global-search.is-focused .global-search-input-wrap {
+		background: var(--theme-surface);
+		border-color: var(--blue);
+	}
+
+		html[data-theme="dark"] .global-search .search {
+		color: var(--theme-text);
+		background: transparent;
+	}
+
+		html[data-theme="light"] .global-search-input-wrap {
+		background: var(--theme-surface-alt);
+		border-color: var(--theme-border);
+	}
+
+		html[data-theme="light"] .global-search-input-wrap:focus-within,
+		html[data-theme="light"] .global-search.is-focused .global-search-input-wrap {
+		background: var(--theme-surface);
+		border-color: var(--blue);
+	}
+
+		html[data-theme="light"] .global-search .search {
+		color: var(--theme-text);
+		background: transparent;
 	}
 
 		html[data-theme="dark"] input::placeholder,
@@ -2741,28 +3032,40 @@
 
 		.ai-assistant {
 			position: fixed;
-			right: 24px;
-			bottom: 24px;
-			z-index: 30;
+			left: 0;
+			top: 0;
+			z-index: 35;
+			display: flex;
+			align-items: flex-end;
+			justify-content: flex-end;
+			pointer-events: none;
 			font-size: 13px;
+		}
+
+		.ai-assistant > * {
+			pointer-events: auto;
 		}
 
 		.ai-launcher {
 			display: flex;
 			align-items: center;
-			gap: 9px;
-			padding: 13px 17px;
-			border-radius: 24px;
+			justify-content: center;
+			width: 50px;
+			height: 50px;
+			padding: 0;
+			border-radius: 50%;
 			color: var(--ink);
 			background: var(--blue);
 			box-shadow: 0 10px 24px #17333a2b;
 			font-weight: 700;
-			transition: .2s;
+			cursor: grab;
+			touch-action: none;
+			user-select: none;
 		}
 
-		.ai-launcher:hover {
+		.ai-launcher:active {
 			background: var(--cyan);
-			transform: translateY(-2px);
+			cursor: grabbing;
 		}
 
 		.ai-launcher-icon {
@@ -2772,13 +3075,14 @@
 			height: 23px;
 			border-radius: 50%;
 			color: var(--blue);
-			background: #fff;
+			background: var(--theme-surface);
+			pointer-events: none;
 		}
 
 		.ai-panel {
 			position: absolute;
-		right: 0;
-			bottom: 62px;
+			right: 0;
+			bottom: calc(100% + 12px);
 			display: flex;
 			flex-direction: column;
 			width: min(390px, calc(100vw - 32px));
@@ -3009,29 +3313,52 @@
 			color: var(--amber);
 		}
 
-		@media(max-width:520px) {
+		@media(max-width:768px) {
 			.ai-assistant {
-				right: 16px;
-				bottom: 16px;
+				z-index: 35;
 			}
 
-			.ai-launcher-label {
-				display: none;
+			.ai-panel {
+				width: min(360px, calc(100vw - 28px));
+			}
+		}
+
+		@media(max-width:520px) {
+			.ai-assistant {
+				z-index: 35;
 			}
 
 			.ai-launcher {
 				width: 50px;
 				height: 50px;
-				justify-content: center;
-				padding: 0;
-				border-radius: 50%;
 			}
 
 			.ai-panel {
-				right: -1px;
-				bottom: 62px;
-				width: calc(100vw - 32px);
+				right: 0;
+				bottom: calc(100% + 10px);
+				width: calc(100vw - 20px);
 				height: min(570px, calc(100vh - 95px));
 				min-height: 390px;
 			}
+		}
+
+		html[data-theme="dark"] .role-page {
+			background: var(--theme-bg) !important;
+			color: var(--theme-text);
+		}
+
+		html[data-theme="dark"] .role-option {
+			background: var(--theme-surface) !important;
+			border-color: var(--theme-border);
+			color: var(--theme-text);
+		}
+
+		html[data-theme="dark"] .role-select h1,
+		html[data-theme="dark"] .role-option h2,
+		html[data-theme="dark"] .role-option p {
+			color: var(--theme-text);
+		}
+
+		html[data-theme="dark"] .role-select > p {
+			color: var(--theme-muted);
 		}

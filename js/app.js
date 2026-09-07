@@ -84,6 +84,7 @@
 			pendingApplication: null,
 			memory: {}
 		};
+		let globalSearchState = { query: '', results: [], activeIndex: -1, open: false };
 
 		function loadThemePreference() {
 			try {
@@ -121,17 +122,16 @@
 				const session = JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
 				if (!session || typeof session !== 'object') return null;
 				if (session.loggedIn === false && !session.role && !session.userId && !session.id) return null;
-				return {
+				const normalized = {
 					loggedIn: true,
 					role: normalizeRole(session.role || session.accountRole || 'student'),
 					userId: session.userId || session.id || null,
 					name: session.name || session.fullName || '',
 					email: session.email || '',
 					companyId: session.companyId || null,
-					institutionId: session.institutionId || null,
-					...session,
-					loggedIn: true
+					institutionId: session.institutionId || null
 				};
+				return { ...session, ...normalized, loggedIn: true };
 			} catch (error) {
 				return null;
 			}
@@ -140,6 +140,7 @@
 		function persistAuthSession(session) {
 			if (!session || !session.role) return;
 			const payload = {
+				...session,
 				loggedIn: true,
 				role: normalizeRole(session.role),
 				userId: session.userId || session.id || null,
@@ -147,7 +148,6 @@
 				email: session.email || '',
 				companyId: session.companyId || null,
 				institutionId: session.institutionId || null,
-				...session,
 				loggedIn: true
 			};
 			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(payload)); } catch (error) {}
@@ -165,7 +165,7 @@
 			const auth = currentAuthSession();
 			const isLoggedIn = Boolean(auth && auth.loggedIn);
 			const dashboardRoute = currentUserDashboardRoute();
-			const authenticatedNav = isLoggedIn ? `<a href="${dashboardRoute}">Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a><button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `<a href="#/login">Login</a>${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a>`;
+			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a>`;
 			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
 			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
@@ -192,11 +192,12 @@
 
 		function auth(type) {
 			let register = type === 'register';
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:var(--cyan)">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillAura workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:var(--cyan)">Connecting Skills, Academia &amp; Industry</div><h1>${register?'Start building your bridge.':'Your next opportunity starts here.'}</h1><p>${register?'Create a role-based workspace designed for the journey from learning to impact.':'One clear view of your skills, opportunities, and the people helping you move forward.'}</p></div><div class="auth-note">Day 1 prototype · Demo access available</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register?'Create your account':'Welcome back'}</h2><p>${register?'Set up your SkillAura workspace in a few seconds.':'Enter your details or jump straight into a demo workspace.'}</p><div class="form">${register?`<label>Full Name</label><input placeholder="Your full name"><label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><label>Confirm Password</label><input type="password" placeholder="••••••••"><label>Institution / Organization</label><input placeholder="Your institution or organization"><label>Role</label><select onchange="updateRoleFields(this.value)"><option>Student</option><option>Industry</option><option>Institution</option></select><div id="role-fields"></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Create Account</button>`:`<label>Email</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="••••••••"><div class="form-row"><label><input type="checkbox"> Remember me</label><a href="#" class="btn-plain">Forgot password?</a></div><button class="btn btn-primary" onclick="location.hash='#/role-selection'">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" onclick="location.hash='#/student/dashboard'">Demo Student</button><button class="demo-btn" onclick="location.hash='#/industry/dashboard'">Demo Industry</button><button class="demo-btn" onclick="location.hash='#/institution/dashboard'">Demo Institution</button></div>`}</div><div class="switch">${register?'Already have an account?':'Don\'t have an account?'} <a href="#/${register?'login':'register'}">${register?'Login':'Create one'}</a></div></div></main></div>`
 		}
 
+		function portalLoginRoute(role) { const normalizedRole = normalizeRole(role); return normalizedRole === 'company' ? '/company/login' : normalizedRole === 'institution' ? '/institution/login' : '/login'; }
 		function roleSelection() {
-			return `<div class="role-page"><div class="container role-top">${brand()}</div><div class="role-select"><div class="eyebrow">Who are you?</div><h1>Choose Your Workspace</h1><p>Select how you want to use SkillAura.</p><div class="role-options"><button class="role-option" type="button" data-action="choose-role" data-role="student"><div class="icon-box">🎓</div><h2>Student</h2><p>Build your skill profile, discover opportunities, and prepare for your career.</p><span class="btn btn-primary">Continue as Student →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="company"><div class="icon-box">🏢</div><h2>Company</h2><p>Discover suitable candidates, post opportunities, and collaborate with academia.</p><span class="btn btn-primary">Continue as Company →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="institution"><div class="icon-box">🏛️</div><h2>Institution</h2><p>Track student readiness, internships, placement progress, and collaboration.</p><span class="btn btn-primary">Continue as Institution →</span></button></div></div></div>`;
+			return `<div class="role-page"><div class="container role-top"><a class="btn-plain" href="#/">← Home</a>${brand()}</div><div class="role-select"><div class="eyebrow">SkillAura portal entry</div><h1>How would you like to use SkillAura?</h1><p>Choose the workspace that matches your goals.</p><div class="role-options"><button class="role-option" type="button" data-action="choose-role" data-role="student"><div class="icon-box">♙</div><h2>Student</h2><p>Build skills, take assessments, discover opportunities and grow your career.</p><strong>Learn → Assess → Improve → Apply</strong><span class="btn btn-primary">Enter Student Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="institution"><div class="icon-box">⌂</div><h2>Institution</h2><p>Manage students, monitor skill development and connect with industry.</p><strong>Develop Students → Track Skills → Connect Industry</strong><span class="btn btn-primary">Enter Institution Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="company"><div class="icon-box">▤</div><h2>Company</h2><p>Find skilled candidates, post opportunities and recruit talent.</p><strong>Post Opportunities → Find Talent → Recruit</strong><span class="btn btn-primary">Enter Company Portal →</span></button></div></div></div>`;
 		}
 		const dashboardRoutes = {
 			student: {
@@ -258,7 +259,7 @@
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const hidden = ['settings', 'career-path', 'applications', 'programs', 'post-opportunity'];
 			const items = Object.entries(dashboardRoutes[role]).filter(([key]) => !hidden.includes(key));
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key]||'◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()"><span>⚙</span> Settings</a><button class="logout" onclick="location.hash='/'">↪ &nbsp; Logout</button></aside>`
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key]||'◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()"><span>⚙</span> Settings</a><button class="logout" onclick="location.hash='#/'">↪ &nbsp; Logout</button></aside>`
 		}
 
 		function dash(role) {
@@ -315,8 +316,7 @@
 			const icon = role === 'company' ? '▤' : role === 'institution' ? '⌂' : '♙';
 			const labels = prompts[role] || prompts.student;
 			return `<button class="ai-launcher" type="button" aria-label="Open SkillAura AI Assistant" aria-expanded="false">
-				<span class="ai-launcher-icon">✦</span>
-				<span class="ai-launcher-label">SkillAura AI</span>
+				<span class="ai-launcher-icon" aria-hidden="true">✦</span>
 			</button>
 			<div class="ai-panel" aria-hidden="true">
 				<div class="ai-header">
@@ -791,7 +791,7 @@
 				return;
 			}
 
-			if (routes[type]) location.hash = routes[type];
+			if (routes[type]) go(routes[type]);
 		}
 
 		function initChatbot() {
@@ -807,6 +807,85 @@
 			const form = assistant.querySelector('.ai-form');
 			const input = assistant.querySelector('.ai-input');
 			const stopButton = assistant.querySelector('.ai-stop');
+			const launcherPositionKey = 'skillaura-ai-launcher-position';
+			const dragThreshold = 5;
+			let dragStart = null;
+			let dragged = false;
+			let suppressClick = false;
+
+			const readLauncherPosition = () => {
+				try {
+					const saved = JSON.parse(localStorage.getItem(launcherPositionKey));
+					return saved && Number.isFinite(saved.x) && Number.isFinite(saved.y) ? saved : null;
+				} catch (error) { return null; }
+			};
+			const clampLauncherPosition = (x, y) => {
+				const rect = launcher.getBoundingClientRect();
+				const margin = 10;
+				return {
+					x: Math.max(margin, Math.min(x, window.innerWidth - rect.width - margin)),
+					y: Math.max(margin, Math.min(y, window.innerHeight - rect.height - margin))
+				};
+			};
+			const setLauncherPosition = (x, y, persist = false) => {
+				const position = clampLauncherPosition(x, y);
+				assistant.style.left = `${position.x}px`;
+				assistant.style.top = `${position.y}px`;
+				assistant.style.right = 'auto';
+				assistant.style.bottom = 'auto';
+				if (persist) {
+					try { localStorage.setItem(launcherPositionKey, JSON.stringify(position)); } catch (error) { }
+				}
+				return position;
+			};
+			const positionChatPanel = () => {
+				const launcherRect = launcher.getBoundingClientRect();
+				const assistantRect = assistant.getBoundingClientRect();
+				const panelHeight = panel.offsetHeight || Math.min(590, window.innerHeight - 110);
+				const panelWidth = panel.offsetWidth || Math.min(390, window.innerWidth - 32);
+				const margin = 10;
+				const horizontal = Math.max(margin, Math.min(launcherRect.left + launcherRect.width - panelWidth, window.innerWidth - panelWidth - margin));
+				panel.style.left = `${horizontal - assistantRect.left}px`;
+				panel.style.right = 'auto';
+				if (launcherRect.top < panelHeight + 24) {
+					panel.style.top = 'calc(100% + 12px)';
+					panel.style.bottom = 'auto';
+				} else {
+					panel.style.top = 'auto';
+					panel.style.bottom = 'calc(100% + 12px)';
+				}
+			};
+			const savedPosition = readLauncherPosition();
+			const initialPosition = savedPosition || { x: window.innerWidth - launcher.offsetWidth - 14, y: window.innerHeight - launcher.offsetHeight - 14 };
+			setLauncherPosition(initialPosition.x, initialPosition.y);
+
+			launcher.addEventListener('pointerdown', (event) => {
+				if (event.button !== undefined && event.button !== 0) return;
+				dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: launcher.getBoundingClientRect().left, top: launcher.getBoundingClientRect().top };
+				dragged = false;
+				launcher.setPointerCapture?.(event.pointerId);
+			});
+			launcher.addEventListener('pointermove', (event) => {
+				if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+				const deltaX = event.clientX - dragStart.x;
+				const deltaY = event.clientY - dragStart.y;
+				if (!dragged && Math.hypot(deltaX, deltaY) <= dragThreshold) return;
+				dragged = true;
+				setLauncherPosition(dragStart.left + deltaX, dragStart.top + deltaY);
+				if (assistant.classList.contains('open')) positionChatPanel();
+				event.preventDefault();
+			});
+			launcher.addEventListener('pointerup', (event) => {
+				if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+				if (dragged) {
+					const position = setLauncherPosition(launcher.getBoundingClientRect().left, launcher.getBoundingClientRect().top, true);
+					suppressClick = true;
+					launcher.setAttribute('data-position-x', String(position.x));
+				}
+				dragStart = null;
+				launcher.releasePointerCapture?.(event.pointerId);
+			});
+			launcher.addEventListener('pointercancel', () => { dragStart = null; dragged = false; });
 
 			const addMessage = (content, sender = 'assistant', cards = '') => {
 				const message = document.createElement('div');
@@ -855,19 +934,37 @@
 				if (response.action) chatbotNavigate(response.action.type, response.action.opportunity);
 			};
 
-			launcher.onclick = () => {
+			launcher.addEventListener('click', (event) => {
+				if (suppressClick) {
+					suppressClick = false;
+					event.preventDefault();
+					return;
+				}
 				const isOpen = assistant.classList.toggle('open');
 				launcher.setAttribute('aria-expanded', String(isOpen));
 				panel.setAttribute('aria-hidden', String(!isOpen));
+				panel.style.setProperty('visibility', isOpen ? 'visible' : 'hidden', 'important');
+				panel.style.setProperty('opacity', isOpen ? '1' : '0', 'important');
+				panel.style.transform = isOpen ? 'none' : '';
 				if (isOpen) {
+					positionChatPanel();
 					showWelcome();
 					input.focus();
 				}
-			};
+			});
+			window.addEventListener('resize', () => {
+				const rect = launcher.getBoundingClientRect();
+				setLauncherPosition(rect.left, rect.top, true);
+				if (assistant.classList.contains('open')) positionChatPanel();
+				positionChatPanel();
+			});
 			close.onclick = () => {
 				assistant.classList.remove('open');
 				launcher.setAttribute('aria-expanded', 'false');
 				panel.setAttribute('aria-hidden', 'true');
+				panel.style.setProperty('visibility', 'hidden', 'important');
+				panel.style.setProperty('opacity', '0', 'important');
+				panel.style.transform = '';
 			};
 			clearButton.onclick = () => {
 				messages.innerHTML = '';
@@ -965,15 +1062,12 @@
 
 				if (destination) {
 					button.onclick = () => {
-						location.hash = `/${role}/${destination}`;
+						go(`/${role}/${destination}`);
 					};
 				} else {
 					button.onclick = () => showToast(`${label.replace(/[→＋♙▤◈]/g, '').trim()} is not available from this dashboard.`);
 				}
 			});
-
-			const search = document.querySelector('.search');
-			if (search) search.onclick = () => document.querySelector('.page-search')?.focus();
 
 			const notification = document.querySelector('.topbar-right > span');
 			if (notification) notification.onclick = () => showToast('You are all caught up.');
@@ -1048,13 +1142,13 @@
 			student: { ...data.student, email: 'rahul@example.com', college: 'ABC Institute of Technology', degree: 'B.Tech', branch: 'Computer Science', year: '3rd Year' },
 			company: { ...data.company, email: 'talent@technova.example', industryType: 'Software & Technology' },
 			institution: { ...data.institution, email: 'admin@abc.example', institutionType: 'Engineering College' },
-			skills: data.skills.map(([name, score, status]) => ({ name, score, status })),
-			gaps: data.gaps.map(([name, score, target]) => ({ name, score, target })),
+			skills: [],
+			gaps: [],
 			careers: data.careers.map(([name, match, description, skills]) => ({ name, match, description, skills })),
-			opportunities: data.opportunities.map(([title, company, location, skills, match]) => ({ title, company, location, skills, match, type: 'Internship', duration: '3 months', eligibility: 'Students with relevant foundational skills', deadline: '2026-12-31', description: 'A hands-on opportunity to build practical experience with a collaborative team.' })),
-			applications: [{ id: 'seed-1', opportunity: 'Software Developer Intern', company: 'TechNova', status: 'Under Review', applied: '2026-08-22' }],
-			partnerships: [{ id: 'seed-p1', name: 'TechNova Technologies', type: 'Hiring partnership', status: 'Active' }, { id: 'seed-p2', name: 'InnovateLabs', type: 'Guest lectures', status: 'Active' }],
-			notifications: [{ id: 'seed-n1', text: 'Welcome to your SkillAura workspace.', read: false, time: 'Today' }],
+			opportunities: [],
+			applications: [],
+			partnerships: [],
+			notifications: [],
 			settings: { emailUpdates: true, profileVisibility: true, compactView: false },
 			assessments: [],
 			selectedCareer: 'Frontend Developer',
@@ -1327,13 +1421,22 @@
 			accounts[index].phone = state.student.phone || '';
 			accounts[index].workspace = { ...studentWorkspace(), preferences: state.student.preferences || {} };
 			saveStudentAccounts(accounts);
-			try { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: session.id, email: state.student.email })); } catch (error) { }
+			persistAuthSession({
+				...session,
+				id: session.userId || session.id,
+				userId: session.userId || session.id,
+				role: normalizeRole(session.role || 'student'),
+				name: state.student.name || session.name,
+				email: state.student.email || session.email,
+				companyId: session.companyId || null,
+				institutionId: session.institutionId || accounts[index].institutionId || state.student.institutionId || null
+			});
 		}
 		function startStudentSession(account, role = account?.role || 'student') {
 			if (!account) return;
 			const normalizedRole = normalizeRole(role);
 			account.role = normalizedRole;
-			persistAuthSession({ id: account.id, userId: account.id, email: account.email, role: normalizedRole, name: account.profile?.name || account.fullName || account.name || 'Student' });
+			persistAuthSession({ id: account.id, userId: account.id, email: account.email, role: normalizedRole, name: account.profile?.name || account.fullName || account.name || 'Student', demoAccount: Boolean(account.demoAccount || account.profile?.demoAccount) });
 			const accounts = loadStudentAccounts();
 			const index = accounts.findIndex((item) => item.id === account.id);
 			if (index >= 0) { accounts[index].role = normalizedRole; saveStudentAccounts(accounts); }
@@ -1345,7 +1448,7 @@
 		function startCompanySession(account) {
 			if (!account) return;
 			account.role = 'company';
-			persistAuthSession({ id: account.id, userId: account.id, companyId: account.id, email: account.email, role: 'company', name: account.profile?.name || account.name || 'Company' });
+			persistAuthSession({ id: account.id, userId: account.id, companyId: account.id, email: account.email, role: 'company', name: account.profile?.name || account.name || 'Company', demoAccount: Boolean(account.demoAccount || account.profile?.demoAccount) });
 			state.activeRole = 'company';
 			state.company = { ...state.company, ...account.profile, email: account.email };
 			saveCompanyAccounts(loadCompanyAccounts().map((item) => item.id === account.id ? account : item));
@@ -1354,7 +1457,7 @@
 		function startInstitutionSession(account) {
 			if (!account) return;
 			account.role = 'institution';
-			persistAuthSession({ id: account.id, userId: account.id, institutionId: account.id, email: account.email, role: 'institution', name: account.profile?.name || account.name || 'Institution' });
+			persistAuthSession({ id: account.id, userId: account.id, institutionId: account.id, email: account.email, role: 'institution', name: account.profile?.name || account.name || 'Institution', demoAccount: Boolean(account.demoAccount || account.profile?.demoAccount) });
 			state.activeRole = 'institution';
 			state.institution = { ...state.institution, ...account.profile, email: account.email };
 			saveInstitutionAccounts(loadInstitutionAccounts().map((item) => item.id === account.id ? account : item));
@@ -1366,7 +1469,15 @@
 		function loadState() {
 			try {
 				const saved = JSON.parse(localStorage.getItem(STATE_KEY));
-				return saved ? { ...clone(defaultState), ...saved, student: { ...defaultState.student, ...saved.student }, company: { ...defaultState.company, ...saved.company }, institution: { ...defaultState.institution, ...saved.institution }, settings: { ...defaultState.settings, ...saved.settings }, ecosystem: { ...defaultState.ecosystem, ...saved.ecosystem, opportunities: saved.ecosystem?.opportunities || [], applications: saved.ecosystem?.applications || [], interviews: saved.ecosystem?.interviews || [], offers: saved.ecosystem?.offers || [], internships: saved.ecosystem?.internships || [], placements: saved.ecosystem?.placements || [], notifications: saved.ecosystem?.notifications || [] } } : clone(defaultState);
+				if (!saved) return clone(defaultState);
+				const loaded = { ...clone(defaultState), ...saved, student: { ...defaultState.student, ...saved.student }, company: { ...defaultState.company, ...saved.company }, institution: { ...defaultState.institution, ...saved.institution }, settings: { ...defaultState.settings, ...saved.settings }, ecosystem: { ...defaultState.ecosystem, ...saved.ecosystem, opportunities: saved.ecosystem?.opportunities || [], applications: saved.ecosystem?.applications || [], interviews: saved.ecosystem?.interviews || [], offers: saved.ecosystem?.offers || [], internships: saved.ecosystem?.internships || [], placements: saved.ecosystem?.placements || [], notifications: saved.ecosystem?.notifications || [] } };
+				loaded.opportunities = (loaded.opportunities || []).filter((item) => !String(item.id || '').startsWith('seed-') && item.title !== 'Software Developer Intern' && item.title !== 'Frontend Developer Intern' && item.title !== 'Data Analyst Intern');
+				loaded.applications = (loaded.applications || []).filter((item) => !String(item.id || '').startsWith('seed-'));
+				loaded.partnerships = (loaded.partnerships || []).filter((item) => !String(item.id || '').startsWith('seed-'));
+				loaded.notifications = (loaded.notifications || []).filter((item) => !String(item.id || '').startsWith('seed-'));
+				loaded.ecosystem.opportunities = loaded.ecosystem.opportunities.filter((item) => !String(item.id || '').startsWith('seed-') && item.title !== 'Software Developer Intern' && item.title !== 'Frontend Developer Intern' && item.title !== 'Data Analyst Intern');
+				loaded.ecosystem.applications = loaded.ecosystem.applications.filter((item) => !String(item.id || '').startsWith('seed-'));
+				return loaded;
 			} catch (error) { return clone(defaultState); }
 		}
 		function ensureEcosystem() {
@@ -1382,6 +1493,70 @@
 		function sharedEcosystem() { return ensureEcosystem(); }
 		function saveEcosystem() { state.opportunities = state.ecosystem.opportunities; state.applications = state.ecosystem.applications; saveState(); }
 		function applicationForId(applicationId) { return sharedEcosystem().applications.find((item) => item.applicationId === applicationId || item.id === applicationId); }
+		function initializeDemoAccounts() {
+			const demoStudentId = 'demo-student-skillaura';
+			const demoCompanyId = 'demo-company-technova';
+			const demoInstitutionId = 'demo-institution-skillaura';
+			const studentSkills = [
+				{ name: 'Python', score: 78, status: 'Verified' },
+				{ name: 'JavaScript', score: 74, status: 'Verified' },
+				{ name: 'HTML/CSS', score: 86, status: 'Verified' },
+				{ name: 'SQL', score: 63, status: 'Intermediate' },
+				{ name: 'Git', score: 71, status: 'Verified' }
+			];
+			const studentAssessments = studentSkills.map((skill) => ({ skill: skill.name, score: skill.score, correct: Math.round(skill.score / 5), total: 20, rating: assessmentRating(skill.score), topicBreakdown: [], completedAt: '2026-08-20T00:00:00.000Z', demoData: true }));
+			let students = loadStudentAccounts();
+			let demoStudent = students.find((account) => account.email === 'student@skillaura.demo');
+			if (!demoStudent) {
+				demoStudent = { id: demoStudentId, studentId: demoStudentId, fullName: 'Demo Student', email: 'student@skillaura.demo', passwordHash: prototypeHash('Student@123'), institutionId: demoInstitutionId, role: 'student', demoAccount: true, registeredAt: new Date().toISOString(), onboardingCompleted: true, onboarding: { careerInterest: 'Software Developer', desiredRole: 'Software Developer' }, profile: { name: 'Demo Student', email: 'student@skillaura.demo', college: 'SkillAura Demo University', course: 'Computer Science and Engineering', year: '3rd Year', phone: '', initials: 'DS', title: 'Welcome, Demo Student', subtitle: 'Explore the connected SkillAura demo journey.', demoAccount: true, careerInterest: 'Software Developer', institutionId: demoInstitutionId }, workspace: { skills: clone(studentSkills), gaps: [{ name: 'Data Structures', score: 48, target: 75 }, { name: 'System Design', score: 35, target: 65 }], applications: [], assessments: clone(studentAssessments), preferences: { careerInterest: 'Software Developer' }, portfolio: { projects: ['Skill tracking dashboard'], certifications: ['Python Foundations'], achievements: ['Completed demo onboarding'] } } };
+				students.push(demoStudent);
+				saveStudentAccounts(students);
+			}
+
+			let companies = loadCompanyAccounts();
+			let demoCompany = companies.find((account) => account.email === 'company@skillaura.demo');
+			if (!demoCompany) {
+				demoCompany = { id: demoCompanyId, companyId: demoCompanyId, role: 'company', demoAccount: true, email: 'company@skillaura.demo', passwordHash: prototypeHash('Company@123'), profile: { name: 'TechNova Solutions', email: 'company@skillaura.demo', industryType: 'Software & Technology', location: 'Hyderabad, India', size: '51–200 employees', contactPerson: 'Demo Recruiter', designation: 'Talent Acquisition Manager', initials: 'TS', title: 'Welcome, TechNova Solutions', subtitle: 'Explore skill-based recruitment with demo data.', demoAccount: true }, createdAt: new Date().toISOString() };
+				companies.push(demoCompany);
+				saveCompanyAccounts(companies);
+			}
+
+			let institutions = loadInstitutionAccounts();
+			let demoInstitution = institutions.find((account) => account.email === 'institution@skillaura.demo');
+			if (!demoInstitution) {
+				demoInstitution = { id: demoInstitutionId, institutionId: demoInstitutionId, role: 'institution', demoAccount: true, email: 'institution@skillaura.demo', passwordHash: prototypeHash('Institution@123'), profile: { name: 'SkillAura Demo Institute', email: 'institution@skillaura.demo', institutionType: 'Engineering College', affiliation: 'SkillAura Demo University', location: 'Hyderabad, India', contactPerson: 'Demo Administrator', designation: 'Placement Officer', initials: 'SD', title: 'Welcome, SkillAura Demo Institute', subtitle: 'Explore institution readiness and outcomes.', demoAccount: true }, createdAt: new Date().toISOString() };
+				institutions.push(demoInstitution);
+				saveInstitutionAccounts(institutions);
+			}
+
+			let companyWorkspace = getCompanyWorkspace(demoCompany.id);
+			let institutionWorkspace = getInstitutionWorkspace(demoInstitution.id);
+			if (!companyWorkspace.companyId) companyWorkspace = blankCompanyWorkspace(demoCompany);
+			if (!institutionWorkspace.institutionId) institutionWorkspace = blankInstitutionWorkspace(demoInstitution);
+			const frontendOpportunityId = 'demo-opportunity-frontend-intern';
+			const demoOpportunities = [
+				{ opportunityId: frontendOpportunityId, id: frontendOpportunityId, companyId: demoCompany.id, company: 'TechNova Solutions', title: 'Frontend Developer Intern', type: 'Internship', department: 'Engineering', location: 'Hyderabad, India', mode: 'Hybrid', description: 'Build accessible product interfaces with a supportive engineering team.', responsibilities: 'Implement UI components and collaborate with designers.', eligibility: 'Computer science students or equivalent', requirements: { required: ['HTML/CSS', 'JavaScript'], preferred: ['React', 'Git'], minimumLevel: 'Intermediate' }, skills: 'HTML/CSS, JavaScript, React, Git', experience: 'No prior experience required', compensation: '₹25,000 / month', stipend: '₹25,000 / month', duration: '3 months', deadline: '2026-12-31', openings: 2, status: 'Published', applicationCount: 1, match: '90%', demoData: true, createdAt: '2026-08-20T00:00:00.000Z' },
+				{ opportunityId: 'demo-opportunity-python-intern', id: 'demo-opportunity-python-intern', companyId: demoCompany.id, company: 'TechNova Solutions', title: 'Python Developer Intern', type: 'Internship', department: 'Platform Engineering', location: 'Hyderabad, India', mode: 'Remote', description: 'Support Python services and automation workflows.', eligibility: 'Students with Python foundations', requirements: { required: ['Python'], preferred: ['SQL', 'Git'], minimumLevel: 'Intermediate' }, skills: 'Python, SQL, Git', experience: 'No prior experience required', compensation: '₹22,000 / month', stipend: '₹22,000 / month', duration: '3 months', deadline: '2026-12-31', openings: 2, status: 'Published', applicationCount: 0, match: '82%', demoData: true, createdAt: '2026-08-20T00:00:00.000Z' },
+				{ opportunityId: 'demo-opportunity-software-intern', id: 'demo-opportunity-software-intern', companyId: demoCompany.id, company: 'TechNova Solutions', title: 'Software Engineering Intern', type: 'Internship', department: 'Product Engineering', location: 'Hyderabad, India', mode: 'Hybrid', description: 'Learn the full software delivery lifecycle on a product team.', eligibility: 'Computer science students', requirements: { required: ['Git', 'JavaScript'], preferred: ['Python', 'SQL'], minimumLevel: 'Beginner' }, skills: 'Git, JavaScript, Python, SQL', experience: 'No prior experience required', compensation: '₹24,000 / month', stipend: '₹24,000 / month', duration: '4 months', deadline: '2026-12-31', openings: 3, status: 'Published', applicationCount: 0, match: '78%', demoData: true, createdAt: '2026-08-20T00:00:00.000Z' }
+			];
+			const ecosystem = state.ecosystem || (state.ecosystem = clone(defaultState.ecosystem));
+			demoOpportunities.forEach((opportunity) => {
+				if (!ecosystem.opportunities.some((item) => item.opportunityId === opportunity.opportunityId)) ecosystem.opportunities.push(clone(opportunity));
+				if (!companyWorkspace.opportunities.some((item) => item.opportunityId === opportunity.opportunityId)) companyWorkspace.opportunities.push(clone(opportunity));
+			});
+			const demoApplicationId = 'demo-application-frontend-intern';
+			if (!ecosystem.applications.some((item) => item.applicationId === demoApplicationId)) ecosystem.applications.push({ applicationId: demoApplicationId, id: demoApplicationId, opportunityId: frontendOpportunityId, opportunity: 'Frontend Developer Intern', company: 'TechNova Solutions', companyId: demoCompany.id, institutionId: demoInstitution.id, studentId: demoStudent.id, studentName: 'Demo Student', status: 'Applied', stage: 'Applied', match: 90, applied: '2026-08-20', demoData: true });
+			const demoApplication = ecosystem.applications.find((item) => item.applicationId === demoApplicationId);
+			if (!companyWorkspace.applications.some((item) => item.applicationId === demoApplicationId)) companyWorkspace.applications.push(clone(demoApplication));
+			if (!institutionWorkspace.students.some((student) => student.studentId === demoStudent.id)) institutionWorkspace.students.push({ studentId: demoStudent.id, name: 'Demo Student', email: 'student@skillaura.demo', college: 'SkillAura Demo University', course: 'Computer Science and Engineering', year: '3rd Year', workspace: clone(demoStudent.workspace), demoAccount: true });
+			if (!institutionWorkspace.internships.some((item) => item.applicationId === demoApplicationId)) institutionWorkspace.internships.push({ id: 'demo-internship-frontend', applicationId: demoApplicationId, studentId: demoStudent.id, companyId: demoCompany.id, institutionId: demoInstitution.id, title: 'Frontend Developer Intern', company: 'TechNova Solutions', status: 'Application in progress', demoData: true });
+			saveCompanyWorkspace(companyWorkspace);
+			saveInstitutionWorkspace(institutionWorkspace);
+			state.opportunities = ecosystem.opportunities;
+			state.applications = ecosystem.applications;
+			state.student = { ...state.student, ...demoStudent.profile };
+			saveState();
+		}
 		function studentIdForSession() { return currentStudentSession()?.id || null; }
 		function institutionIdForStudent(studentId) { const accounts = loadStudentAccounts(); const student = accounts.find((account) => account.id === studentId || account.studentId === studentId); if (student?.institutionId) return student.institutionId; const institution = loadInstitutionAccounts().find((account) => account.profile?.name?.trim().toLowerCase() === student?.profile?.college?.trim().toLowerCase()); if (institution) { student.institutionId = institution.institutionId || institution.id; student.profile.institutionId = student.institutionId; saveStudentAccounts(accounts); return student.institutionId; } return null; }
 		function addEcosystemNotification(targetRole, targetId, text, route = '') { const ecosystem = sharedEcosystem(); ecosystem.notifications.unshift({ id: `notification-${Date.now()}-${Math.random().toString(16).slice(2)}`, targetRole, targetId, text, route, read: false, time: 'Just now' }); saveEcosystem(); }
@@ -1430,14 +1605,72 @@
 			const routes = dashboardRoutes[normalizedRole] || dashboardRoutes.company || {};
 			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${normalizedRole}/${key}" onclick="closeSidebar()">${icons[key] || '◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><button class="logout" data-action="logout">↪ &nbsp; Logout</button></aside>`;
 		}
+		function globalSearchMarkup() { return `<div class="global-search" data-search-root><div class="global-search-input-wrap"><span class="global-search-icon" aria-hidden="true">⌕</span><input class="search" data-global-search-input type="search" placeholder="Search anything" aria-label="Search anything" aria-controls="global-search-results" autocomplete="off"><kbd>⌘ K</kbd><button class="global-search-clear" data-action="clear-global-search" type="button" aria-label="Clear search" hidden>×</button></div><div class="global-search-results" id="global-search-results" role="listbox" hidden></div></div>`; }
 		function shell(role, title, content) {
 			const normalizedRole = normalizeRole(role);
 			const person = personFor(normalizedRole);
 			const unread = state.notifications.filter((item) => !item.read).length + currentEcosystemNotifications().filter((item) => !item.read).length;
-			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right"><button class="search" data-action="focus-search">⌕ &nbsp; Search anything</button>${themeToggleMarkup()}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
+			const demoTag = person.demoAccount ? '<span class="tag blue">Demo Account</span>' : '';
+			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right">${globalSearchMarkup()}${themeToggleMarkup()}${demoTag}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
 		}
 		function pageIntro(title, text, action = '') { return `<div class="dash-intro"><div><h1>${esc(title)}</h1><p>${esc(text)}</p></div>${action}</div>`; }
 		function searchBox(placeholder = 'Search this workspace') { return `<input class="page-search" data-action="filter" placeholder="⌕  ${placeholder}" aria-label="${placeholder}">`; }
+		function searchText(value) { return String(value || '').toLowerCase(); }
+		function searchWorkspaceRoute(section) {
+			const role = normalizeRole(currentAuthSession()?.role || state.activeRole || 'student');
+			if (section === 'applications') return role === 'company' ? '/company/applications' : role === 'institution' ? '/institution/placements' : '/student/applications';
+			if (section === 'interviews') return role === 'company' ? '/company/interviews' : role === 'institution' ? '/institution/placements' : '/student/interviews';
+			if (section === 'offers') return role === 'company' ? '/company/applications' : role === 'institution' ? '/institution/placements' : '/student/offers';
+			if (section === 'internships') return role === 'institution' ? '/institution/internships' : role === 'company' ? '/company/applications' : '/student/internships';
+			if (section === 'placements') return role === 'institution' ? '/institution/placements' : role === 'company' ? '/company/applications' : '/student/placements';
+			return role === 'institution' ? '/institution/skills' : '/student/skills';
+		}
+		function globalSearchIndex() {
+			const items = [];
+			sharedEcosystem().opportunities.forEach((item) => items.push({ type: 'Opportunity', icon: '▣', title: item.title, description: `${item.company} · ${item.location || 'Flexible'} · ${item.skills || ''}`, search: [item.title, item.company, item.description, item.skills, item.type, item.location, item.department], action: 'opportunity', titleKey: item.title }));
+			(state.skills || []).forEach((item) => items.push({ type: 'Skill', icon: '✦', title: item.name, description: `${item.score || 0}% · ${item.status || 'In progress'}`, search: [item.name, item.status, 'skill'], route: searchWorkspaceRoute('skills') }));
+			(state.assessments || []).forEach((item) => items.push({ type: 'Verified skill', icon: '✓', title: item.skill, description: `${item.score}% · ${item.rating}`, search: [item.skill, item.rating, 'assessment', 'verified'], route: '/student/skill-profile' }));
+			(state.careers || []).forEach((item) => items.push({ type: 'Career path', icon: '◎', title: item.name, description: item.description, search: [item.name, item.description, item.skills, 'career'], route: '/student/career-path' }));
+			sharedEcosystem().applications.forEach((item) => items.push({ type: 'Application', icon: '▤', title: item.opportunity, description: `${item.company || 'Company'} · ${item.status || item.stage || 'Applied'}`, search: [item.opportunity, item.company, item.status, item.stage, item.studentName, 'application'], route: searchWorkspaceRoute('applications') }));
+			sharedEcosystem().interviews.forEach((item) => items.push({ type: 'Interview', icon: '◷', title: item.opportunity, description: `${item.candidateName || 'Candidate'} · ${item.date || 'Date pending'}`, search: [item.opportunity, item.candidateName, item.date, 'interview'], route: searchWorkspaceRoute('interviews') }));
+			sharedEcosystem().offers.forEach((item) => items.push({ type: 'Offer', icon: '◆', title: item.opportunity, description: `${item.candidateName || 'Candidate'} · ${item.status}`, search: [item.opportunity, item.candidateName, item.status, 'offer'], route: searchWorkspaceRoute('offers') }));
+			sharedEcosystem().internships.forEach((item) => items.push({ type: 'Internship', icon: '▤', title: item.title || item.opportunity, description: `${item.company || 'Company'} · ${item.status}`, search: [item.title, item.opportunity, item.company, item.status, 'internship'], route: searchWorkspaceRoute('internships') }));
+			sharedEcosystem().placements.forEach((item) => items.push({ type: 'Placement', icon: '↗', title: item.role || item.title || item.opportunity, description: `${item.company || 'Company'} · ${item.status}`, search: [item.role, item.title, item.opportunity, item.company, item.status, 'placement'], route: searchWorkspaceRoute('placements') }));
+			currentEcosystemNotifications().forEach((item) => items.push({ type: 'Notification', icon: '◌', title: item.text, description: item.time || 'Recent update', search: [item.text, item.time, 'notification'], route: '/student/notifications' }));
+			const person = personFor(normalizeRole(currentAuthSession()?.role || state.activeRole || 'student'));
+			if (person?.name) items.push({ type: 'Profile', icon: '◉', title: person.name, description: `${person.role || roleLabel(state.activeRole || 'student')}`, search: [person.name, person.email, person.role, 'profile'], route: `/${normalizeRole(currentAuthSession()?.role || state.activeRole || 'student')}/profile` });
+			(data.candidates || []).forEach((item) => items.push({ type: 'Candidate', icon: '♙', title: item[0], description: `${item[1]} · ${item[3]}`, search: item, route: '/company/candidates' }));
+			return items;
+		}
+		function highlightSearch(value, query) { const text = esc(value); if (!query) return text; const escapedQuery = esc(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return text.replace(new RegExp(`(${escapedQuery})`, 'ig'), '<mark>$1</mark>'); }
+		function globalSearchResults(query) {
+			const normalized = searchText(query).trim();
+			if (!normalized) return [];
+			return globalSearchIndex().map((item) => {
+				const haystack = searchText(item.search.join(' '));
+				const terms = normalized.split(/\s+/).filter(Boolean);
+				const matches = terms.filter((term) => haystack.includes(term)).length;
+				const exact = searchText(item.title).includes(normalized) ? 3 : 0;
+				return { ...item, score: matches * 2 + exact };
+			}).filter((item) => item.score > 0).sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, 8);
+		}
+		function renderGlobalSearch() {
+			const input = document.querySelector('[data-global-search-input]');
+			const panel = document.getElementById('global-search-results');
+			if (!input || !panel) return;
+			const query = input.value.trim();
+			globalSearchState.query = input.value;
+			globalSearchState.results = globalSearchResults(input.value);
+			globalSearchState.activeIndex = -1;
+			globalSearchState.open = Boolean(query);
+			input.closest('[data-search-root]')?.classList.toggle('is-focused', globalSearchState.open || document.activeElement === input);
+			input.closest('[data-search-root]')?.querySelector('.global-search-clear')?.toggleAttribute('hidden', !input.value);
+			if (!query) { panel.hidden = true; panel.innerHTML = ''; return; }
+			panel.hidden = false;
+			panel.innerHTML = globalSearchState.results.length ? globalSearchState.results.map((item, index) => `<button class="global-search-result ${index === globalSearchState.activeIndex ? 'active' : ''}" data-action="global-search-result" data-result-index="${index}" type="button" role="option"><span class="global-search-result-icon">${item.icon}</span><span><strong>${highlightSearch(item.title, query)}</strong><small><b>${esc(item.type)}</b> · ${highlightSearch(item.description, query)}</small></span><span class="global-search-arrow">↗</span></button>`).join('') + `<button class="global-search-all" data-action="global-search-all" type="button">View all results <span>↗</span></button>` : `<div class="global-search-empty"><strong>No results found</strong><span>Try a skill, company, opportunity, or career path.</span></div>`;
+		}
+		function closeGlobalSearch() { const input = document.querySelector('[data-global-search-input]'); const panel = document.getElementById('global-search-results'); if (panel) panel.hidden = true; input?.closest('[data-search-root]')?.classList.remove('is-focused'); globalSearchState.open = false; }
+		function focusGlobalSearch() { const input = document.querySelector('[data-global-search-input]'); if (input) { input.focus(); renderGlobalSearch(); } }
 		function emptyState(text) { return `<div class="empty-state">${esc(text)}</div>`; }
 		function assessmentRating(score) { if (score >= 90) return 'Excellent'; if (score >= 80) return 'Advanced'; if (score >= 70) return 'Good'; if (score >= 60) return 'Intermediate'; if (score >= 40) return 'Beginner'; return 'Needs Improvement'; }
 		function assessmentStats() { const assessments = state.assessments || []; const average = assessments.length ? Math.round((assessments.reduce((total, item) => total + item.score, 0) / assessments.length) * 10) / 10 : 0; return { assessments, average }; }
@@ -1474,7 +1707,7 @@
 		function notificationPanel() { return `<div class="modal-backdrop" onclick="this.remove()"><div class="modal-card notification-panel" onclick="event.stopPropagation()"><button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">×</button><h2>Notifications</h2>${state.notifications.length ? state.notifications.map((item) => `<div class="notification-row ${item.read ? '' : 'unread'}"><span>${esc(item.text)}<small>${esc(item.time)}</small></span>${item.read ? '' : `<button class="btn-plain" onclick="markNotification('${item.id}', this)">Mark read</button>`}</div>`).join('') : emptyState('You are all caught up.')}</div></div>`; }
 		function institutionDashboardPage() { return shell('institution', 'Institution Dashboard', `${pageIntro(state.institution.title, state.institution.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Students</span></div><div class="kpi-value">2,450</div></div><div class="kpi"><div class="kpi-top"><span>Assessed Students</span></div><div class="kpi-value">1,980</div></div><div class="kpi"><div class="kpi-top"><span>Internship Ready</span></div><div class="kpi-value">68%</div></div><div class="kpi"><div class="kpi-top"><span>Placement Ready</span></div><div class="kpi-value">61%</div></div></div><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Top Student Skill Gaps</h3><button class="btn-plain" data-action="route" data-route="/institution/skills">View details →</button></div>${state.gaps.map((gap) => `<div class="skill"><div class="skill-line"><span>${esc(gap.name)}</span><span>${gap.score}%</span></div><div class="bar"><span style="width:${gap.score}%;background:var(--cyan)"></span></div></div>`).join('')}</section><section class="dash-panel"><div class="panel-head"><h3>Industry Collaboration</h3><button class="btn-plain" data-action="route" data-route="/institution/partnerships">Manage Partnerships →</button></div><div class="metric-row"><span>Active Industry Partners</span><strong>${state.partnerships.length}</strong></div><div class="metric-row"><span>Live Projects</span><strong>18</strong></div><div class="metric-row"><span>Workshops This Year</span><strong>27</strong></div></section></div>`); }
 		function industryDashboardPage() { return shell('company', 'Industry Dashboard', `${pageIntro(state.company.title, state.company.subtitle, '<span class="tag blue">Prototype workspace</span>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Active Opportunities</span></div><div class="kpi-value">${state.opportunities.length}</div><div class="kpi-note">${state.opportunities.length} published</div></div><div class="kpi"><div class="kpi-top"><span>Applications</span></div><div class="kpi-value">${state.applications.length}</div><div class="kpi-note">Live prototype data</div></div><div class="kpi"><div class="kpi-top"><span>Shortlisted</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Shortlisted').length}</div></div><div class="kpi"><div class="kpi-top"><span>Selected</span></div><div class="kpi-value">${state.applications.filter((item) => item.status === 'Selected').length}</div></div></div><div class="action-grid"><button class="action" data-action="route" data-route="/company/post-opportunity">＋ Post Opportunity</button><button class="action" data-action="route" data-route="/company/candidates">♙ View Candidates</button><button class="action" data-action="route" data-route="/company/applications">▤ Manage Applications</button><button class="action" data-action="route" data-route="/company/programs">◈ Industry Programs</button></div><section class="dash-panel"><div class="panel-head"><h3>Active Opportunities</h3><button class="btn-plain" data-action="route" data-route="/company/opportunities">Manage all →</button></div>${state.opportunities.slice(0, 3).map((item) => `<div class="application-row"><div><b>${esc(item.title)}</b><p>${esc(item.company)} · ${esc(item.location)}</p></div><button class="btn-plain" data-action="view-opportunity" data-title="${esc(item.title)}">View →</button></div>`).join('')}</section>`); }
-		function companyWorkspaceOrEmpty() { const account = currentCompanyAccount(); const workspace = currentCompanyWorkspace() || { companyId: account?.id || '', opportunities: [], applications: [], shortlist: [], interviews: [], messages: [], notifications: [], offers: [], notes: {}, onboarding: { status: 'Pending', completed: false } }; const ecosystem = sharedEcosystem(); const ownOpportunities = ecosystem.opportunities.filter((item) => item.companyId === account?.id); const ownApplications = ecosystem.applications.filter((item) => item.companyId === account?.id); return { ...workspace, opportunities: [...workspace.opportunities.filter((item) => !ownOpportunities.some((record) => record.opportunityId === item.opportunityId)), ...ownOpportunities], applications: ownApplications }; }
+		function companyWorkspaceOrEmpty() { const account = currentCompanyAccount(); const workspace = currentCompanyWorkspace() || { companyId: account?.id || '', opportunities: [], applications: [], shortlist: [], interviews: [], messages: [], notifications: [], offers: [], notes: {}, onboarding: { status: 'Pending', completed: false } }; const ecosystem = sharedEcosystem(); const ownOpportunities = ecosystem.opportunities.filter((item) => item.companyId === account?.id); const ownApplications = ecosystem.applications.filter((item) => item.companyId === account?.id); const ownInterviews = ecosystem.interviews.filter((item) => item.companyId === account?.id); const ownOffers = ecosystem.offers.filter((item) => item.companyId === account?.id); const ownNotifications = ecosystem.notifications.filter((item) => item.targetRole === 'company' && item.targetId === account?.id); return { ...workspace, opportunities: [...workspace.opportunities.filter((item) => !ownOpportunities.some((record) => record.opportunityId === item.opportunityId)), ...ownOpportunities], applications: ownApplications, interviews: ownInterviews, offers: ownOffers, notifications: [...workspace.notifications.filter((item) => !ownNotifications.some((record) => record.id === item.id)), ...ownNotifications] }; }
 		function companyStatusTag(status) { return `<span class="tag ${['Published', 'Shortlisted', 'Interview', 'Selected', 'Offer Sent', 'Accepted', 'Verified'].includes(status) ? 'success' : status === 'Rejected' || status === 'Closed' ? 'warning' : 'blue'}">${esc(status)}</span>`; }
 		function companyDashboardPage() {
 			const workspace = companyWorkspaceOrEmpty();
@@ -1525,18 +1758,19 @@
 			const register = type === 'register';
 			const loginFields = `${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`;
 			const registerFields = `${authInput('Full Name', 'name', { placeholder: 'Your full name', autocomplete: 'name' })}${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('College / University', 'college', { placeholder: 'Your institution', autocomplete: 'organization' })}${authInput('Course', 'course', { placeholder: 'e.g. B.Tech Computer Science' })}<div class="auth-field"><label for="year">Year of Study <b aria-hidden="true">*</b></label><select id="year" name="year" required><option value="">Select your year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Graduate</option></select></div>${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210', autocomplete: 'tel', optional: true })}`;
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Connecting Skills, Academia &amp; Industry</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create your student account and shape a profile that opens the right doors.' : 'Sign in to your personal SkillAura workspace.'}</p></div><div class="auth-note">Frontend prototype · account data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register ? 'Create your student account' : 'Student login'}</h2><p>${register ? 'Fields marked * are required.' : 'Use the email and password you registered with.'}</p><form class="form" data-form="${register ? 'register' : 'login'}" novalidate>${register ? registerFields : loginFields}${register ? '<button class="btn btn-primary" type="submit">Create Account</button>' : '<div class="form-row"><label><input type="checkbox" name="remember"> Remember me</label><button class="btn-plain" type="button" data-action="forgot">Forgot password?</button></div><button class="btn btn-primary" type="submit">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="student">Demo Student</button><button class="demo-btn" type="button" data-demo="industry">Demo Industry</button><button class="demo-btn" type="button" data-demo="institution">Demo Institution</button></div>'}</form>${register ? '<div class="switch">Already have an account? <a href="#/login">Login</a></div>' : '<div class="switch">New to SkillAura? <a href="#/register">Create Account</a></div>'}</div></main></div>`;
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Student Portal</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create your student account and shape a profile that opens the right doors.' : 'Sign in to your personal SkillAura workspace.'}</p></div><div class="auth-note">Frontend prototype · account data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/role-selection">← Back to portal selection</a><h2 style="margin-top:27px">Student Portal</h2><p>${register ? 'Create your student account. Fields marked * are required.' : 'Login to your student workspace.'}</p><form class="form" data-form="${register ? 'register' : 'login'}" novalidate>${register ? registerFields : loginFields}${register ? '<button class="btn btn-primary" type="submit">Create Student Account</button>' : '<div class="form-row"><label><input type="checkbox" name="remember"> Remember me</label><button class="btn-plain" type="button" data-action="forgot" data-portal-role="student">Forgot password?</button></div><button class="btn btn-primary" type="submit">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="student">Demo Student</button><button class="demo-btn" type="button" data-demo="industry">Demo Industry</button><button class="demo-btn" type="button" data-demo="institution">Demo Institution</button></div>'}</form>${register ? '<div class="switch">Already have an account? <a href="#/login">Login</a></div>' : '<div class="switch">New to SkillAura? <a href="#/register">Create Student Account</a></div>'}</div></main></div>`;
 		}
 		function companyAuthPage(type) {
 			const register = type === 'register';
 			const fields = register ? `${authInput('Company Name', 'name', { placeholder: 'Your company name' })}${authInput('Official Email', 'email', { type: 'email', placeholder: 'talent@example.com' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('Industry / Company Type', 'industryType', { placeholder: 'Software & Technology' })}${authInput('Company Website', 'website', { type: 'url', placeholder: 'https://example.com', optional: true })}${authInput('Company Size', 'size', { placeholder: '11-50 employees' })}${authInput('Location', 'location', { placeholder: 'City, Country' })}${authInput('Contact Person', 'contactPerson', { placeholder: 'Full name' })}${authInput('Designation', 'designation', { placeholder: 'Recruiter / HR Lead' })}${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210' })}` : `${authInput('Official Email', 'email', { type: 'email', placeholder: 'talent@example.com' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`;
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Company workspace</div><h1>${register ? 'Build your hiring bridge.' : 'Welcome back, employer.'}</h1><p>${register ? 'Create a company workspace for skill-based recruitment.' : 'Sign in to manage opportunities, candidates, and hiring activity.'}</p></div><div class="auth-note">Frontend prototype · company data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register ? 'Create Company Account' : 'Company Login'}</h2><p>${register ? 'Fields marked * are required.' : 'Use your official company email.'}</p><form class="form" data-form="company-${register ? 'register' : 'login'}" novalidate>${fields}<button class="btn btn-primary" type="submit">${register ? 'Create Company Account' : 'Login'}</button>${register ? '' : '<div class="form-row"><button class="btn-plain" type="button" data-action="forgot">Forgot Password?</button></div>'}</form><div class="switch">${register ? 'Already have an account?' : 'Need a company account?'} <a href="#/company/${register ? 'login' : 'register'}">${register ? 'Login' : 'Create Company Account'}</a></div></div></main></div>`;
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Company Portal</div><h1>${register ? 'Build your hiring bridge.' : 'Welcome back, employer.'}</h1><p>${register ? 'Create a company workspace for skill-based recruitment.' : 'Sign in to manage opportunities, candidates, and hiring activity.'}</p></div><div class="auth-note">Frontend prototype · company data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/role-selection">← Back to portal selection</a><h2 style="margin-top:27px">Company Portal</h2><p>${register ? 'Create your company account. Fields marked * are required.' : 'Login to your company workspace.'}</p><form class="form" data-form="company-${register ? 'register' : 'login'}" novalidate>${fields}<button class="btn btn-primary" type="submit">${register ? 'Create Company Account' : 'Login'}</button>${register ? '' : '<div class="form-row"><button class="btn-plain" type="button" data-action="forgot" data-portal-role="company">Forgot Password?</button></div>'}</form><div class="switch">${register ? 'Already have an account?' : 'Need a company account?'} <a href="#/company/${register ? 'login' : 'register'}">${register ? 'Login' : 'Create Company Account'}</a></div></div></main></div>`;
 		}
 		function companyOnboardingPage() { const account = currentCompanyAccount(); const workspace = companyWorkspaceOrEmpty(); return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Company onboarding</div><h1>Make your company credible.</h1><p>Add the details students need before they apply.</p></div><div class="auth-note">Verification is simulated in this prototype.</div></aside><main class="auth-main"><div class="form-wrap"><h2>Company Verification &amp; Onboarding</h2><p>Status: ${companyStatusTag(workspace.onboarding?.status || 'Pending')}</p><form class="form" data-form="company-onboarding">${authInput('Company Description', 'description', { placeholder: 'What does your company build?', optional: true })}${authInput('Logo URL', 'logo', { type: 'url', placeholder: 'https://example.com/logo.png', optional: true })}${authInput('Recruitment Preferences', 'preferences', { placeholder: 'Skills, roles, or campuses you recruit from', optional: true })}<button class="btn btn-primary" type="submit">Submit for Verification</button><button class="btn btn-light" type="button" data-action="skip-company-onboarding">Skip Optional Details</button><button class="btn-plain" type="button" data-action="route" data-route="/company/profile">Edit Company Profile</button></form></div></main></div>`; }
-		function institutionAuthPage(type) { const register = type === 'register'; const fields = register ? `${authInput('Institution Name', 'name', { placeholder: 'Your college or university' })}${authInput('Official Institution Email', 'email', { type: 'email', placeholder: 'admin@example.edu' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('Institution Type', 'institutionType', { placeholder: 'Engineering College / University' })}${authInput('Affiliation / University', 'affiliation', { placeholder: 'Affiliated university' })}${authInput('Accreditation', 'accreditation', { placeholder: 'Optional accreditation information', optional: true })}${authInput('Website', 'website', { type: 'url', placeholder: 'https://example.edu', optional: true })}${authInput('Location', 'location', { placeholder: 'City, Country' })}${authInput('Contact Person', 'contactPerson', { placeholder: 'Administrator name' })}${authInput('Designation', 'designation', { placeholder: 'Placement Officer / Dean' })}${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210' })}` : `${authInput('Official Institution Email', 'email', { type: 'email', placeholder: 'admin@example.edu' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`; return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Institution workspace</div><h1>${register ? 'Turn student potential into outcomes.' : 'Welcome back, institution.'}</h1><p>${register ? 'Create a college workspace for skills, internships, and placement readiness.' : 'Sign in to monitor your institution ecosystem.'}</p></div><div class="auth-note">Frontend prototype · institution data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/">← Back to home</a><h2 style="margin-top:27px">${register ? 'Create Institution Account' : 'Institution Login'}</h2><p>${register ? 'Fields marked * are required.' : 'Use your official institution email.'}</p><form class="form" data-form="institution-${register ? 'register' : 'login'}" novalidate>${fields}<button class="btn btn-primary" type="submit">${register ? 'Create Institution Account' : 'Login'}</button>${register ? '' : '<div class="form-row"><button class="btn-plain" type="button" data-action="forgot">Forgot Password?</button></div>'}</form><div class="switch">${register ? 'Already have an account?' : 'Need an institution account?'} <a href="#/institution/${register ? 'login' : 'register'}">${register ? 'Login' : 'Create Institution Account'}</a></div></div></main></div>`; }
+		function institutionAuthPage(type) { const register = type === 'register'; const fields = register ? `${authInput('Institution Name', 'name', { placeholder: 'Your college or university' })}${authInput('Official Institution Email', 'email', { type: 'email', placeholder: 'admin@example.edu' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('Institution Type', 'institutionType', { placeholder: 'Engineering College / University' })}${authInput('Affiliation / University', 'affiliation', { placeholder: 'Affiliated university' })}${authInput('Accreditation', 'accreditation', { placeholder: 'Optional accreditation information', optional: true })}${authInput('Website', 'website', { type: 'url', placeholder: 'https://example.edu', optional: true })}${authInput('Location', 'location', { placeholder: 'City, Country' })}${authInput('Contact Person', 'contactPerson', { placeholder: 'Administrator name' })}${authInput('Designation', 'designation', { placeholder: 'Placement Officer / Dean' })}${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210' })}` : `${authInput('Official Institution Email', 'email', { type: 'email', placeholder: 'admin@example.edu' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`; return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Institution Portal</div><h1>${register ? 'Turn student potential into outcomes.' : 'Welcome back, institution.'}</h1><p>${register ? 'Create a college workspace for skills, internships, and placement readiness.' : 'Sign in to monitor your institution ecosystem.'}</p></div><div class="auth-note">Frontend prototype · institution data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/role-selection">← Back to portal selection</a><h2 style="margin-top:27px">Institution Portal</h2><p>${register ? 'Create your institution account. Fields marked * are required.' : 'Login to your institution workspace.'}</p><form class="form" data-form="institution-${register ? 'register' : 'login'}" novalidate>${fields}<button class="btn btn-primary" type="submit">${register ? 'Create Institution Account' : 'Login'}</button>${register ? '' : '<div class="form-row"><button class="btn-plain" type="button" data-action="forgot" data-portal-role="institution">Forgot Password?</button></div>'}</form><div class="switch">${register ? 'Already have an account?' : 'Need an institution account?'} <a href="#/institution/${register ? 'login' : 'register'}">${register ? 'Login' : 'Create Institution Account'}</a></div></div></main></div>`; }
 		function institutionOnboardingPage() { const workspace = institutionWorkspaceOrEmpty(); return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Institution onboarding</div><h1>Make your institution visible.</h1><p>Add the academic context that helps SkillAura connect readiness to opportunity.</p></div><div class="auth-note">Verification is simulated in this prototype.</div></aside><main class="auth-main"><div class="form-wrap"><h2>Institution Verification &amp; Onboarding</h2><p>Status: ${companyStatusTag(workspace.onboarding?.status || 'Pending')}</p><form class="form" data-form="institution-onboarding">${authInput('Institution Description', 'description', { placeholder: 'Tell students and partners about your institution.', optional: true })}${authInput('Logo URL', 'logo', { type: 'url', placeholder: 'https://example.edu/logo.png', optional: true })}${authInput('Departments', 'departments', { placeholder: 'CSE, ECE, Management', optional: true })}${authInput('Courses / Programs', 'courses', { placeholder: 'B.Tech, MBA, BCA', optional: true })}${authInput('Academic Year', 'academicYear', { placeholder: '2026-27', optional: true })}<button class="btn btn-primary" type="submit">Submit for Verification</button><button class="btn btn-light" type="button" data-action="skip-institution-onboarding">Skip Optional Details</button><button class="btn-plain" type="button" data-action="route" data-route="/institution/profile">Edit Institution Profile</button></form></div></main></div>`; }
 		function onboardingPage() { return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Student onboarding</div><h1>Make your profile yours.</h1><p>These optional preferences help SkillAura present more relevant opportunities.</p></div><div class="auth-note">You can update these choices later from your profile.</div></aside><main class="auth-main"><div class="form-wrap"><h2>What are you working toward?</h2><p>Complete what is useful now, or skip straight to your dashboard.</p><form class="form" data-form="onboarding">${authInput('Career interests', 'interests', { placeholder: 'e.g. Product design, data, web development', optional: true })}${authInput('Desired job roles', 'roles', { placeholder: 'e.g. Frontend Developer', optional: true })}${authInput('Technical skills', 'technicalSkills', { placeholder: 'e.g. HTML, CSS, JavaScript', optional: true })}${authInput('Soft skills', 'softSkills', { placeholder: 'e.g. Communication, teamwork', optional: true })}${authInput('Preferred industries', 'industries', { placeholder: 'e.g. Technology, finance', optional: true })}<div class="auth-field"><label for="opportunityType">Preferred opportunity type <span>(optional)</span></label><select id="opportunityType" name="opportunityType"><option value="">No preference</option><option>Internship</option><option>Part-time</option><option>Full-time</option></select></div>${authInput('Location preference', 'location', { placeholder: 'e.g. Bengaluru or Remote', optional: true })}<button class="btn btn-primary" type="submit">Save and continue →</button><button class="btn btn-light" type="button" data-action="skip-onboarding">Skip for now</button></form></div></main></div>`; }
 		function recoveryPage(reset = false) { return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Password recovery</div><h1>${reset ? 'Choose a new password.' : 'Get back to your workspace.'}</h1><p>This is a frontend prototype; no email is sent from this page.</p></div><div class="auth-note">Prototype-only account recovery</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/login">← Back to login</a><h2 style="margin-top:27px">${reset ? 'Reset your password' : 'Password recovery'}</h2><p>${reset ? 'Set a new password for the verified prototype account.' : 'Enter your registered email to begin a simulated reset.'}</p><form class="form" data-form="${reset ? 'reset-password' : 'recovery'}">${reset ? `${authInput('New Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm New Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}<button class="btn btn-primary" type="submit">Update Password</button>` : `${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}<button class="btn btn-primary" type="submit">Send Reset Link</button>`}</form></div></main></div>`; }
+		function portalRecoveryPage(role) { const normalizedRole = normalizeRole(role); const label = roleLabel(normalizedRole); return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">${label} Portal</div><h1>Get back to your workspace.</h1><p>Enter your registered email to begin a simulated password reset.</p></div><div class="auth-note">Frontend prototype · no email is sent</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#${portalLoginRoute(normalizedRole)}">← Back to ${label.toLowerCase()} login</a><h2 style="margin-top:27px">${label} Portal</h2><p>Password recovery</p><form class="form" data-form="portal-recovery" data-role="${normalizedRole}">${authInput('Email', 'email', { type: 'email', placeholder: normalizedRole === 'student' ? 'you@example.com' : 'admin@example.com', autocomplete: 'email' })}<button class="btn btn-primary" type="submit">Send Reset Link</button></form></div></main></div>`; }
 		const WEAK_THRESHOLD = 60;
 		const CAREER_SKILLS = {
 			'Frontend Developer': ['HTML/CSS', 'CSS', 'JavaScript', 'React'],
@@ -1666,37 +1900,49 @@
 				const role = normalizeRole(sourceEvent.currentTarget.dataset.role);
 				const session = currentStudentSession();
 				const account = currentStudentAccount();
-				if (account) {
-					account.role = role;
-					const accounts = loadStudentAccounts();
-					const index = accounts.findIndex((item) => item.id === account.id);
-					if (index >= 0) {
-						accounts[index].role = role;
-						saveStudentAccounts(accounts);
-					}
-					if (session) {
-						localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: session.id, email: session.email, role }));
-					}
+				if (session?.loggedIn || account) {
+					go(dashboardRouteForRole(session?.role || account?.role || 'student'));
+					return;
 				}
-				state.activeRole = role;
-				saveState();
-				go(dashboardRouteForRole(role));
+				go(portalLoginRoute(role));
 				return;
 			}
-			if (action === 'forgot') { go('/forgot-password'); return; }
+			if (action === 'forgot') { go(`${portalLoginRoute(sourceEvent.currentTarget.dataset.portalRole || 'student').replace('/login', '/forgot-password')}`); return; }
 			if (action === 'skip-onboarding') { go('/student/dashboard'); return; }
 			if (action === 'toggle-password') { const input = document.getElementById(sourceEvent.currentTarget.dataset.target); if (!input) return; const show = input.type === 'password'; input.type = show ? 'text' : 'password'; sourceEvent.currentTarget.textContent = show ? 'Hide' : 'Show'; sourceEvent.currentTarget.setAttribute('aria-pressed', String(show)); sourceEvent.currentTarget.setAttribute('aria-label', `${show ? 'Hide' : 'Show'} password`); return; }
 			if (action === 'focus-search') { document.querySelector('.page-search')?.focus(); return; }
 			if (action === 'notifications') { document.body.insertAdjacentHTML('beforeend', notificationPanel()); return; }
 			if (action === 'close-modal') { sourceEvent.currentTarget.closest('.modal-backdrop')?.remove(); return; }
+			if (action === 'global-search-result') {
+				const result = globalSearchState.results[Number(sourceEvent.currentTarget.dataset.resultIndex)];
+				if (!result) return;
+				closeGlobalSearch();
+				if (result.action === 'opportunity') {
+					const opportunity = opportunityByTitle(result.titleKey);
+					if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity));
+				} else if (result.route) go(result.route);
+				return;
+			}
+			if (action === 'global-search-all') { closeGlobalSearch(); go(`/${normalizeRole(currentAuthSession()?.role || state.activeRole || 'student')}/opportunities`); return; }
+			if (action === 'clear-global-search') { const input = document.querySelector('[data-global-search-input]'); if (input) { input.value = ''; input.focus(); renderGlobalSearch(); } return; }
 		}
 		function bindFunctionalEvents() {
-			document.querySelectorAll('[data-action]').forEach((element) => {
-				if (element.dataset.action === 'filter' || element.dataset.action === 'status') return;
-				element.addEventListener('click', (event) => {
-					event.stopPropagation();
+			if (!document.body.dataset.actionDelegationBound) {
+				document.body.addEventListener('click', (event) => {
+					const element = event.target.closest('[data-action]');
+					if (!element) return;
 					const action = element.dataset.action;
-					if (action === 'view-opportunity') { const opportunity = opportunityByTitle(element.dataset.title); if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity)); return; }
+					if (action === 'filter' || action === 'status') return;
+					event.stopPropagation();
+
+					if (action === 'view-opportunity') {
+						const opportunity = opportunityByTitle(element.dataset.title);
+						if (opportunity) {
+							document.body.insertAdjacentHTML('beforeend', detailModal(opportunity));
+							bindFunctionalEvents();
+						}
+						return;
+					}
 					if (action === 'apply') { addApplication(element.dataset.title); return; }
 					if (action === 'delete-opportunity') { if (confirm(`Delete ${element.dataset.title}?`)) { state.opportunities = state.opportunities.filter((item) => item.title !== element.dataset.title); saveState(); notify('Opportunity deleted.'); renderFunctional(); } return; }
 					if (action === 'add-skill') { const name = prompt('Skill name'); if (name?.trim()) { state.skills.push({ name: name.trim(), score: 25, status: 'Improve' }); saveState(); notify(`${name.trim()} added to your skills.`); renderFunctional(); } return; }
@@ -1707,21 +1953,8 @@
 						const role = normalizeRole(element.dataset.role);
 						const session = currentStudentSession();
 						const account = currentStudentAccount();
-						if (account) {
-							account.role = role;
-							const accounts = loadStudentAccounts();
-							const index = accounts.findIndex((item) => item.id === account.id);
-							if (index >= 0) {
-								accounts[index].role = role;
-								saveStudentAccounts(accounts);
-							}
-							if (session) {
-								localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: session.id, email: session.email, role }));
-							}
-						}
-						state.activeRole = role;
-						saveState();
-						go(dashboardRouteForRole(role));
+						if (session?.loggedIn || account) { go(dashboardRouteForRole(session?.role || account?.role || 'student')); return; }
+						go(portalLoginRoute(role));
 						return;
 					}
 					if (action === 'select-assessment' || action === 'retake-assessment') { state.assessmentResult = null; state.assessmentSession = { skill: element.dataset.skill, index: 0, answers: [] }; renderFunctional(); return; }
@@ -1729,15 +1962,51 @@
 					if (action === 'next-assessment' || action === 'submit-assessment') { const choice = document.querySelector('input[name="assessment-answer"]:checked'); if (!choice) { showToast('Please select an answer.'); return; } const session = state.assessmentSession; session.answers[session.index] = Number(choice.value); const questions = ASSESSMENT_QUESTIONS[session.skill]; if (action === 'next-assessment') { session.index += 1; renderFunctional(); return; } const correct = session.answers.reduce((total, answer, index) => total + (answer === questions[index].a ? 1 : 0), 0); const score = Math.round((correct / questions.length) * 100); const topicBreakdown = calculateTopicBreakdown(session.skill, session.answers); const result = { skill: session.skill, score, correct, total: questions.length, rating: assessmentRating(score), topicBreakdown, completedAt: new Date().toISOString() }; state.assessments = (state.assessments || []).filter((item) => item.skill !== result.skill); state.assessments.push(result); state.skills = state.assessments.map((item) => ({ name: item.skill, score: item.score, status: item.rating })); state.assessmentResult = result; delete state.assessmentSession; saveState(); notify(`${result.skill} assessment completed with ${score}%.`); renderFunctional(); return; }
 					if (action === 'close-assessment') { document.getElementById('assessment-area').innerHTML = ''; return; }
 					if (action === 'start-learning') { state.learningProgress[element.dataset.skill] = 'In Progress'; saveState(); renderFunctional(); return; }
-					if (action === 'retake-assessment') { state.assessmentResult = null; state.assessmentSession = { skill: element.dataset.skill, index: 0, answers: [] }; renderFunctional(); return; }
 					if (action === 'candidate') { showToast(`${element.dataset.name}'s profile is ready for review.`); return; }
 					if (action === 'join-program') { notify(`You joined the ${element.dataset.name} program.`); showToast('Program added to your workspace.'); return; }
 					if (action === 'add-partnership') { const name = prompt('Partner organization'); if (name?.trim()) { state.partnerships.push({ id: `p-${Date.now()}`, name: name.trim(), type: 'New partnership', status: 'Pending' }); notify(`New partnership added with ${name.trim()}.`); saveState(); renderFunctional(); } return; }
 					if (action === 'remove-partnership') { if (confirm('Remove this partnership?')) { state.partnerships = state.partnerships.filter((item) => item.id !== element.dataset.id); saveState(); renderFunctional(); } return; }
 					if (action === 'read-notification') { const notification = state.notifications.find((item) => item.id === element.dataset.id); if (notification) notification.read = true; saveState(); element.closest('.notification-row')?.remove(); return; }
-					navigateFromAction(action, event);
+					navigateFromAction(action, { currentTarget: element });
 				});
+				document.body.dataset.actionDelegationBound = 'true';
+			}
+
+			document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+				if (backdrop.dataset.overlayBound) return;
+				backdrop.addEventListener('click', (event) => {
+					if (event.target === backdrop) {
+						backdrop.remove();
+					}
+				});
+				backdrop.dataset.overlayBound = 'true';
 			});
+			const globalInput = document.querySelector('[data-global-search-input]');
+			if (globalInput && !globalInput.dataset.bound) {
+				globalInput.dataset.bound = 'true';
+				globalInput.addEventListener('input', renderGlobalSearch);
+				globalInput.addEventListener('focus', () => { globalInput.closest('[data-search-root]')?.classList.add('is-focused'); renderGlobalSearch(); });
+				globalInput.addEventListener('keydown', (event) => {
+					if (event.key === 'Escape') { closeGlobalSearch(); return; }
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						const result = globalSearchState.results[globalSearchState.activeIndex >= 0 ? globalSearchState.activeIndex : 0];
+						if (result) document.querySelector(`[data-action="global-search-result"][data-result-index="${globalSearchState.activeIndex >= 0 ? globalSearchState.activeIndex : 0}"]`)?.click();
+						return;
+					}
+					if (!globalSearchState.results.length || !['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+					event.preventDefault();
+					const direction = event.key === 'ArrowDown' ? 1 : -1;
+					globalSearchState.activeIndex = (globalSearchState.activeIndex + direction + globalSearchState.results.length) % globalSearchState.results.length;
+					document.querySelectorAll('.global-search-result').forEach((item, index) => item.classList.toggle('active', index === globalSearchState.activeIndex));
+				});
+			}
+			if (!document.body.dataset.globalSearchOutsideBound) {
+				document.addEventListener('click', (event) => { if (globalSearchState.open && !event.target.closest('[data-search-root]')) { closeGlobalSearch(); event.preventDefault(); event.stopPropagation(); } }, true);
+				document.addEventListener('click', (event) => { const closeTarget = event.target.closest('[data-action="close-modal"]'); if (closeTarget) closeTarget.closest('.modal-backdrop')?.remove(); }, true);
+				document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); focusGlobalSearch(); } });
+				document.body.dataset.globalSearchOutsideBound = 'true';
+			}
 			document.querySelectorAll('input[name="assessment-answer"]').forEach((input) => input.addEventListener('change', () => {
 				const session = state.assessmentSession;
 				if (!session) return;
@@ -1753,6 +2022,15 @@
 			const values = Object.fromEntries(new FormData(form).entries());
 			if (submitEvent?.submitter?.name) values[submitEvent.submitter.name] = submitEvent.submitter.value;
 			clearFormErrors(form);
+			if (form.dataset.form === 'portal-recovery') {
+				const role = normalizeRole(form.dataset.role || 'student');
+				if (!isValidEmail(values.email)) return showFieldError(form, 'email', 'Enter a valid email address.');
+				const accounts = role === 'company' ? loadCompanyAccounts() : role === 'institution' ? loadInstitutionAccounts() : loadStudentAccounts();
+				if (!accounts.some((account) => account.email === values.email.trim().toLowerCase())) return showFieldError(form, 'email', `No ${roleLabel(role).toLowerCase()} account exists for this email.`);
+				showToast('Reset link simulated. You can sign in with your updated prototype credentials.');
+				go(portalLoginRoute(role));
+				return;
+			}
 			if (form.dataset.form === 'institution-register') {
 				const email = (values.email || '').trim().toLowerCase();
 				if (!(values.name || '').trim()) return showFieldError(form, 'name', 'Enter the institution name.');
@@ -1769,7 +2047,18 @@
 				if (loadInstitutionAccounts().some((account) => account.email === email)) return showFieldError(form, 'email', 'This institution email is already registered.');
 				const profile = { name: values.name.trim(), email, institutionType: values.institutionType.trim(), affiliation: values.affiliation.trim(), accreditation: values.accreditation || '', website: values.website || '', location: values.location.trim(), contactPerson: values.contactPerson.trim(), designation: values.designation.trim(), phone: values.phone.trim(), initials: values.name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), title: `Welcome, ${values.name.trim()}`, subtitle: 'Monitor readiness, skills, internships, and outcomes.' };
 				const institutionId = `institution-${Date.now()}`; const account = { id: institutionId, institutionId, role: 'institution', email, passwordHash: prototypeHash(values.password), profile, createdAt: new Date().toISOString() };
-				const accounts = loadInstitutionAccounts(); accounts.push(account); saveInstitutionAccounts(accounts); saveInstitutionWorkspace(blankInstitutionWorkspace(account)); startInstitutionSession(account); go('/institution/onboarding'); return;
+				const accounts = loadInstitutionAccounts(); accounts.push(account); saveInstitutionAccounts(accounts); saveInstitutionWorkspace(blankInstitutionWorkspace(account));
+				const institutionName = profile.name.trim().toLowerCase();
+				const students = loadStudentAccounts().map((student) => {
+					const college = String(student.profile?.college || student.college || '').trim().toLowerCase();
+					return college === institutionName ? { ...student, institutionId, profile: { ...student.profile, institutionId } } : student;
+				});
+				saveStudentAccounts(students);
+				const linkedStudentIds = new Set(students.filter((student) => student.institutionId === institutionId).map((student) => student.id));
+				(state.ecosystem?.applications || []).forEach((application) => { if (linkedStudentIds.has(application.studentId)) application.institutionId = institutionId; });
+				(state.ecosystem?.interviews || []).forEach((interview) => { if (linkedStudentIds.has(interview.studentId)) interview.institutionId = institutionId; });
+				(state.ecosystem?.offers || []).forEach((offer) => { if (linkedStudentIds.has(offer.studentId)) offer.institutionId = institutionId; });
+				saveState(); startInstitutionSession(account); go('/institution/onboarding'); return;
 			}
 			if (form.dataset.form === 'institution-login') {
 				const email = (values.email || '').trim().toLowerCase(); const account = loadInstitutionAccounts().find((item) => item.email === email);
@@ -1862,13 +2151,13 @@
 				const accounts = loadStudentAccounts(); accounts.push(account); saveStudentAccounts(accounts);
 				startStudentSession(account, 'student');
 				notify('Your student account was created.');
-				go('/role-selection');
+				go('/student/onboarding');
 				return;
 			}
 			if (form.dataset.form === 'onboarding') { const account = currentStudentAccount(); if (!account) return go('/login'); const onboarding = { careerInterest: values.interests || '', desiredRole: values.roles || '', technicalSkills: values.technicalSkills || '', softSkills: values.softSkills || '', preferredIndustry: values.industries || '', opportunityType: values.opportunityType || '', location: values.location || '' }; state.student.preferences = onboarding; const accounts = loadStudentAccounts(); const index = accounts.findIndex((item) => item.id === account.id); if (index >= 0) { accounts[index].onboarding = onboarding; accounts[index].onboardingCompleted = true; saveStudentAccounts(accounts); } saveState(); notify('Your onboarding preferences were saved.'); go('/student/dashboard'); return; }
 			if (form.dataset.form === 'recovery') { if (!isValidEmail(values.email)) return showFieldError(form, 'email', 'Enter a valid email address.'); const account = loadStudentAccounts().find((item) => item.email === values.email.trim().toLowerCase()); if (!account) return showFieldError(form, 'email', 'No student account exists for this email.'); try { localStorage.setItem(RESET_CANDIDATE_KEY, account.id); } catch (error) { } showToast('Reset link simulated. Choose a new password now.'); go('/reset-password'); return; }
 			if (form.dataset.form === 'reset-password') { const accountId = localStorage.getItem(RESET_CANDIDATE_KEY); const accounts = loadStudentAccounts(); const index = accounts.findIndex((account) => account.id === accountId); if (index < 0) return go('/forgot-password'); if ((values.password || '').length < 8) return showFieldError(form, 'password', 'Use at least 8 characters.'); if (values.password !== values.confirmPassword) return showFieldError(form, 'confirmPassword', 'Passwords do not match.'); accounts[index].passwordHash = prototypeHash(values.password); saveStudentAccounts(accounts); localStorage.removeItem(RESET_CANDIDATE_KEY); showToast('Password updated. You can now log in.'); go('/login'); return; }
-			if (form.dataset.form === 'profile') { const normalizedRole = normalizeRole(form.dataset.role); const person = personFor(normalizedRole); person.name = values.name; person.email = values.email; if (normalizedRole === 'student') { person.college = values.details; person.title = `Welcome, ${(values.name || '').trim().split(/\s+/)[0] || 'Student'}`; } else if (normalizedRole === 'company') person.industryType = values.details; else person.institutionType = values.details; saveState(); notify('Profile changes saved.'); showToast('Profile changes saved.'); return; }
+			if (form.dataset.form === 'profile') { const normalizedRole = normalizeRole(form.dataset.role); const person = personFor(normalizedRole); person.name = values.name; person.email = values.email; if (normalizedRole === 'student') { person.college = values.details; person.title = `Welcome, ${(values.name || '').trim().split(/\s+/)[0] || 'Student'}`; const account = currentStudentAccount(); if (account) { account.profile = { ...account.profile, name: person.name, email: person.email, college: person.college, title: person.title }; saveStudentAccounts(loadStudentAccounts().map((item) => item.id === account.id ? account : item)); } } else if (normalizedRole === 'company') person.industryType = values.details; else person.institutionType = values.details; const session = currentAuthSession(); if (session) persistAuthSession({ ...session, name: person.name, email: person.email }); saveState(); notify('Profile changes saved.'); showToast('Profile changes saved.'); return; }
 			if (form.dataset.form === 'settings') { state.settings = { emailUpdates: form.elements.emailUpdates.checked, profileVisibility: form.elements.profileVisibility.checked, compactView: form.elements.compactView.checked }; saveState(); notify('Settings saved.'); showToast('Settings saved.'); return; }
 			if (form.dataset.form === 'opportunity') { if (!values.title || !values.company || !values.location || !values.skills || !values.description || !values.duration || !values.deadline) return showFormError(form, 'Complete all required opportunity fields.'); state.opportunities.unshift({ title: values.title, company: values.company, location: values.location, type: values.type, skills: values.skills, description: values.description, duration: values.duration, deadline: values.deadline, match: 'New' }); saveState(); notify(`Opportunity posted: ${values.title}.`); showToast('Opportunity posted successfully.'); go('/company/opportunities'); return; }
 			if (form.dataset.form === 'assessment') { const score = ['q1', 'q2', 'q3'].reduce((total, key) => total + (values[key] === '1' ? 1 : 0), 0); state.assessment = { score, completed: new Date().toISOString() }; const git = state.skills.find((skill) => skill.name === 'Git'); if (git) { git.score = Math.min(100, git.score + score * 5); git.status = score > 1 ? 'Verified' : git.status; } saveState(); notify('Assessment completed.'); showToast(`Assessment complete: ${score}/3 correct.`); renderFunctional(); return; }
@@ -2124,19 +2413,20 @@
 			teardownLandingExperience();
 			const match = path.match(/^\/(student|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports)$/);
 			const session = currentStudentSession();
-			if (path.startsWith('/student/') && !currentStudentAccount()) { go('/login'); return; }
-			if (path.startsWith('/student/') && currentStudentAccount()) hydrateStudentAccount(currentStudentAccount());
-			if ((path.startsWith('/company/') && !['/company/login', '/company/register'].includes(path)) || (path.startsWith('/institution/') && !['/institution/login', '/institution/register'].includes(path))) {
-				const expectedRole = path.startsWith('/company/') ? 'company' : 'institution';
-				if (expectedRole === 'institution' && !currentInstitutionAccount()) { go('/institution/login'); return; }
-				const currentRole = normalizeRole(session && session.role ? session.role : (currentStudentAccount() && currentStudentAccount().role) || state.activeRole);
-				if (currentRole !== expectedRole) {
-					const redirect = currentRole === 'student' ? '/student/dashboard' : currentRole === 'company' ? '/company/dashboard' : currentRole === 'institution' ? '/institution/dashboard' : '/role-selection';
-					if (redirect !== path) { go(redirect); return; }
-				}
+			if (path === '/role-selection' && session?.loggedIn) { go(dashboardRouteForRole(session.role)); return; }
+			if (path.startsWith('/student/')) {
+				if (!currentStudentAccount() || !session?.loggedIn) { go('/login'); return; }
+				if (normalizeRole(session.role) !== 'student') { go(dashboardRouteForRole(session.role)); return; }
+				hydrateStudentAccount(currentStudentAccount());
 			}
-			if (path.startsWith('/student/') && session && session.role && session.role !== 'student') {
-				go(dashboardRouteForRole(session.role)); return;
+			if (path.startsWith('/industry/')) { go(path.replace('/industry/', '/company/')); return; }
+			if (path.startsWith('/company/') && !['/company/login', '/company/register'].includes(path)) {
+				if (!currentCompanyAccount() || !session?.loggedIn) { go('/company/login'); return; }
+				if (normalizeRole(session.role) !== 'company') { go(dashboardRouteForRole(session.role)); return; }
+			}
+			if (path.startsWith('/institution/') && !['/institution/login', '/institution/register'].includes(path)) {
+				if (!currentInstitutionAccount() || !session?.loggedIn) { go('/institution/login'); return; }
+				if (normalizeRole(session.role) !== 'institution') { go(dashboardRouteForRole(session.role)); return; }
 			}
 			if (path === '/') app.innerHTML = landing();
 			else if (path === '/login' || path === '/register') app.innerHTML = authPage(path.slice(1));
@@ -2144,7 +2434,10 @@
 			else if (path === '/company/onboarding') app.innerHTML = companyOnboardingPage();
 			else if (path === '/institution/login' || path === '/institution/register') app.innerHTML = institutionAuthPage(path.split('/')[2]);
 			else if (path === '/institution/onboarding') app.innerHTML = institutionOnboardingPage();
-			else if (path === '/forgot-password') app.innerHTML = recoveryPage();
+			else if (path === '/company/forgot-password') app.innerHTML = portalRecoveryPage('company');
+			else if (path === '/institution/forgot-password') app.innerHTML = portalRecoveryPage('institution');
+			else if (path === '/student/forgot-password') app.innerHTML = portalRecoveryPage('student');
+			else if (path === '/forgot-password') app.innerHTML = portalRecoveryPage('student');
 			else if (path === '/reset-password') app.innerHTML = recoveryPage(true);
 			else if (path === '/role-selection') app.innerHTML = roleSelection();
 			else if (match) { const [, role, section] = match; const normalizedRole = normalizeRole(role); const pages = { dashboard: normalizedRole === 'student' ? studentDashboardPage : normalizedRole === 'company' ? companyDashboardPage : institutionDashboardPage, profile: normalizedRole === 'company' ? companyProfilePage : normalizedRole === 'institution' ? institutionProfilePage : () => profilePage(normalizedRole), skills: normalizedRole === 'student' ? skillsPage : normalizedRole === 'institution' ? institutionSkillsAnalyticsPage : institutionSkillsPage, opportunities: normalizedRole === 'company' ? companyOpportunitiesPage : () => opportunitiesPage(normalizedRole), applications: normalizedRole === 'student' ? studentApplicationsPage : normalizedRole === 'company' ? companyApplicationsPage : () => applicationsPage(normalizedRole), shortlist: companyShortlistPage, interviews: normalizedRole === 'student' ? studentInterviewsPage : companyInterviewsPage, offers: studentOffersPage, messages: companyMessagesPage, notifications: normalizedRole === 'student' ? studentNotificationsPage : normalizedRole === 'institution' ? institutionNotificationsPage : companyNotificationsPage, settings: normalizedRole === 'institution' ? institutionSettingsPage : () => settingsPage(normalizedRole), 'career-path': careerPage, candidates: companyCandidatesPage, analytics: normalizedRole === 'company' ? companyAnalyticsPage : normalizedRole === 'institution' ? institutionAnalyticsPage : () => analyticsPage(normalizedRole), partnerships: normalizedRole === 'institution' ? institutionPartnershipsPage : partnershipsPage, 'post-opportunity': normalizedRole === 'company' ? companyOpportunityFormPage : postOpportunityPage, programs: programsPage, onboarding: normalizedRole === 'company' ? companyOnboardingPage : normalizedRole === 'institution' ? institutionOnboardingPage : onboardingPage, assessment: normalizedRole === 'student' ? assessmentPage : institutionAssessmentsPage, 'skill-profile': skillProfilePage, 'skill-gaps': normalizedRole === 'institution' ? institutionSkillGapsPage : skillGapsPage, 'learning-recommendations': learningRecommendationsPage, students: institutionStudentsPage, assessments: institutionAssessmentsPage, learning: institutionLearningPage, internships: normalizedRole === 'student' ? studentInternshipsPage : institutionInternshipsPage, placements: normalizedRole === 'student' ? studentPlacementsPage : institutionPlacementsPage, industry: institutionIndustryPage, faculty: institutionFacultyPage, reports: institutionReportsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
@@ -2158,4 +2451,5 @@
 		}
 		window.removeEventListener('hashchange', render);
 		window.addEventListener('hashchange', renderFunctional);
+		initializeDemoAccounts();
 		renderFunctional();
