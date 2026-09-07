@@ -1,7 +1,7 @@
 		const data = {
 			student: {
 				name: 'Rahul Kumar',
-				role: 'CSE Student • 3rd Year',
+				role: 'Student/Employee • 3rd Year',
 				initials: 'RK',
 				title: 'Good morning, Rahul',
 				subtitle: "Here's your career readiness overview."
@@ -172,7 +172,7 @@
 
 		function currentUserDashboardRoute() {
 			const session = currentAuthSession();
-			const role = normalizeRole(session?.role || state?.activeRole || 'student');
+			const role = normalizeRole(session?.role || session?.accountRole || 'student');
 			if (role === 'company') return '/company/dashboard';
 			if (role === 'institution') return '/institution/dashboard';
 			return '/student/dashboard';
@@ -180,15 +180,15 @@
 
 		function landing() {
 			const auth = currentAuthSession();
-			const isLoggedIn = Boolean(auth && auth.loggedIn);
+			const isLoggedIn = Boolean(auth?.loggedIn);
 			const dashboardRoute = currentUserDashboardRoute();
-			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started</a>`;
-			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Students</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
-			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
-			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Students</h3><p>Clarity is hard to find when the path from classroom to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
-			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillAura gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
+			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get ˀˀed</a>`;
+			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Student/Employees</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
+			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student/Employee</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
+			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Student/Employees</h3><p>Clarity is hard to find when the path from learning to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
+			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillAura gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student/Employee profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
-			<section class="section soft" id="roles"><div class="container"><div class="section-heading"><div class="eyebrow">One ecosystem</div><h2>Built for the Entire Academia–Industry Ecosystem</h2></div><div class="grid-3"><div class="card role-card student"><div class="icon-box">♙</div><h3>Student</h3><p>Find internships, jobs, learning programs, and career guidance.</p><a class="btn btn-light" href="#/role-selection">Explore as Student →</a></div><div class="card role-card industry"><div class="icon-box">▤</div><h3>Industry</h3><p>Find skilled candidates and collaborate with institutions.</p><a class="btn btn-light" href="#/role-selection">Explore as Industry →</a></div><div class="card role-card institution"><div class="icon-box">⌂</div><h3>Institution</h3><p>Monitor student readiness and build industry partnerships.</p><a class="btn btn-light" href="#/role-selection">Explore as Institution →</a></div></div></div></section>
+			<section class="section soft" id="roles"><div class="container"><div class="section-heading"><div class="eyebrow">One ecosystem</div><h2>Built for the Entire Academia–Industry Ecosystem</h2></div><div class="grid-3"><div class="card role-card student"><div class="icon-box">♙</div><h3>Student/Employee</h3><p>Find internships, jobs, learning programs, and career guidance.</p><a class="btn btn-light" href="#/role-selection">Explore as Student/Employee →</a></div><div class="card role-card industry"><div class="icon-box">▤</div><h3>Industry</h3><p>Find skilled candidates and collaborate with institutions.</p><a class="btn btn-light" href="#/role-selection">Explore as Industry →</a></div><div class="card role-card institution"><div class="icon-box">⌂</div><h3>Institution</h3><p>Monitor student readiness and build industry partnerships.</p><a class="btn btn-light" href="#/role-selection">Explore as Institution →</a></div></div></div></section>
 			<section class="section"><div class="container"><div class="section-heading"><div class="eyebrow">Coming together</div><h2>Preview the Platform</h2></div><div class="feature-grid">${['Skill Assessment','Verified Skills','Career Guidance','Internship & Job Matching','Industry Learning Programs','Institution Analytics'].map((x,i)=>`<div class="feature"><div class="icon-box">${['✦','✓','◎','▣','◈','▥'][i]}</div><strong>${x}</strong></div>`).join('')}</div></div></section><section class="cta"><div class="container"><h2>Build a Stronger Bridge Between Education and Industry</h2><p>From learning new skills to finding the right opportunity, SkillAura brings the complete journey into one platform.</p><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a></div></section><footer><div class="container"><div class="footer-grid"><div>${brand()}<p style="margin-top:14px">Connecting Skills, Academia &amp; Industry.</p></div><div><h4>Platform</h4><a href="#/role-selection">Students</a><a href="#/role-selection">Industry</a><a href="#/role-selection">Institutions</a><a href="#/role-selection">Opportunities</a></div><div><h4>Company</h4><a href="#about">About</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div><div><h4>Social</h4><p>LinkedIn · X · Instagram</p></div></div><div class="copyright">© 2026 SkillAura. All rights reserved.</div></div></footer></div>`
 		}
 
@@ -196,7 +196,7 @@
 			const target = document.getElementById('role-fields');
 			if (!target) return;
 
-			const fields = role === 'Student' ?
+			const fields = role === 'Student/Employee' ?
 				['College', 'Degree', 'Branch', 'Year'] :
 				role === 'Industry' ?
 				['Company Name', 'Industry Type'] :
@@ -214,7 +214,7 @@
 
 		function portalLoginRoute(role) { const normalizedRole = normalizeRole(role); return normalizedRole === 'company' ? '/company/login' : normalizedRole === 'institution' ? '/institution/login' : '/login'; }
 		function roleSelection() {
-			return `<div class="role-page"><div class="container role-top"><a class="btn-plain" href="#/">← Home</a>${brand()}</div><div class="role-select"><div class="eyebrow">SkillAura portal entry</div><h1>How would you like to use SkillAura?</h1><p>Choose the workspace that matches your goals.</p><div class="role-options"><button class="role-option" type="button" data-action="choose-role" data-role="student"><div class="icon-box">♙</div><h2>Student</h2><p>Build skills, take assessments, discover opportunities and grow your career.</p><strong>Learn → Assess → Improve → Apply</strong><span class="btn btn-primary">Enter Student Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="institution"><div class="icon-box">⌂</div><h2>Institution</h2><p>Manage students, monitor skill development and connect with industry.</p><strong>Develop Students → Track Skills → Connect Industry</strong><span class="btn btn-primary">Enter Institution Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="company"><div class="icon-box">▤</div><h2>Company</h2><p>Find skilled candidates, post opportunities and recruit talent.</p><strong>Post Opportunities → Find Talent → Recruit</strong><span class="btn btn-primary">Enter Company Portal →</span></button></div></div></div>`;
+			return `<div class="role-page"><div class="container role-top"><a class="btn-plain" href="#/">← Home</a>${brand()}</div><div class="role-select"><div class="eyebrow">SkillAura portal entry</div><h1>How would you like to use SkillAura?</h1><p>Choose the workspace that matches your goals.</p><div class="role-options"><button class="role-option" type="button" data-action="choose-role" data-role="student"><div class="icon-box">♙</div><h2>Student/Employee</h2><p>Build skills, take assessments, discover opportunities and grow your career.</p><strong>Learn → Assess → Improve → Apply</strong><span class="btn btn-primary">Enter Student/Employee Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="institution"><div class="icon-box">⌂</div><h2>Institution</h2><p>Manage students, monitor skill development and connect with industry.</p><strong>Develop Students → Track Skills → Connect Industry</strong><span class="btn btn-primary">Enter Institution Portal →</span></button><button class="role-option" type="button" data-action="choose-role" data-role="company"><div class="icon-box">▤</div><h2>Company</h2><p>Find skilled candidates, post opportunities and recruit talent.</p><strong>Post Opportunities → Find Talent → Recruit</strong><span class="btn btn-primary">Enter Company Portal →</span></button></div></div></div>`;
 		}
 		const dashboardRoutes = {
 			student: {
@@ -262,6 +262,12 @@
 				partnerships: 'Partnerships',
 				reports: 'Reports & Analytics',
 				notifications: 'Notifications',
+				settings: 'Settings'
+			},
+			tutor: {
+				dashboard: 'Dashboard',
+				courses: 'My Courses',
+				profile: 'Tutor Profile',
 				settings: 'Settings'
 			}
 		};
@@ -1066,8 +1072,8 @@
 		}
 
 		function initChatbot() {
-			document.querySelector('.ai-launcher')?.parentElement?.remove();
-			document.body.insertAdjacentHTML('beforeend', `<div class="ai-assistant">${chatbotMarkup()}</div>`);
+			document.querySelector('.ai-assistant')?.remove();
+			return;
 
 			const assistant = document.querySelector('.ai-assistant');
 			const launcher = assistant.querySelector('.ai-launcher');
@@ -1448,7 +1454,7 @@
 				if (section === 'dashboard') bindDashboardActions(role)
 			} else app.innerHTML = notFound();
 			document.querySelectorAll('a[href="#"]').forEach(link => link.href = '#/');
-			if (path === '/register') updateRoleFields('Student');
+			if (path === '/register') updateRoleFields('Student/Employee');
 			if (path === '/login' || path === '/register') bindFormValidation(path.slice(1));
 			window.scrollTo(0, 0)
 			initChatbot();
@@ -1493,6 +1499,7 @@
 		const COMPANY_WORKSPACES_KEY = 'skillaura_company_workspaces';
 		const INSTITUTION_ACCOUNTS_KEY = 'skillaura_institutions';
 		const INSTITUTION_WORKSPACES_KEY = 'skillaura_institution_workspaces';
+		const TUTOR_ACCOUNTS_KEY = 'skillaura_tutors';
 		const CURRENT_USER_KEY = 'skillaura_current_user';
 		const RESET_CANDIDATE_KEY = 'skillaura_reset_candidate';
 		const ECOSYSTEM_STATUSES = ['Applied', 'Under Review', 'Shortlisted', 'Assessment', 'Interview', 'Selected', 'Offer Sent', 'Accepted', 'Rejected', 'Withdrawn'];
@@ -1735,6 +1742,8 @@
 		function saveCompanyWorkspace(workspace) { const workspaces = loadCompanyWorkspaces(); workspaces[workspace.companyId] = workspace; try { localStorage.setItem(COMPANY_WORKSPACES_KEY, JSON.stringify(workspaces)); } catch (error) { showToast('Company workspace changes could not be saved.'); } }
 		function loadInstitutionAccounts() { try { const accounts = JSON.parse(localStorage.getItem(INSTITUTION_ACCOUNTS_KEY)); return Array.isArray(accounts) ? accounts : []; } catch (error) { return []; } }
 		function saveInstitutionAccounts(accounts) { try { localStorage.setItem(INSTITUTION_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Institution account changes could not be saved.'); } }
+		function loadTutorAccounts() { try { const accounts = JSON.parse(localStorage.getItem(TUTOR_ACCOUNTS_KEY)); return Array.isArray(accounts) ? accounts : []; } catch (error) { return []; } }
+		function saveTutorAccounts(accounts) { try { localStorage.setItem(TUTOR_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Tutor account changes could not be saved.'); } }
 		function loadInstitutionWorkspaces() { try { const workspaces = JSON.parse(localStorage.getItem(INSTITUTION_WORKSPACES_KEY)); return workspaces && typeof workspaces === 'object' ? workspaces : {}; } catch (error) { return {}; } }
 		function blankInstitutionWorkspace(account) { return { institutionId: account.id, students: [], programs: [], internships: [], collaborations: [], notifications: [], reports: [], admins: [{ name: account.profile.contactPerson, email: account.email, role: 'Owner', permissions: 'All', status: 'Active' }], settings: { academicYear: '', departments: '', courses: '' }, onboarding: { status: 'Pending', completed: false } }; }
 		function getInstitutionWorkspace(institutionId) { const workspaces = loadInstitutionWorkspaces(); return workspaces[institutionId] || blankInstitutionWorkspace({ id: institutionId, email: '', profile: { contactPerson: 'Administrator' } }); }
@@ -1744,10 +1753,12 @@
 		function currentCompanyAccount() { const session = currentStudentSession(); return session && normalizeRole(session.role) === 'company' ? loadCompanyAccounts().find((account) => account.id === session.companyId || account.id === session.id) : null; }
 		function currentCompanyWorkspace() { const account = currentCompanyAccount(); return account ? getCompanyWorkspace(account.id) : null; }
 		function currentInstitutionAccount() { const session = currentStudentSession(); return session && session.role === 'institution' ? loadInstitutionAccounts().find((account) => account.id === session.institutionId || account.id === session.id) : null; }
+		function currentTutorAccount() { const session = currentStudentSession(); return session && session.role === 'tutor' ? loadTutorAccounts().find((account) => account.id === session.id || account.id === session.userId) : null; }
 		function currentInstitutionWorkspace() { const account = currentInstitutionAccount(); return account ? getInstitutionWorkspace(account.id) : null; }
-		function normalizeRole(role) { return role === 'industry' ? 'company' : role; }
+		function normalizeRole(role) { return role === 'industry' ? 'company' : role === 'employee' ? 'student' : role; }
+		function isLearnerRole(role) { return ['student', 'tutor'].includes(normalizeRole(role)); }
 		function resolveAccountRole(account) { return normalizeRole((account && account.role) || (currentStudentSession() && currentStudentSession().role) || 'student'); }
-		function dashboardRouteForRole(role) { const normalized = normalizeRole(role); return normalized === 'company' ? '/company/dashboard' : normalized === 'institution' ? '/institution/dashboard' : '/student/dashboard'; }
+		function dashboardRouteForRole(role) { const normalized = normalizeRole(role); return normalized === 'company' ? '/company/dashboard' : normalized === 'institution' ? '/institution/dashboard' : normalized === 'tutor' ? '/tutor/dashboard' : '/student/dashboard'; }
 		function clearStudentSession() {
 			for (const key of LEGACY_USER_KEYS) {
 				try { localStorage.removeItem(key); } catch (error) {}
@@ -1824,6 +1835,14 @@
 			state.activeRole = 'institution';
 			state.institution = { ...state.institution, ...account.profile, email: account.email };
 			saveInstitutionAccounts(loadInstitutionAccounts().map((item) => item.id === account.id ? account : item));
+			saveState();
+		}
+		function startTutorSession(account) {
+			if (!account) return;
+			account.role = 'tutor';
+			persistAuthSession({ id: account.id, userId: account.id, email: account.email, role: 'tutor', name: account.profile?.name || account.name || 'Tutor', demoAccount: Boolean(account.demoAccount || account.profile?.demoAccount) });
+			state.activeRole = 'tutor';
+			saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item));
 			saveState();
 		}
 		function isValidEmail(email) { return /^\S+@\S+\.\S+$/.test(email || ''); }
@@ -1932,8 +1951,8 @@
 			state.notifications.unshift({ id: `n-${Date.now()}`, text, read: false, time: 'Just now' });
 			saveState();
 		}
-		function roleLabel(role) { return role[0].toUpperCase() + role.slice(1); }
-		function personFor(role) { const normalized = role === 'company' ? 'company' : role === 'institution' ? 'institution' : 'student'; return state[normalized === 'company' ? 'company' : normalized === 'institution' ? 'institution' : 'student']; }
+		function roleLabel(role) { return normalizeRole(role) === 'student' ? 'Student/Employee' : role[0].toUpperCase() + role.slice(1); }
+		function personFor(role) { const normalized = normalizeRole(role); if (normalized === 'company') return state.company; if (normalized === 'institution') return state.institution; if (normalized === 'tutor') return currentTutorAccount()?.profile || { name: 'Tutor', initials: 'TU', role: 'tutor' }; return state.student; }
 		function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
 		function go(route) { location.hash = route.startsWith('#') ? route : `#${route}`; }
 		function opportunityByTitle(title) { return state.opportunities.find((item) => item.title === title); }
@@ -1964,9 +1983,10 @@
 
 		function functionalSidebar(role) {
 			const normalizedRole = normalizeRole(role);
+			const routeRole = normalizedRole;
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
-			const routes = dashboardRoutes[normalizedRole] || dashboardRoutes.company || {};
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${normalizedRole}/${key}" onclick="closeSidebar()">${icons[key] || '◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><button class="logout" data-action="logout">↪ &nbsp; Logout</button></aside>`;
+			const routes = dashboardRoutes[routeRole] || dashboardRoutes.company || {};
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()">${icons[key] || '◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><button class="logout" data-action="logout">↪ &nbsp; Logout</button></aside>`;
 		}
 		function globalSearchMarkup() { return `<div class="global-search" data-search-root><div class="global-search-input-wrap"><span class="global-search-icon" aria-hidden="true">⌕</span><input class="search" data-global-search-input type="search" placeholder="Search anything" aria-label="Search anything" aria-controls="global-search-results" autocomplete="off"><kbd>⌘ K</kbd><button class="global-search-clear" data-action="clear-global-search" type="button" aria-label="Clear search" hidden>×</button></div><div class="global-search-results" id="global-search-results" role="listbox" hidden></div></div>`; }
 		function shell(role, title, content) {
@@ -2041,6 +2061,41 @@
 		function studentDashboardPage() {
 			const { assessments, average } = assessmentStats();
 			return shell('student', 'Student Dashboard', `${pageIntro(state.student.title, 'Build your profile from real assessment results.', '<button class="btn btn-primary" data-action="route" data-route="/student/assessment">＋ Add Skill Assessment</button>')}<section class="dash-panel skill-profile-panel"><div class="panel-head"><div><h3>My Skill Profile</h3><p class="muted">Your scores begin at zero and grow with completed assessments.</p></div></div><div class="kpis assessment-kpis"><div class="kpi"><div class="kpi-top"><span>Skills Assessed</span><span class="kpi-icon">✦</span></div><div class="kpi-value">${assessments.length}</div></div><div class="kpi"><div class="kpi-top"><span>Assessments Completed</span><span class="kpi-icon">✓</span></div><div class="kpi-value">${assessments.length}</div></div><div class="kpi"><div class="kpi-top"><span>Average Score</span><span class="kpi-icon">▥</span></div><div class="kpi-value">${average}%</div></div><div class="kpi"><div class="kpi-top"><span>Skill Readiness</span><span class="kpi-icon">◉</span></div><div class="kpi-value">${average}%</div></div></div></section><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Assessed Skills</h3><button class="btn-plain" data-action="route" data-route="/student/assessment">Take assessment →</button></div>${assessments.length ? assessments.map((item) => `<div class="skill"><div class="skill-line"><span><b>${esc(item.skill)}</b> <span class="tag ${item.score >= 70 ? 'success' : 'warning'}">${esc(item.rating)}</span></span><span><b>${item.score}%</b> <button class="btn-plain" data-action="retake-assessment" data-skill="${esc(item.skill)}">Retake</button></span></div><div class="bar"><span style="width:${item.score}%"></span></div></div>`).join('') : emptyState('No skills assessed yet.')}</section><section class="dash-panel"><div class="panel-head"><h3>Assessment History</h3><button class="btn-plain" data-action="route" data-route="/student/skills">View all →</button></div>${assessmentHistoryMarkup(4)}</section></div><section class="dash-panel"><div class="panel-head"><h3>Recommended Opportunities</h3><button class="btn-plain" data-action="route" data-route="/student/opportunities">View all opportunities →</button></div>${state.opportunities.slice(0, 3).map(opportunityRow).join('')}</section></div>`);
+		}
+		function tutorCourseForm(course = {}) {
+			return `<form class="dash-panel editable-form" data-form="tutor-course"><div class="panel-head"><h3>${course.id ? 'Edit Course' : 'Create Course'}</h3></div><input type="hidden" name="courseId" value="${esc(course.id || '')}"><label>Course title</label><input name="title" value="${esc(course.title || '')}" placeholder="e.g. Modern JavaScript Foundations" required><label>Description</label><textarea name="description" rows="3" placeholder="What will learners achieve?" required>${esc(course.description || '')}</textarea><div class="form-row"><div><label>Category</label><input name="category" value="${esc(course.category || '')}" placeholder="Web development" required></div><div><label>Difficulty</label><select name="difficulty"><option ${course.difficulty === 'Beginner' ? 'selected' : ''}>Beginner</option><option ${course.difficulty === 'Intermediate' ? 'selected' : ''}>Intermediate</option><option ${course.difficulty === 'Advanced' ? 'selected' : ''}>Advanced</option></select></div></div><label>Skills / topics covered</label><input name="skills" value="${esc(course.skills || '')}" placeholder="JavaScript, DOM, accessibility" required><label>Course thumbnail URL <span>(optional)</span></label><input name="thumbnail" type="url" value="${esc(course.thumbnail || '')}" placeholder="https://example.com/course-image.jpg"><label>Modules / course content</label><textarea name="modules" rows="3" placeholder="Module 1: Foundations&#10;Module 2: Practice" required>${esc(course.modules || '')}</textarea><div class="form-row"><div><label>Duration</label><input name="duration" value="${esc(course.duration || '')}" placeholder="6 weeks" required></div><div><label>Price</label><input name="price" value="${esc(course.price || 'Free')}" placeholder="Free or 499" required></div></div><button class="btn btn-primary" type="submit">${course.id ? 'Save Course Changes' : 'Save Course as Draft'}</button></form>`;
+		}
+		function tutorExamQuestion(question = {}) {
+			return `<div class="tutor-question"><div class="panel-head"><strong>Multiple-choice question</strong><button class="btn-plain" type="button" data-action="tutor-remove-question">Remove</button></div><label>Question</label><textarea name="questionText" rows="2" placeholder="Write the question" required>${esc(question.text || '')}</textarea><div class="form-row"><div><label>Option A</label><input name="questionOptionA" value="${esc(question.options?.A || '')}" required></div><div><label>Option B</label><input name="questionOptionB" value="${esc(question.options?.B || '')}" required></div></div><div class="form-row"><div><label>Option C</label><input name="questionOptionC" value="${esc(question.options?.C || '')}" required></div><div><label>Option D</label><input name="questionOptionD" value="${esc(question.options?.D || '')}" required></div></div><div class="form-row"><div><label>Correct answer</label><select name="questionAnswer"><option value="A" ${question.answer === 'A' ? 'selected' : ''}>Option A</option><option value="B" ${question.answer === 'B' ? 'selected' : ''}>Option B</option><option value="C" ${question.answer === 'C' ? 'selected' : ''}>Option C</option><option value="D" ${question.answer === 'D' ? 'selected' : ''}>Option D</option></select></div><div><label>Marks</label><input name="questionMarks" type="number" min="1" value="${esc(question.marks || 1)}" required></div></div></div>`;
+		}
+		function tutorExamForm(exam = {}, courses = []) {
+			const questions = exam.questions?.length ? exam.questions : [{}];
+			return `<form class="dash-panel editable-form" data-form="tutor-exam"><div class="panel-head"><h3>${exam.id ? 'Edit Exam' : 'Create Exam'}</h3></div><input type="hidden" name="examId" value="${esc(exam.id || '')}"><label>Exam title</label><input name="title" value="${esc(exam.title || '')}" placeholder="e.g. JavaScript Fundamentals Assessment" required><label>Description / instructions</label><textarea name="description" rows="3" placeholder="Explain the exam instructions and expectations." required>${esc(exam.description || '')}</textarea><div class="form-row"><div><label>Course</label><select name="courseId" required><option value="">Select a course</option>${courses.map((course) => `<option value="${esc(course.id)}" ${course.id === exam.courseId ? 'selected' : ''}>${esc(course.title)}</option>`).join('')}</select></div><div><label>Module / topic</label><input name="module" value="${esc(exam.module || '')}" placeholder="Module 1: Foundations"></div></div><div class="form-row"><div><label>Difficulty</label><select name="difficulty"><option ${exam.difficulty === 'Beginner' ? 'selected' : ''}>Beginner</option><option ${exam.difficulty === 'Intermediate' ? 'selected' : ''}>Intermediate</option><option ${exam.difficulty === 'Advanced' ? 'selected' : ''}>Advanced</option></select></div><div><label>Time limit (minutes)</label><input name="timeLimit" type="number" min="1" value="${esc(exam.timeLimit || 30)}" required></div></div><div class="form-row"><div><label>Passing score (%)</label><input name="passingScore" type="number" min="1" max="100" value="${esc(exam.passingScore || 60)}" required></div><div><label>Availability</label><select name="availability"><option ${exam.availability === 'Scheduled' ? 'selected' : ''}>Always available</option><option ${exam.availability === 'Scheduled' ? 'selected' : ''}>Scheduled</option></select></div></div><div class="panel-head"><h3>Questions</h3><button class="btn btn-light" type="button" data-action="tutor-add-question">＋ Add question</button></div><div data-tutor-questions>${questions.map((question) => tutorExamQuestion(question)).join('')}</div><button class="btn btn-primary" type="submit">${exam.id ? 'Save Exam Changes' : 'Save Exam as Draft'}</button></form>`;
+		}
+		function tutorExamManagementMarkup() {
+			const account = currentTutorAccount() || { courses: [], exams: [] };
+			const courses = account.courses || [];
+			const exams = account.exams || [];
+			const published = exams.filter((exam) => exam.status === 'Published').length;
+			const draft = exams.length - published;
+			const courseName = (courseId) => courses.find((course) => course.id === courseId)?.title || 'Course not selected';
+			return `<section class="tutor-exam-section"><div class="dash-intro"><div><h1>Exam &amp; Assessment Management</h1><p>Create assessments that connect directly to your courses and modules.</p></div><span class="tag blue">${exams.length} exams</span></div><div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Exams</span><span class="kpi-icon">▣</span></div><div class="kpi-value">${exams.length}</div></div><div class="kpi"><div class="kpi-top"><span>Published Exams</span><span class="kpi-icon">✓</span></div><div class="kpi-value">${published}</div></div><div class="kpi"><div class="kpi-top"><span>Draft Exams</span><span class="kpi-icon">◷</span></div><div class="kpi-value">${draft}</div></div><div class="kpi"><div class="kpi-top"><span>Total Questions</span><span class="kpi-icon">?</span></div><div class="kpi-value">${exams.reduce((total, exam) => total + (exam.questions?.length || 0), 0)}</div></div></div><section class="dash-panel" id="tutor-exams"><div class="panel-head"><h3>My Exams</h3><button class="btn btn-primary" data-action="tutor-new-exam">＋ Create Exam</button></div>${exams.length ? `<div class="tutor-exam-list">${exams.map((exam) => `<article class="application-row"><div><b>${esc(exam.title)}</b><p>${esc(courseName(exam.courseId))} · ${esc(exam.module || 'General assessment')}</p><small>${exam.questions?.length || 0} questions · ${exam.totalMarks || 0} marks · ${exam.timeLimit || 0} minutes</small></div><div class="card-actions"><span class="tag ${exam.status === 'Published' ? 'success' : 'warning'}">${esc(exam.status || 'Draft')}</span><button class="btn-plain" data-action="tutor-view-exam" data-id="${esc(exam.id)}">View</button><button class="btn-plain" data-action="tutor-edit-exam" data-id="${esc(exam.id)}">Edit</button><button class="btn-plain" data-action="tutor-duplicate-exam" data-id="${esc(exam.id)}">Duplicate</button><button class="btn-plain" data-action="tutor-${exam.status === 'Published' ? 'unpublish' : 'publish'}-exam" data-id="${esc(exam.id)}">${exam.status === 'Published' ? 'Unpublish' : 'Publish'}</button><button class="btn-plain" data-action="tutor-delete-exam" data-id="${esc(exam.id)}">Delete</button></div></article>`).join('')}</div>` : emptyState('No exams yet. Create an assessment for one of your courses.')}</section><div id="tutor-exam-form">${tutorExamForm({}, courses)}</div></section>`;
+		}
+		function addTutorTakeExamButton() {
+			const intro = document.querySelector('.dash-content > .dash-intro');
+			const createCourse = intro?.querySelector('[data-action="tutor-focus-course"]');
+			if (!createCourse || intro.querySelector('.tutor-dashboard-actions')) return;
+			const actions = document.createElement('div');
+			actions.className = 'tutor-dashboard-actions';
+			createCourse.replaceWith(actions);
+			actions.append(createCourse);
+			actions.insertAdjacentHTML('beforeend', '<button class="btn btn-light" type="button">Take Exam</button>');
+		}
+		function tutorDashboardPage() {
+			const account = currentTutorAccount() || { profile: { name: 'Tutor', email: '', expertise: '', bio: '' }, courses: [] };
+			const courses = account.courses || [];
+			const published = courses.filter((course) => course.status === 'Published').length;
+			return shell('tutor', 'Tutor Dashboard', `${pageIntro(`Welcome, ${account.profile?.name || 'Tutor'}`, 'Create practical courses and help learners build their next skill.', '<button class="btn btn-primary" data-action="tutor-focus-course">＋ Create Course</button>')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Total Courses</span><span class="kpi-icon">▣</span></div><div class="kpi-value">${courses.length}</div><div class="kpi-note">Your course library</div></div><div class="kpi"><div class="kpi-top"><span>Published Courses</span><span class="kpi-icon">✓</span></div><div class="kpi-value">${published}</div><div class="kpi-note">Visible to learners</div></div><div class="kpi"><div class="kpi-top"><span>Total Learners</span><span class="kpi-icon">♙</span></div><div class="kpi-value">${courses.reduce((total, course) => total + (course.learners || 0), 0)}</div><div class="kpi-note">Across your courses</div></div><div class="kpi"><div class="kpi-top"><span>Completion Rate</span><span class="kpi-icon">◎</span></div><div class="kpi-value">${published ? Math.round(courses.filter((course) => course.status === 'Published').reduce((total, course) => total + (course.completion || 0), 0) / published) : 0}%</div><div class="kpi-note">Published course average</div></div></div><div class="dash-grid"><section class="dash-panel" id="tutor-courses"><div class="panel-head"><h3>My Courses</h3><span class="tag blue">${published} published</span></div>${courses.length ? courses.map((course) => `<article class="application-row"><div><b>${esc(course.title)}</b><p>${esc(course.category)} · ${esc(course.difficulty)} · ${esc(course.duration || 'Duration not set')}</p><small>${esc(course.skills || '')}</small></div><div class="card-actions"><span class="tag ${course.status === 'Published' ? 'success' : 'warning'}">${esc(course.status)}</span><button class="btn-plain" data-action="tutor-edit-course" data-id="${esc(course.id)}">Edit</button>${course.status === 'Draft' ? `<button class="btn-plain" data-action="tutor-publish-course" data-id="${esc(course.id)}">Publish</button>` : ''}<button class="btn-plain" data-action="tutor-delete-course" data-id="${esc(course.id)}">Delete</button></div></article>`).join('') : emptyState('No courses yet. Create your first course to get started.')}</section>${tutorCourseForm()}</div><section class="dash-panel"><div class="panel-head"><h3>Tutor Profile</h3><span class="tag blue">Public profile</span></div><form class="editable-form" data-form="tutor-profile"><div class="form-row"><div><label>Tutor name</label><input name="name" value="${esc(account.profile?.name || '')}" required></div><div><label>Expertise / skills</label><input name="expertise" value="${esc(account.profile?.expertise || '')}" placeholder="JavaScript, UI design" required></div></div><label>Bio</label><textarea name="bio" rows="3" placeholder="Tell learners what you teach.">${esc(account.profile?.bio || '')}</textarea><button class="btn btn-light" type="submit">Save Tutor Profile</button></form></section>`);
 		}
 		function opportunityRow(opportunity) { return `<button class="opportunity opportunity-button" data-action="view-opportunity" data-title="${esc(opportunity.title)}"><span class="opportunity-icon">▣</span><span class="opportunity-info"><strong>${esc(opportunity.title)}</strong><small>${esc(opportunity.company)} · ${esc(opportunity.location)}<br>${esc(opportunity.skills)}</small></span><span class="match">${esc(opportunity.match)}<small style="display:block;color:var(--muted);font-weight:400">match</small></span></button>`; }
 		function studentApplicationsPage() { const applications = sharedEcosystem().applications.filter((item) => item.studentId === studentIdForSession()); return shell('student', 'Applications', `${pageIntro('My Applications', 'Track the same application records companies and institutions see.')}${applications.length ? `<div class="dash-panel">${applications.map((item) => `<div class="application-row"><div><b>${esc(item.opportunity)}</b><p>${esc(item.company)} · ${esc(item.applied || '')} · ${item.match || 0}% Prototype Match Score</p></div><div>${companyStatusTag(item.status || item.stage)}${item.status === 'Offer Sent' ? `<button class="btn btn-primary" data-action="student-accept-offer" data-id="${item.applicationId || item.id}">Accept Offer</button>` : ''}</div></div>`).join('')}</div>` : emptyState('No applications yet. Explore opportunities to get started.')}`); }
@@ -2119,7 +2174,7 @@
 			const register = type === 'register';
 			const loginFields = `${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`;
 			const registerFields = `${authInput('Full Name', 'name', { placeholder: 'Your full name', autocomplete: 'name' })}${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('College / University', 'college', { placeholder: 'Your institution', autocomplete: 'organization' })}${authInput('Course', 'course', { placeholder: 'e.g. B.Tech Computer Science' })}<div class="auth-field"><label for="year">Year of Study <b aria-hidden="true">*</b></label><select id="year" name="year" required><option value="">Select your year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Graduate</option></select></div>${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210', autocomplete: 'tel', optional: true })}`;
-			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">Student Portal</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create your student account and shape a profile that opens the right doors.' : 'Sign in to your personal SkillAura workspace.'}</p></div><div class="auth-note">Frontend prototype · account data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/role-selection">← Back to portal selection</a><h2 style="margin-top:27px">Student Portal</h2><p>${register ? 'Create your student account. Fields marked * are required.' : 'Login to your student workspace.'}</p><form class="form" data-form="${register ? 'register' : 'login'}" novalidate>${register ? registerFields : loginFields}${register ? '<button class="btn btn-primary" type="submit">Create Student Account</button>' : '<div class="form-row"><label><input type="checkbox" name="remember"> Remember me</label><button class="btn-plain" type="button" data-action="forgot" data-portal-role="student">Forgot password?</button></div><button class="btn btn-primary" type="submit">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="student">Demo Student</button><button class="demo-btn" type="button" data-demo="industry">Demo Industry</button><button class="demo-btn" type="button" data-demo="institution">Demo Institution</button></div>'}</form>${register ? '<div class="switch">Already have an account? <a href="#/login">Login</a></div>' : '<div class="switch">New to SkillAura? <a href="#/register">Create Student Account</a></div>'}</div></main></div>`;
+			return `<div class="auth"><aside class="auth-aside">${brand()}<div><div class="eyebrow" style="color:#5bd1d5">${register ? 'Create your SkillAura profile' : 'SkillAura Portal'}</div><h1>${register ? 'Start building your bridge.' : 'Your next opportunity starts here.'}</h1><p>${register ? 'Create your account and shape a profile that opens the right doors.' : 'Sign in to your SkillAura workspace.'}</p></div><div class="auth-note">Frontend prototype · account data stays in this browser</div></aside><main class="auth-main"><div class="form-wrap"><a class="btn-plain" href="#/role-selection">← Back to portal selection</a><h2 style="margin-top:27px">${register ? 'Create your account' : 'Sign in to SkillAura'}</h2><p>${register ? 'Create your learner account. Fields marked * are required.' : 'Choose your role, then sign in to your SkillAura workspace.'}</p><form class="form" data-form="${register ? 'register' : 'login'}" novalidate>${register ? registerFields : loginFields}${register ? '<button class="btn btn-primary" type="submit">Create Account</button>' : '<div class="form-row"><label><input type="checkbox" name="remember"> Remember me</label><button class="btn-plain" type="button" data-action="forgot" data-portal-role="student">Forgot password?</button></div><button class="btn btn-primary" type="submit">Login</button><div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="student">Demo Student/Employee</button><button class="demo-btn" type="button" data-demo="tutor">Demo Tutor</button></div>'}</form>${register ? '<div class="switch">Already have an account? <a href="#/login">Login</a></div>' : '<div class="switch">New to SkillAura? <a href="#/register">Create an account</a></div>'}</div></main></div>`;
 		}
 		function companyAuthPage(type) {
 			const register = type === 'register';
@@ -2268,6 +2323,18 @@
 			}).join('')}</div></section>`);
 		}
 		function navigateFromAction(action, sourceEvent) {
+			if (action === 'tutor-add-question') { document.querySelector('[data-tutor-questions]')?.insertAdjacentHTML('beforeend', tutorExamQuestion()); bindFunctionalEvents(); return; }
+			if (action === 'tutor-remove-question') { const questions = document.querySelectorAll('[data-tutor-questions] .tutor-question'); if (questions.length > 1) sourceEvent.currentTarget.closest('.tutor-question')?.remove(); return; }
+			if (action === 'tutor-new-exam') { document.querySelector('#tutor-exam-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.querySelector('[data-form="tutor-exam"] input[name="title"]')?.focus(); return; }
+			if (action === 'tutor-view-exam') { const exam = currentTutorAccount()?.exams?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!exam) return; const course = currentTutorAccount()?.courses?.find((item) => item.id === exam.courseId); document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close exam details">×</button><span class="tag ${exam.status === 'Published' ? 'success' : 'warning'}">${esc(exam.status || 'Draft')}</span><h2>${esc(exam.title)}</h2><p>${esc(course?.title || 'Course not selected')} · ${esc(exam.module || 'General assessment')}</p><p>${esc(exam.description)}</p><p><b>${exam.questions?.length || 0} questions</b> · <b>${exam.totalMarks || 0} marks</b> · <b>${exam.timeLimit || 0} minutes</b> · Passing score ${exam.passingScore || 0}%</p>${(exam.questions || []).map((question, index) => `<div class="metric-row"><span>${index + 1}. ${esc(question.text)}</span><strong>${question.marks} marks · Answer ${esc(question.answer)}</strong></div>`).join('')}</div></div>`); return; }
+			if (action === 'tutor-edit-exam') { const account = currentTutorAccount(); const exam = account?.exams?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); const form = document.querySelector('[data-form="tutor-exam"]'); if (!exam || !form) return; form.outerHTML = tutorExamForm(exam, account.courses || []); bindFunctionalEvents(); document.querySelector('[data-form="tutor-exam"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+			if (action === 'tutor-duplicate-exam') { const account = currentTutorAccount(); const exam = account?.exams?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!account || !exam) return; account.exams = [{ ...clone(exam), id: `exam-${Date.now()}`, title: `${exam.title} Copy`, status: 'Draft' }, ...(account.exams || [])]; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Exam duplicated as a draft.'); renderFunctional(); return; }
+			if (action === 'tutor-publish-exam' || action === 'tutor-unpublish-exam') { const account = currentTutorAccount(); const exam = account?.exams?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!account || !exam) return; exam.status = action === 'tutor-publish-exam' ? 'Published' : 'Draft'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast(action === 'tutor-publish-exam' ? 'Exam published.' : 'Exam unpublished.'); renderFunctional(); return; }
+			if (action === 'tutor-delete-exam') { const account = currentTutorAccount(); if (!account || !confirm('Delete this exam?')) return; account.exams = (account.exams || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Exam deleted.'); renderFunctional(); return; }
+			if (action === 'tutor-focus-course') { document.querySelector('[data-form="tutor-course"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.querySelector('[data-form="tutor-course"] input[name="title"]')?.focus(); return; }
+			if (action === 'tutor-edit-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); const form = document.querySelector('[data-form="tutor-course"]'); if (!course || !form) return; Object.entries(course).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ''; }); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); form.elements.title?.focus(); return; }
+			if (action === 'tutor-publish-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (course) { course.status = 'Published'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course published.'); renderFunctional(); } return; }
+			if (action === 'tutor-delete-course') { const account = currentTutorAccount(); if (!account || !confirm('Delete this course?')) return; account.courses = (account.courses || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course deleted.'); renderFunctional(); return; }
 			if (action === 'logout') { clearStudentSession(); state.activeRole = null; saveState(); go('/login'); return; }
 			if (action === 'skip-company-onboarding') { go('/company/dashboard'); return; }
 			if (action === 'skip-institution-onboarding') { go('/institution/dashboard'); return; }
@@ -2333,7 +2400,34 @@
 			if (action === 'global-search-all') { closeGlobalSearch(); go(`/${normalizeRole(currentAuthSession()?.role || state.activeRole || 'student')}/opportunities`); return; }
 			if (action === 'clear-global-search') { const input = document.querySelector('[data-global-search-input]'); if (input) { input.value = ''; input.focus(); renderGlobalSearch(); } return; }
 		}
+		function setupLoginRoleSelection() {
+			const form = document.querySelector('form[data-form="login"]');
+			if (!form || form.querySelector('[data-login-role-picker]')) return;
+			const rolePicker = document.createElement('fieldset');
+			rolePicker.className = 'auth-role-picker';
+			rolePicker.dataset.loginRolePicker = 'true';
+			rolePicker.innerHTML = '<legend>Sign in as</legend><div class="auth-role-options"><button type="button" class="auth-role-option is-selected" data-login-role="student" aria-pressed="true">Student/Employee</button><button type="button" class="auth-role-option" data-login-role="tutor" aria-pressed="false">Tutor</button></div><input type="hidden" name="loginRole" value="student">';
+			form.prepend(rolePicker);
+			rolePicker.querySelectorAll('[data-login-role]').forEach((button) => button.addEventListener('click', () => {
+				const selectedRole = button.dataset.loginRole;
+				rolePicker.querySelector('input[name="loginRole"]').value = selectedRole;
+				rolePicker.querySelectorAll('[data-login-role]').forEach((option) => {
+					const selected = option === button;
+					option.classList.toggle('is-selected', selected);
+					option.setAttribute('aria-pressed', String(selected));
+				});
+			}));
+			const eyebrow = document.querySelector('.auth-aside .eyebrow');
+			const heading = document.querySelector('.auth-main h2');
+			const description = document.querySelector('.auth-main .form-wrap > p');
+			const switchText = document.querySelector('.auth-main .switch');
+			if (eyebrow) eyebrow.textContent = 'SkillAura Portal';
+			if (heading) heading.textContent = 'Sign in to SkillAura';
+			if (description) description.textContent = 'Choose your role, then sign in to your SkillAura workspace.';
+			if (switchText) switchText.innerHTML = 'New to SkillAura? <a href="#/register">Create an account</a>';
+		}
 		function bindFunctionalEvents() {
+			setupLoginRoleSelection();
 			if (!document.body.dataset.demoLoginBound) {
 				document.body.addEventListener('click', (event) => {
 					const button = event.target.closest('[data-demo]');
@@ -2439,7 +2533,20 @@
 			document.querySelectorAll('[data-action="filter"]').forEach((input) => input.addEventListener('input', () => { const query = input.value.toLowerCase().trim(); const container = input.closest('.dash-content'); const results = [...container.querySelectorAll('[data-searchable]')]; results.forEach((item) => { item.hidden = query && !item.dataset.searchable.toLowerCase().includes(query); }); const visible = results.some((item) => !item.hidden); container.querySelector('.empty-state')?.remove(); if (!visible) container.insertAdjacentHTML('beforeend', emptyState('No results found.')); }));
 			document.querySelectorAll('[data-action="status"]').forEach((select) => select.addEventListener('change', () => { const application = state.applications.find((item) => item.id === select.dataset.id); if (application) { application.status = select.value; notify(`Application status updated to ${select.value}.`); saveState(); showToast('Application status updated.'); } }));
 			document.querySelectorAll('form[data-form]').forEach((form) => form.addEventListener('submit', (event) => { event.preventDefault(); handleForm(form, event); }));
-			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => { if (button.dataset.demo !== 'student') { state.activeRole = button.dataset.demo; saveState(); go(`/${button.dataset.demo}/dashboard`); return; } let account = loadStudentAccounts().find((item) => item.email === 'demo@student.skillaura'); if (!account) { const profile = { ...clone(defaultState.student), name: 'Demo Student', email: 'demo@student.skillaura', initials: 'DS', title: 'Welcome, Demo', subtitle: 'Here is your career readiness overview.' }; account = { id: 'student-demo', email: profile.email, passwordHash: prototypeHash('demo-access'), profile, workspace: studentWorkspace(), createdAt: new Date().toISOString() }; const accounts = loadStudentAccounts(); accounts.push(account); saveStudentAccounts(accounts); } startStudentSession(account); go('/student/dashboard'); }));
+			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => {
+				const demoRole = button.dataset.demo;
+				if (demoRole === 'tutor') {
+					let account = loadTutorAccounts().find((item) => item.email === 'demo@tutor.skillaura');
+					if (!account) {
+						account = { id: 'tutor-demo', email: 'demo@tutor.skillaura', passwordHash: prototypeHash('demo-access'), role: 'tutor', demoAccount: true, profile: { name: 'Demo Tutor', email: 'demo@tutor.skillaura', initials: 'DT', expertise: 'JavaScript, Web Development', bio: 'I help learners build practical skills for modern digital careers.' }, courses: [{ id: 'course-demo-js', title: 'Modern JavaScript Foundations', description: 'Build a strong foundation in JavaScript and browser development.', category: 'Web Development', difficulty: 'Beginner', skills: 'JavaScript, DOM, Accessibility', modules: 'Module 1: Language foundations\nModule 2: Browser projects', duration: '6 weeks', price: 'Free', status: 'Published', learners: 24, completion: 68 }] };
+						saveTutorAccounts([...(loadTutorAccounts()), account]);
+					}
+					startTutorSession(account); go('/tutor/dashboard'); return;
+				}
+				let account = loadStudentAccounts().find((item) => item.email === 'demo@student.skillaura');
+				if (!account) { const profile = { ...clone(defaultState.student), name: 'Demo Student/Employee', email: 'demo@student.skillaura', initials: 'DS', title: 'Welcome, Demo', subtitle: 'Here is your career readiness overview.' }; account = { id: 'student-demo', email: profile.email, passwordHash: prototypeHash('demo-access'), profile, workspace: studentWorkspace(), createdAt: new Date().toISOString() }; saveStudentAccounts([...loadStudentAccounts(), account]); }
+				startStudentSession(account, 'student'); go('/student/dashboard');
+			}));
 		}
 		function handleForm(form, submitEvent) {
 			const values = Object.fromEntries(new FormData(form).entries());
@@ -2543,17 +2650,53 @@
 				if (opportunity.status === 'Published') { sharedEcosystem().opportunities.unshift({ ...opportunity, match: 'New', eligibility: opportunity.eligibility || 'Students with relevant skills' }); saveEcosystem(); }
 				showToast(opportunity.status === 'Published' ? 'Opportunity published.' : 'Opportunity saved as draft.'); go('/company/opportunities'); return;
 			}
+			if (form.dataset.form === 'tutor-exam') {
+				const account = currentTutorAccount(); if (!account) return go('/login');
+				const formData = new FormData(form);
+				const texts = formData.getAll('questionText').map((value) => String(value).trim());
+				const optionsA = formData.getAll('questionOptionA').map((value) => String(value).trim());
+				const optionsB = formData.getAll('questionOptionB').map((value) => String(value).trim());
+				const optionsC = formData.getAll('questionOptionC').map((value) => String(value).trim());
+				const optionsD = formData.getAll('questionOptionD').map((value) => String(value).trim());
+				const answers = formData.getAll('questionAnswer').map((value) => String(value));
+				const marks = formData.getAll('questionMarks').map((value) => Number(value) || 0);
+				if (!values.title?.trim()) return showFieldError(form, 'title', 'Enter an exam title.');
+				if (!values.courseId) return showFieldError(form, 'courseId', 'Select the course for this exam.');
+				if (!texts.length || texts.some((text, index) => !text || !optionsA[index] || !optionsB[index] || !optionsC[index] || !optionsD[index] || marks[index] < 1)) return showFormError(form, 'Complete every multiple-choice question, option, and mark value.');
+				const questions = texts.map((text, index) => ({ text, options: { A: optionsA[index], B: optionsB[index], C: optionsC[index], D: optionsD[index] }, answer: answers[index], marks: marks[index] }));
+				const exams = account.exams || [];
+				const existing = exams.find((exam) => exam.id === values.examId);
+				const exam = { id: existing?.id || `exam-${Date.now()}`, title: values.title.trim(), description: values.description.trim(), courseId: values.courseId, module: values.module.trim(), difficulty: values.difficulty, questions, totalMarks: marks.reduce((total, mark) => total + mark, 0), timeLimit: Number(values.timeLimit) || 30, passingScore: Number(values.passingScore) || 60, availability: values.availability || 'Always available', status: existing?.status || 'Draft', updatedAt: new Date().toISOString() };
+				if (existing) Object.assign(existing, exam); else exams.unshift(exam);
+				account.exams = exams; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast(existing ? 'Exam changes saved.' : 'Exam saved as draft.'); renderFunctional(); return;
+			}
+			if (form.dataset.form === 'tutor-profile') {
+				const account = currentTutorAccount(); if (!account) return go('/login');
+				account.profile = { ...account.profile, name: values.name.trim(), expertise: values.expertise.trim(), bio: values.bio.trim(), initials: values.name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() };
+				saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Tutor profile saved.'); renderFunctional(); return;
+			}
+			if (form.dataset.form === 'tutor-course') {
+				const account = currentTutorAccount(); if (!account) return go('/login');
+				if (!values.title?.trim()) return showFieldError(form, 'title', 'Enter a course title.');
+				const courses = account.courses || [];
+				const existing = courses.find((course) => course.id === values.courseId);
+				const course = { id: existing?.id || `course-${Date.now()}`, title: values.title.trim(), description: values.description.trim(), category: values.category.trim(), difficulty: values.difficulty, skills: values.skills.trim(), thumbnail: values.thumbnail.trim(), modules: values.modules.trim(), duration: values.duration.trim(), price: values.price.trim() || 'Free', status: existing?.status || 'Draft', learners: existing?.learners || 0, completion: existing?.completion || 0, updatedAt: new Date().toISOString() };
+				if (existing) Object.assign(existing, course); else courses.unshift(course);
+				account.courses = courses; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast(existing ? 'Course changes saved.' : 'Course saved as draft.'); renderFunctional(); return;
+			}
 			if (form.dataset.form === 'login') {
 				let invalid = false;
 				if (!isValidEmail(values.email)) { showFieldError(form, 'email', 'Enter a valid email address.'); invalid = true; }
 				if (!values.password) { showFieldError(form, 'password', 'Enter your password.'); invalid = true; }
 				if (invalid) return;
-				const account = loadStudentAccounts().find((item) => item.email === values.email.trim().toLowerCase());
+				const role = values.loginRole || 'student';
+				if (!isLearnerRole(role)) return showFormError(form, 'Choose Student/Employee or Tutor.');
+				const accounts = role === 'tutor' ? loadTutorAccounts() : loadStudentAccounts();
+				const account = accounts.find((item) => item.email === values.email.trim().toLowerCase());
 				if (!account || account.passwordHash !== prototypeHash(values.password)) return showFormError(form, 'That email or password is not correct.');
-				const role = normalizeRole(account.role || 'student');
+				if (role === 'tutor') { startTutorSession(account); go('/tutor/dashboard'); return; }
 				startStudentSession(account, role);
-				const redirect = role === 'company' ? '/company/dashboard' : role === 'institution' ? '/institution/dashboard' : '/student/dashboard';
-				go(redirect); return;
+				go('/student/dashboard'); return;
 			}
 			if (form.dataset.form === 'register') {
 				let invalid = false;
@@ -2646,6 +2789,10 @@
 		function teardownLandingExperience() {
 			if (window.__skillAuraScrollFrame) cancelAnimationFrame(window.__skillAuraScrollFrame);
 			window.__skillAuraScrollFrame = null;
+			if (window.__skillAuraSkillRotationCleanup) window.__skillAuraSkillRotationCleanup();
+			delete window.__skillAuraSkillRotationCleanup;
+			if (window.__skillAuraStatsCleanup) window.__skillAuraStatsCleanup();
+			delete window.__skillAuraStatsCleanup;
 			if (window.__skillAuraScrollHandler) window.removeEventListener('scroll', window.__skillAuraScrollHandler);
 			if (window.__skillAuraResizeHandler) window.removeEventListener('resize', window.__skillAuraResizeHandler);
 			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
@@ -2675,17 +2822,69 @@
 		function enhanceHomePage(landingRoot) {
 			if (landingRoot.querySelector('.home-stats')) return;
 			landingRoot.querySelector('.cta')?.insertAdjacentHTML('beforebegin', homeEnhancementsMarkup());
+			landingRoot.querySelector('#roles')?.remove();
+			landingRoot.querySelector('#home-opportunities')?.remove();
+			const skillDetails = {
+				Python: 'Automation, data, and backend foundations used across SkillAura opportunities.',
+				JavaScript: 'The language behind interactive products, dashboards, and modern web experiences.',
+				React: 'A practical UI skill for building fast, composable product interfaces.',
+				SQL: 'The data layer skill that helps teams turn product questions into decisions.',
+				Git: 'A collaboration essential for shipping confidently with technical teams.',
+				Communication: 'The multiplier that helps strong technical work create real-world impact.'
+			};
+			const skillOrder = ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'Communication'];
+			const skillSection = landingRoot.querySelector('#home-skills');
+			const skillDetail = landingRoot.querySelector('.home-skill-detail');
+			let activeSkillIndex = 0;
+			let skillRotationTimer = null;
+			let skillSectionVisible = false;
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const clearSkillRotation = () => {
+				if (skillRotationTimer) window.clearInterval(skillRotationTimer);
+				skillRotationTimer = null;
+			};
+			const showSkill = (skillName, animate = true) => {
+				const skill = data.skills.find((item) => item[0] === skillName);
+				if (!skill || !skillDetail) return;
+				activeSkillIndex = skillOrder.indexOf(skillName);
+				landingRoot.querySelectorAll('[data-home-skill]').forEach((item) => item.classList.toggle('active', item.dataset.homeSkill === skillName));
+				skillDetail.querySelector('h3').textContent = skill[0];
+				skillDetail.querySelector('p').textContent = skillDetails[skill[0]];
+				skillDetail.querySelector('strong').textContent = `${skill[1]}% readiness`;
+				skillDetail.querySelector('.bar span').style.width = `${skill[1]}%`;
+				if (animate && !reducedMotion) {
+					skillDetail.classList.remove('skill-card-enter');
+					void skillDetail.offsetWidth;
+					skillDetail.classList.add('skill-card-enter');
+				}
+			};
+			const startSkillRotation = () => {
+				clearSkillRotation();
+				if (!skillSectionVisible || !skillSection) return;
+				skillRotationTimer = window.setInterval(() => {
+					const sectionBounds = skillSection.getBoundingClientRect();
+					const isOnScreen = sectionBounds.bottom > 0 && sectionBounds.top < window.innerHeight;
+					if (!isOnScreen) {
+						clearSkillRotation();
+						return;
+					}
+					showSkill(skillOrder[(activeSkillIndex + 1) % skillOrder.length]);
+				}, 2000);
+			};
+			const skillVisibilityObserver = skillSection ? new IntersectionObserver(([entry]) => {
+				skillSectionVisible = entry.isIntersecting;
+				if (skillSectionVisible) startSkillRotation();
+				else clearSkillRotation();
+			}, { threshold: .35 }) : null;
+			if (skillVisibilityObserver) skillVisibilityObserver.observe(skillSection);
+			window.__skillAuraSkillRotationCleanup = () => {
+				clearSkillRotation();
+				if (skillVisibilityObserver) skillVisibilityObserver.disconnect();
+			};
 			landingRoot.querySelectorAll('[data-home-skill]').forEach((button) => {
 				button.addEventListener('click', () => {
-					const skill = data.skills.find((item) => item[0] === button.dataset.homeSkill);
-					if (!skill) return;
-					landingRoot.querySelectorAll('[data-home-skill]').forEach((item) => item.classList.toggle('active', item === button));
-					const detail = landingRoot.querySelector('.home-skill-detail');
-					const descriptions = { Python: 'Automation, data, and backend foundations used across SkillAura opportunities.', JavaScript: 'The language behind interactive products, dashboards, and modern web experiences.', React: 'A practical UI skill for building fast, composable product interfaces.', SQL: 'The data layer skill that helps teams turn product questions into decisions.', Git: 'A collaboration essential for shipping confidently with technical teams.', Communication: 'The multiplier that helps strong technical work create real-world impact.' };
-					detail.querySelector('h3').textContent = skill[0];
-					detail.querySelector('p').textContent = descriptions[skill[0]];
-					detail.querySelector('strong').textContent = `${skill[1]}% readiness`;
-					detail.querySelector('.bar span').style.width = `${skill[1]}%`;
+					showSkill(button.dataset.homeSkill);
+					startSkillRotation();
 				});
 			});
 			landingRoot.querySelectorAll('.home-opportunity-card').forEach((card) => card.addEventListener('keydown', (event) => {
@@ -2700,26 +2899,6 @@
 				const opportunity = opportunityByTitle(button.dataset.title);
 				if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity));
 			}));
-			landingRoot.querySelectorAll('[data-stat-value]').forEach((stat) => {
-				stat.querySelector('strong').textContent = `0${stat.dataset.statSuffix || ''}`;
-			});
-			const statsObserver = new IntersectionObserver((entries, observer) => {
-				if (!entries.some((entry) => entry.isIntersecting)) return;
-				landingRoot.querySelectorAll('[data-stat-value]').forEach((stat) => {
-					const target = Number(stat.dataset.statValue);
-					const value = stat.querySelector('strong');
-					const suffix = stat.dataset.statSuffix || '';
-					if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-						value.textContent = `${target.toLocaleString()}${suffix}`;
-						return;
-					}
-					const start = performance.now();
-					const animate = (now) => { const progress = Math.min(1, (now - start) / 700); value.textContent = `${Math.round(target * (1 - Math.pow(1 - progress, 3))).toLocaleString()}${suffix}`; if (progress < 1) requestAnimationFrame(animate); };
-					requestAnimationFrame(animate);
-				});
-				observer.disconnect();
-			}, { threshold: .35 });
-			statsObserver.observe(landingRoot.querySelector('.home-stats'));
 			const ecosystemSteps = [...landingRoot.querySelectorAll('.home-ecosystem-step')];
 			const ecosystemObserver = new IntersectionObserver((entries) => {
 				entries.forEach((entry) => {
@@ -2834,14 +3013,16 @@
 				return;
 			}
 			teardownLandingExperience();
-			const match = path.match(/^\/(student|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports)$/);
+			const match = path.match(/^\/(student|tutor|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports)$/);
 			const session = currentStudentSession();
+			if (path.startsWith('/employee/')) { go(path.replace('/employee/', '/student/')); return; }
 			if (path === '/role-selection' && session?.loggedIn) { go(dashboardRouteForRole(session.role)); return; }
 			if (path.startsWith('/student/')) {
 				if (!currentStudentAccount() || !session?.loggedIn) { go('/login'); return; }
-				if (normalizeRole(session.role) !== 'student') { go(dashboardRouteForRole(session.role)); return; }
+				if (!isLearnerRole(session.role)) { go(dashboardRouteForRole(session.role)); return; }
 				hydrateStudentAccount(currentStudentAccount());
 			}
+			if (path.startsWith('/tutor/')) { if (!currentTutorAccount() || !session?.loggedIn || session.role !== 'tutor') { go('/login'); return; } }
 			if (path.startsWith('/industry/')) { go(path.replace('/industry/', '/company/')); return; }
 			if (path.startsWith('/company/') && !['/company/login', '/company/register'].includes(path)) {
 				if (!currentCompanyAccount() || !session?.loggedIn) { go('/company/login'); return; }
@@ -2851,7 +3032,8 @@
 				if (!currentInstitutionAccount() || !session?.loggedIn) { go('/institution/login'); return; }
 				if (normalizeRole(session.role) !== 'institution') { go(dashboardRouteForRole(session.role)); return; }
 			}
-			if (path === '/') app.innerHTML = landing();
+			if (path.startsWith('/tutor/')) { app.innerHTML = tutorDashboardPage(); }
+			else if (path === '/') app.innerHTML = landing();
 			else if (path === '/login' || path === '/register') app.innerHTML = authPage(path.slice(1));
 			else if (path === '/company/login' || path === '/company/register') app.innerHTML = companyAuthPage(path.split('/')[2]);
 			else if (path === '/company/onboarding') app.innerHTML = companyOnboardingPage();
@@ -2865,6 +3047,10 @@
 			else if (path === '/role-selection') app.innerHTML = roleSelection();
 			else if (match) { const [, role, section] = match; const normalizedRole = normalizeRole(role); const pages = { dashboard: normalizedRole === 'student' ? studentDashboardPage : normalizedRole === 'company' ? companyDashboardPage : institutionDashboardPage, profile: normalizedRole === 'company' ? companyProfilePage : normalizedRole === 'institution' ? institutionProfilePage : () => profilePage(normalizedRole), skills: normalizedRole === 'student' ? skillsPage : normalizedRole === 'institution' ? institutionSkillsAnalyticsPage : institutionSkillsPage, opportunities: normalizedRole === 'company' ? companyOpportunitiesPage : () => opportunitiesPage(normalizedRole), applications: normalizedRole === 'student' ? studentApplicationsPage : normalizedRole === 'company' ? companyApplicationsPage : () => applicationsPage(normalizedRole), shortlist: companyShortlistPage, interviews: normalizedRole === 'student' ? studentInterviewsPage : companyInterviewsPage, offers: studentOffersPage, messages: companyMessagesPage, notifications: normalizedRole === 'student' ? studentNotificationsPage : normalizedRole === 'institution' ? institutionNotificationsPage : companyNotificationsPage, settings: normalizedRole === 'institution' ? institutionSettingsPage : () => settingsPage(normalizedRole), 'career-path': careerPage, candidates: companyCandidatesPage, analytics: normalizedRole === 'company' ? companyAnalyticsPage : normalizedRole === 'institution' ? institutionAnalyticsPage : () => analyticsPage(normalizedRole), partnerships: normalizedRole === 'institution' ? institutionPartnershipsPage : partnershipsPage, 'post-opportunity': normalizedRole === 'company' ? companyOpportunityFormPage : postOpportunityPage, programs: programsPage, onboarding: normalizedRole === 'company' ? companyOnboardingPage : normalizedRole === 'institution' ? institutionOnboardingPage : onboardingPage, assessment: normalizedRole === 'student' ? assessmentPage : institutionAssessmentsPage, 'skill-profile': skillProfilePage, 'skill-gaps': normalizedRole === 'institution' ? institutionSkillGapsPage : skillGapsPage, 'learning-recommendations': learningRecommendationsPage, students: institutionStudentsPage, assessments: institutionAssessmentsPage, learning: institutionLearningPage, internships: normalizedRole === 'student' ? studentInternshipsPage : institutionInternshipsPage, placements: normalizedRole === 'student' ? studentPlacementsPage : institutionPlacementsPage, industry: institutionIndustryPage, faculty: institutionFacultyPage, reports: institutionReportsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
 			else app.innerHTML = notFound();
+			if (path.startsWith('/tutor/')) {
+				app.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', tutorExamManagementMarkup());
+				addTutorTakeExamButton();
+			}
 			if (path === '/login' || path === '/register') {
 				const backLink = app.querySelector('.form-wrap > .btn-plain');
 				if (backLink) { backLink.href = '#/'; backLink.textContent = '← Back to home'; }
@@ -2875,7 +3061,6 @@
 			bindFunctionalEvents();
 			setupLandingExperience();
 			setupPageMotion();
-			animatePercentages(app);
 			bindThemeToggle();
 			initChatbot();
 		}
