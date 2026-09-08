@@ -1893,7 +1893,11 @@
 		.sidebar[data-sidebar-role="institution"]:hover .side-group.submenu-open > .side-submenu,
 		.sidebar[data-sidebar-role="institution"]:focus-within .side-group.submenu-open > .side-submenu,
 		.sidebar[data-sidebar-role="institution"].pinned .side-group.submenu-open > .side-submenu,
-		.sidebar[data-sidebar-role="institution"].open .side-group.submenu-open > .side-submenu {
+		.sidebar[data-sidebar-role="institution"].open .side-group.submenu-open > .side-submenu,
+		.sidebar[data-sidebar-role="company"]:hover .side-group.submenu-open > .side-submenu,
+		.sidebar[data-sidebar-role="company"]:focus-within .side-group.submenu-open > .side-submenu,
+		.sidebar[data-sidebar-role="company"].pinned .side-group.submenu-open > .side-submenu,
+		.sidebar[data-sidebar-role="company"].open .side-group.submenu-open > .side-submenu {
 			max-height: 220px !important;
 			opacity: 1 !important;
 		}

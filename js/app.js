@@ -355,9 +355,29 @@
 				button.title = pinned ? 'Unpin sidebar' : 'Pin sidebar';
 			}
 		}
+		function setCompanySubmenuState(group, expanded) {
+			const submenu = group.querySelector(':scope > .side-submenu');
+			if (!submenu) return;
+			submenu.style.setProperty('max-height', '0px', 'important');
+			submenu.style.setProperty('opacity', '0', 'important');
+			if (!expanded) return;
+			void submenu.offsetHeight;
+			requestAnimationFrame(() => {
+				if (group.classList.contains('submenu-open')) {
+					submenu.style.setProperty('max-height', '220px', 'important');
+					submenu.style.setProperty('opacity', '1', 'important');
+				}
+			});
+		}
+		function syncCompanySidebarSubmenus() {
+			const sidebarElement = document.querySelector('.sidebar[data-sidebar-role="company"]');
+			if (!sidebarElement) return;
+			sidebarElement.querySelectorAll(':scope > .side-nav > .side-group').forEach((group) => setCompanySubmenuState(group, group.classList.contains('submenu-open')));
+		}
 		function setupSidebarState() {
 			const sidebarElement = document.getElementById('sidebar');
 			if (sidebarElement) setSidebarPinned(isSidebarPinned());
+			syncCompanySidebarSubmenus();
 		}
 
 		function chatbotMarkup() {
@@ -2055,13 +2075,23 @@
 			const analyticsOpen = ['analytics', 'reports'].includes(current);
 			return `${link('dashboard', 'Dashboard', icons.dashboard)}${students}${parent('institution-placements', 'Internships & Placements', icons.internships, placementsOpen, childLinks([['internships', 'Internships', icons.internships], ['placements', 'Placements', icons.placements], ['partnerships', 'Partnerships', icons.partnerships]]))}${parent('institution-opportunities', 'Opportunities', icons.opportunities, opportunitiesOpen, childLinks([['industry', 'Industry Opportunities', icons.opportunities], ['faculty', 'Faculty Opportunities', icons.faculty]]))}${parent('institution-analytics', 'Analytics & Reports', icons.analytics, analyticsOpen, childLinks([['analytics', 'Analytics', icons.analytics], ['reports', 'Reports & Analytics', icons.reports]]))}${link('profile', 'Institution Profile', icons.profile)}${link('settings', 'Settings', icons.settings)}`;
 		}
+		function companySidebarNavigation(current) {
+			const childLinks = (items) => items.map(([key, label, icon]) => `<a class="side-subitem ${key === current ? 'active' : ''}" href="#/company/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span></a>`).join('');
+			const parent = (key, label, icon, open, items) => `<div class="side-group ${open ? 'submenu-open' : ''}"><button class="side-parent" type="button" data-action="sidebar-submenu" data-submenu="${key}" aria-expanded="${open}" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span><span class="side-chevron" aria-hidden="true">⌄</span></button><div class="side-submenu">${items}</div></div>`;
+			const link = (key, label, icon) => `<a class="side-item ${key === current ? 'active' : ''}" href="#/company/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span></a>`;
+			const applicationsOpen = ['applications', 'candidates', 'analytics'].includes(current);
+			const csrOpen = ['csr-programs', 'csr-create', 'csr-applications', 'csr-participants', 'csr-analytics', 'programs'].includes(current);
+			const applications = parent('company-applications', 'Applications & Candidates', icons.applications, applicationsOpen, childLinks([['applications', 'Applications', icons.applications], ['candidates', 'Candidates', icons.candidates], ['analytics', 'Analytics', icons.analytics]]));
+			const csr = parent('company-csr', 'CSR', icons['csr-programs'], csrOpen, childLinks([['csr-programs', 'CSR Programs', icons['csr-programs']], ['csr-create', 'Create CSR Program', icons['csr-create']], ['csr-applications', 'CSR Applications', icons['csr-applications']], ['csr-participants', 'CSR Participants', icons['csr-participants']], ['csr-analytics', 'CSR Impact', icons['csr-analytics']], ['programs', 'Industry Programs', icons.programs]]));
+			return `${link('dashboard', 'Dashboard', icons.dashboard)}${link('opportunities', 'Opportunities', icons.opportunities)}${applications}${csr}${link('shortlist', 'Shortlist', icons.shortlist || icons.profile)}${link('interviews', 'Interviews', icons.interviews)}${link('messages', 'Messages', icons.messages)}${link('profile', 'Company Profile', icons.profile)}${link('settings', 'Settings', icons.settings)}`;
+		}
 
 		function functionalSidebar(role) {
 			const normalizedRole = normalizeRole(role);
 			const routeRole = normalizedRole;
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const routes = dashboardRoutes[routeRole] || dashboardRoutes.company || {};
-			const navigation = routeRole === 'student' ? studentSidebarNavigation(current) : routeRole === 'institution' ? institutionSidebarNavigation(current) : Object.entries(routes).map(([key, label]) => `<a class="side-item ${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key] || '◉'}</span><span class="side-label">${label}</span></a>`).join('');
+			const navigation = routeRole === 'student' ? studentSidebarNavigation(current) : routeRole === 'institution' ? institutionSidebarNavigation(current) : routeRole === 'company' ? companySidebarNavigation(current) : Object.entries(routes).map(([key, label]) => `<a class="side-item ${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key] || '◉'}</span><span class="side-label">${label}</span></a>`).join('');
 			return `<aside class="sidebar" id="sidebar" data-sidebar-role="${routeRole}"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${navigation}</nav><div class="side-spacer"></div>${routeRole === 'student' ? `<a class="side-item ${current === 'settings' ? 'active' : ''}" href="#/${routeRole}/settings" onclick="closeSidebar()" title="Settings" data-tooltip="Settings"><span class="side-icon" aria-hidden="true">⚙</span><span class="side-label">Settings</span></a>` : ''}<button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" data-action="logout" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`;
 		}
 		function globalSearchMarkup() { return `<div class="global-search" data-search-root><div class="global-search-input-wrap"><span class="global-search-icon" aria-hidden="true">🔍</span><input class="search" data-global-search-input type="search" placeholder="Search anything" aria-label="Search anything" aria-controls="global-search-results" autocomplete="off"><kbd>⌘ K</kbd><button class="global-search-clear" data-action="clear-global-search" type="button" aria-label="Clear search" hidden>×</button></div><div class="global-search-results" id="global-search-results" role="listbox" hidden></div></div>`; }
@@ -2523,6 +2553,7 @@
 				const group = sourceEvent.currentTarget.closest('.side-group');
 				const expanded = group.classList.toggle('submenu-open');
 				sourceEvent.currentTarget.setAttribute('aria-expanded', String(expanded));
+				if (group.closest('.sidebar[data-sidebar-role="company"]')) setCompanySubmenuState(group, expanded);
 				return;
 			}
 			if (action === 'sidebar-pin') { setSidebarPinned(!isSidebarPinned()); return; }
