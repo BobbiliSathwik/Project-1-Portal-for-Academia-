@@ -3292,6 +3292,8 @@
 			updateGlobalBackground();
 		}
 		function teardownLandingExperience() {
+			if (window.__skillAuraHeroTextCleanup) window.__skillAuraHeroTextCleanup();
+			delete window.__skillAuraHeroTextCleanup;
 			if (window.__skillAuraScrollFrame) cancelAnimationFrame(window.__skillAuraScrollFrame);
 			window.__skillAuraScrollFrame = null;
 			if (window.__skillAuraSkillRotationCleanup) window.__skillAuraSkillRotationCleanup();
@@ -3530,6 +3532,34 @@
 			observer.observe(stats);
 			window.__skillAuraStatsCleanup = () => observer.disconnect();
 		}
+		function setupHeroTextAnimation(landingRoot) {
+			const hero = landingRoot.querySelector('.hero');
+			const copy = hero?.querySelector('.hero-copy');
+			const wordmark = hero?.querySelector('.hero-wordmark');
+			const headline = hero?.querySelector('h1');
+			const description = hero?.querySelector('.hero-copy p');
+			if (!hero || !copy || !wordmark || !headline || !description || hero.dataset.cinematicReady) return;
+			hero.dataset.cinematicReady = 'true';
+			wordmark.innerHTML = [...wordmark.textContent.trim()].map((letter) => `<span class="hero-letter">${letter}</span>`).join('');
+			headline.innerHTML = `<span class="hero-line">Connecting Skills,</span><span class="hero-line">Academia <span class="hero-accent">&amp;</span></span><span class="hero-line">Industry</span>`;
+			copy.querySelector('.eyebrow')?.classList.add('hero-cinematic-label');
+			description.classList.add('hero-cinematic-description');
+			copy.querySelector('.hero-actions')?.classList.add('hero-cinematic-actions');
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (reducedMotion) hero.classList.add('hero-cinematic-reduced');
+			const updateParallax = () => {
+				const bounds = hero.getBoundingClientRect();
+				const progress = Math.max(-1, Math.min(1, -bounds.top / Math.max(bounds.height, 1)));
+				hero.style.setProperty('--hero-text-parallax', reducedMotion ? '0px' : `${(progress * -12).toFixed(2)}px`);
+			};
+			window.__skillAuraHeroTextScrollHandler = updateParallax;
+			window.addEventListener('scroll', updateParallax, { passive: true });
+			updateParallax();
+			window.__skillAuraHeroTextCleanup = () => {
+				window.removeEventListener('scroll', window.__skillAuraHeroTextScrollHandler);
+				delete window.__skillAuraHeroTextScrollHandler;
+			};
+		}
 
 		function setupLandingExperience() {
 			const landingRoot = document.querySelector('.landing');
@@ -3539,6 +3569,7 @@
 			}
 			document.body.classList.add('home-page');
 			enhanceHomePage(landingRoot);
+			setupHeroTextAnimation(landingRoot);
 			setupHomeStats(landingRoot);
 			const mobileMenu = landingRoot.querySelector('.mobile-menu');
 			if (mobileMenu) {
@@ -3575,6 +3606,11 @@
 				element.classList.add('reveal');
 				element.style.setProperty('--reveal-delay', `${Math.min((index % 5) * .06, .24)}s`);
 			});
+			const heroCopy = landingRoot.querySelector('.hero-copy');
+			if (heroCopy) {
+				heroCopy.classList.remove('reveal');
+				heroCopy.classList.add('is-visible');
+			}
 			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
 			window.__skillAuraRevealObserver = new IntersectionObserver((entries, observer) => {
 				entries.forEach((entry) => {

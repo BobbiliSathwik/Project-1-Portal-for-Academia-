@@ -3606,6 +3606,7 @@
 			font: 700 clamp(44px, 7vw, 88px)/.82 'Space Grotesk', sans-serif;
 			letter-spacing: -.08em;
 			text-transform: uppercase;
+			text-shadow: 0 0 22px color-mix(in srgb, var(--scroll-ink) 18%, transparent), 0 0 34px color-mix(in srgb, var(--cyan) 12%, transparent);
 		}
 
 		.landing .hero-wordmark span {
@@ -3638,6 +3639,114 @@
 		@keyframes hero-copy-in {
 			from { opacity: 0; transform: translateY(12px); }
 			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.landing .hero-cinematic-label,
+		.landing .hero-wordmark,
+		.landing .hero h1,
+		.landing .hero-cinematic-description,
+		.landing .hero-cinematic-actions {
+			animation: none;
+		}
+
+		.landing .hero h1 {
+			text-shadow: 0 0 18px color-mix(in srgb, var(--scroll-ink) 16%, transparent), 0 0 30px color-mix(in srgb, var(--cyan) 10%, transparent);
+		}
+
+		.landing .hero-cinematic-label,
+		.landing .hero-letter,
+		.landing .hero-line,
+		.landing .hero-cinematic-description {
+			will-change: transform, opacity, filter;
+		}
+
+		.landing .hero-cinematic-label {
+			opacity: 0;
+			transform: translate3d(0, calc(var(--hero-text-parallax, 0px) + 14px), 0);
+			animation: hero-cinematic-label .65s .08s cubic-bezier(.2,.7,.2,1) forwards;
+		}
+
+		.landing .hero-letter {
+			display: inline-block;
+			opacity: 0;
+			transform: translate3d(0, calc(var(--hero-text-parallax, 0px) + 30px), 0);
+			animation: hero-cinematic-letter .62s calc(.28s + var(--letter-delay, 0s)) cubic-bezier(.2,.7,.2,1) forwards;
+		}
+
+		.landing .hero-letter:nth-child(1) { --letter-delay: .00s; }
+		.landing .hero-letter:nth-child(2) { --letter-delay: .035s; }
+		.landing .hero-letter:nth-child(3) { --letter-delay: .07s; }
+		.landing .hero-letter:nth-child(4) { --letter-delay: .105s; }
+		.landing .hero-letter:nth-child(5) { --letter-delay: .14s; }
+		.landing .hero-letter:nth-child(6) { --letter-delay: .175s; }
+		.landing .hero-letter:nth-child(7) { --letter-delay: .21s; }
+		.landing .hero-letter:nth-child(8) { --letter-delay: .245s; }
+		.landing .hero-letter:nth-child(9) { --letter-delay: .28s; }
+
+		.landing .hero-line {
+			display: block;
+			opacity: 0;
+			transform: translate3d(0, calc(var(--hero-text-parallax, 0px) + 24px), 0);
+			animation: hero-cinematic-line .7s calc(.92s + var(--line-delay, 0s)) cubic-bezier(.2,.7,.2,1) forwards;
+		}
+
+		.landing .hero-line:nth-child(1) { --line-delay: .00s; }
+		.landing .hero-line:nth-child(2) { --line-delay: .13s; }
+		.landing .hero-line:nth-child(3) { --line-delay: .26s; }
+
+		.landing .hero-accent {
+			display: inline-block;
+			transform: scale(.95);
+			text-shadow: 0 0 0 transparent;
+			animation: hero-accent-in .55s 1.12s cubic-bezier(.2,.7,.2,1) forwards;
+		}
+
+		.landing .hero-cinematic-description {
+			opacity: 0;
+			transform: translate3d(0, calc(var(--hero-text-parallax, 0px) + 16px), 0);
+			animation: hero-cinematic-description .7s 1.48s cubic-bezier(.2,.7,.2,1) forwards;
+		}
+
+		.landing .hero-cinematic-label,
+		.landing .hero-wordmark,
+		.landing .hero h1,
+		.landing .hero-cinematic-description {
+			animation-fill-mode: both;
+		}
+
+		.landing .hero-cinematic-description {
+			animation-name: hero-cinematic-description, hero-cinematic-idle;
+			animation-duration: .7s, 5.5s;
+			animation-delay: 1.48s, 2.35s;
+			animation-iteration-count: 1, infinite;
+			animation-direction: normal, alternate;
+		}
+
+		@keyframes hero-cinematic-label {
+			to { opacity: 1; transform: translate3d(0, var(--hero-text-parallax, 0px), 0); }
+		}
+
+		@keyframes hero-cinematic-letter {
+			0% { opacity: 0; transform: translate3d(0, calc(var(--hero-text-parallax, 0px) + 30px), 0); }
+			70% { opacity: 1; }
+			100% { opacity: 1; transform: translate3d(0, var(--hero-text-parallax, 0px), 0); text-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 35%, transparent); }
+		}
+
+		@keyframes hero-cinematic-line {
+			to { opacity: 1; transform: translate3d(0, var(--hero-text-parallax, 0px), 0); }
+		}
+
+		@keyframes hero-accent-in {
+			to { transform: scale(1); text-shadow: 0 0 12px color-mix(in srgb, var(--cyan) 35%, transparent); }
+		}
+
+		@keyframes hero-cinematic-description {
+			to { opacity: 1; transform: translate3d(0, var(--hero-text-parallax, 0px), 0); }
+		}
+
+		@keyframes hero-cinematic-idle {
+			from { transform: translate3d(0, var(--hero-text-parallax, 0px), 0); }
+			to { transform: translate3d(0, calc(var(--hero-text-parallax, 0px) - 2px), 0); }
 		}
 
 
@@ -3703,7 +3812,12 @@
 			.landing .hero-wordmark,
 			.landing .hero h1,
 			.landing .hero p,
-			.landing .hero-actions { animation: none; transform: none; }
+			.landing .hero-actions,
+			.landing .hero-cinematic-label,
+			.landing .hero-letter,
+			.landing .hero-line,
+			.landing .hero-accent,
+			.landing .hero-cinematic-description { animation: none; opacity: 1; filter: none; transform: none; text-shadow: none; }
 		}
 
 		.notification-button {
