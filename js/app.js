@@ -3302,6 +3302,8 @@
 			delete window.__skillAuraStatsCleanup;
 			if (window.__skillAuraHomeMicroCleanup) window.__skillAuraHomeMicroCleanup();
 			delete window.__skillAuraHomeMicroCleanup;
+			if (window.__skillAuraOrbitalParallaxCleanup) window.__skillAuraOrbitalParallaxCleanup();
+			delete window.__skillAuraOrbitalParallaxCleanup;
 			if (window.__skillAuraScrollHandler) window.removeEventListener('scroll', window.__skillAuraScrollHandler);
 			if (window.__skillAuraResizeHandler) window.removeEventListener('resize', window.__skillAuraResizeHandler);
 			if (window.__skillAuraHeroPointerHandler) document.querySelector('.hero')?.removeEventListener('pointermove', window.__skillAuraHeroPointerHandler);
@@ -3554,6 +3556,48 @@
 			landingRoot.querySelectorAll('[data-home-skill]').forEach((button) => button.addEventListener('click', animateSkillProgress));
 			window.__skillAuraHomeMicroCleanup = () => { journeyObserver?.disconnect(); skillObserver?.disconnect(); };
 		}
+		function setupOrbitalParallax(landingRoot) {
+			const panel = landingRoot.querySelector('.ecosystem-orbital');
+			if (!panel || panel.dataset.orbitalParallaxBound || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+			panel.dataset.orbitalParallaxBound = 'true';
+			const layers = [
+				{ selector: '.ring-three', strength: .45 },
+				{ selector: '.ring-two', strength: .7 },
+				{ selector: '.ring-one', strength: 1 },
+				{ selector: '.orbital-dot', strength: .28 },
+				{ selector: '.orbital-orb', strength: .12 }
+			].map(({ selector, strength }) => ({ elements: [...panel.querySelectorAll(selector)], strength }));
+			const current = { x: 0, y: 0 };
+			const target = { x: 0, y: 0 };
+			let frame = null;
+			const render = () => {
+				frame = null;
+				current.x += (target.x - current.x) * .12;
+				current.y += (target.y - current.y) * .12;
+				layers.forEach(({ elements, strength }) => elements.forEach((element) => {
+					element.style.setProperty('--orbital-parallax-x', `${(current.x * strength).toFixed(2)}px`);
+					element.style.setProperty('--orbital-parallax-y', `${(current.y * strength).toFixed(2)}px`);
+				}));
+				if (Math.abs(target.x - current.x) > .05 || Math.abs(target.y - current.y) > .05) frame = requestAnimationFrame(render);
+			};
+			const schedule = () => { if (!frame) frame = requestAnimationFrame(render); };
+			const move = (event) => {
+				const bounds = panel.getBoundingClientRect();
+				const x = Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / bounds.width - .5) * 2));
+				const y = Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / bounds.height - .5) * 2));
+				target.x = -x * 12;
+				target.y = -y * 12;
+				schedule();
+			};
+			const leave = () => { target.x = 0; target.y = 0; schedule(); };
+			panel.addEventListener('mousemove', move, { passive: true });
+			panel.addEventListener('mouseleave', leave, { passive: true });
+			window.__skillAuraOrbitalParallaxCleanup = () => {
+				panel.removeEventListener('mousemove', move);
+				panel.removeEventListener('mouseleave', leave);
+				if (frame) cancelAnimationFrame(frame);
+			};
+		}
 		function setupHeroTextAnimation(landingRoot) {
 			const hero = landingRoot.querySelector('.hero');
 			const copy = hero?.querySelector('.hero-copy');
@@ -3594,6 +3638,7 @@
 			setupHeroTextAnimation(landingRoot);
 			setupHomeStats(landingRoot);
 			setupHomeMicroInteractions(landingRoot);
+			setupOrbitalParallax(landingRoot);
 			const mobileMenu = landingRoot.querySelector('.mobile-menu');
 			if (mobileMenu) {
 				mobileMenu.onclick = () => setMobileNavState(mobileMenu.getAttribute('aria-expanded') !== 'true');
