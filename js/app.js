@@ -104,11 +104,7 @@
 		let globalSearchState = { query: '', results: [], activeIndex: -1, open: false };
 
 		function loadThemePreference() {
-			try {
-				return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
-			} catch (error) {
-				return 'light';
-			}
+			return 'dark';
 		}
 
 		function themeToggleMarkup() {
@@ -194,7 +190,7 @@
 			const dashboardRoute = currentUserDashboardRoute();
 			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started ↗</a>`;
 			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Student/Employees</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" type="button" aria-expanded="false" aria-label="Open navigation menu">☰</button></div></nav>
-			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student/Employee</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
+			<section class="hero"><div class="hero-atmosphere" aria-hidden="true"><span class="hero-particle particle-one"></span><span class="hero-particle particle-two"></span><span class="hero-particle particle-three"></span><span class="hero-particle particle-four"></span><span class="hero-thread thread-one"></span><span class="hero-thread thread-two"></span></div><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student/Employee</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Student/Employees</h3><p>Clarity is hard to find when the path from learning to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillAura gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student/Employee profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
 			<section class="section" id="how"><div class="container"><div class="section-heading"><div class="eyebrow">Simple by design</div><h2>How It Works</h2></div><div class="steps">${[['01','Create Your Profile','Role-based profiles for every stakeholder.'],['02','Discover Opportunities','Explore skills, programs, and real opportunities.'],['03','Verify & Improve','Build confidence through assessments and learning.'],['04','Connect','Meet mentors, teams, institutions, and employers.'],['05','Track Progress','See development, applications, and outcomes.']].map(x=>`<div class="step"><strong>${x[0]}</strong><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div></div></section>
@@ -2090,6 +2086,26 @@
 		function assessmentRating(score) { if (score >= 90) return 'Excellent'; if (score >= 80) return 'Advanced'; if (score >= 70) return 'Good'; if (score >= 60) return 'Intermediate'; if (score >= 40) return 'Beginner'; return 'Needs Improvement'; }
 		function assessmentStats() { const assessments = state.assessments || []; const average = assessments.length ? Math.round((assessments.reduce((total, item) => total + item.score, 0) / assessments.length) * 10) / 10 : 0; return { assessments, average }; }
 		function assessmentHistoryMarkup(limit) { const assessments = state.assessments || []; const items = limit ? assessments.slice(-limit).reverse() : assessments.slice().reverse(); return items.length ? `<div class="assessment-history">${items.map((item) => `<div class="assessment-history-row"><div><strong>${esc(item.skill)}</strong><small>${new Date(item.completedAt).toLocaleDateString()}</small></div><div><b>${item.score}%</b><span class="tag ${item.score >= 70 ? 'success' : 'warning'}">${esc(item.rating)}</span></div></div>`).join('')}</div>` : emptyState('No assessments yet. Choose a skill to begin.'); }
+		function skillRecordDetails(skill) {
+			const name = skill.skill || skill.name;
+			const assessment = (state.assessments || []).find((item) => item.skill === name);
+			const gap = (state.gaps || []).find((item) => item.name === name);
+			return { name, score: Number(skill.score || assessment?.score || 0), status: skill.rating || skill.status || assessment?.rating || 'In progress', target: gap?.target, gap: gap ? Math.max(0, gap.target - Number(skill.score || assessment?.score || 0)) : null, assessment };
+		}
+		function skillCardMarkup(skill) {
+			const details = skillRecordDetails(skill);
+			return `<article class="skill-card" tabindex="0" role="button" data-action="view-skill" data-skill="${esc(details.name)}" aria-label="View details for ${esc(details.name)} skill"><div class="skill-card-top"><div><span class="skill-card-icon" aria-hidden="true">✦</span><h4>${esc(details.name)}</h4></div><span class="tag ${details.score >= 70 ? 'success' : 'warning'}">${esc(details.status)}</span></div><div class="skill-card-score"><div class="skill-ring" style="--skill-score:${details.score}" aria-label="${details.score}% score"><strong>${details.score}%</strong></div><div class="skill-card-summary"><span>Current score</span>${details.target !== undefined ? `<small>Target ${details.target}% · Gap ${details.gap}%</small>` : '<small>Assessment score</small>'}</div></div><div class="skill-card-footer"><span>${details.assessment ? `Assessed ${new Date(details.assessment.completedAt).toLocaleDateString()}` : 'Skill profile record'}</span><button class="btn-plain" type="button" data-action="view-skill" data-skill="${esc(details.name)}">View Details →</button></div></article>`;
+		}
+		function upgradeSkillCards() {
+			const skills = (state.assessments || []).length ? state.assessments : state.skills || [];
+			const panels = [...document.querySelectorAll('.dash-panel')].filter((panel) => ['Assessed Skills', 'Verified Skills'].includes(panel.querySelector('.panel-head h3')?.textContent.trim()));
+			panels.forEach((panel) => {
+				const head = panel.querySelector('.panel-head');
+				if (!head || panel.dataset.skillCardsReady) return;
+				panel.dataset.skillCardsReady = 'true';
+				panel.innerHTML = `${head.outerHTML}${skills.length ? skills.map(skillCardMarkup).join('') : emptyState('No skills assessed yet.')}`;
+			});
+		}
 		function studentDashboardPage() {
 			const { assessments, average } = assessmentStats();
 			return shell('student', 'Student Dashboard', `${pageIntro(state.student.title, 'Build your profile from real assessment results.', '<button class="btn btn-primary" data-action="route" data-route="/student/assessment">＋ Add Skill Assessment</button>')}<section class="dash-panel skill-profile-panel"><div class="panel-head"><div><h3>My Skill Profile</h3><p class="muted">Your scores begin at zero and grow with completed assessments.</p></div></div><div class="kpis assessment-kpis"><div class="kpi"><div class="kpi-top"><span>Skills Assessed</span><span class="kpi-icon">✦</span></div><div class="kpi-value">${assessments.length}</div></div><div class="kpi"><div class="kpi-top"><span>Assessments Completed</span><span class="kpi-icon">✓</span></div><div class="kpi-value">${assessments.length}</div></div><div class="kpi"><div class="kpi-top"><span>Average Score</span><span class="kpi-icon">▥</span></div><div class="kpi-value">${average}%</div></div><div class="kpi"><div class="kpi-top"><span>Skill Readiness</span><span class="kpi-icon">◉</span></div><div class="kpi-value">${average}%</div></div></div></section><div class="dash-grid"><section class="dash-panel"><div class="panel-head"><h3>Assessed Skills</h3><button class="btn-plain" data-action="route" data-route="/student/assessment">Take assessment →</button></div>${assessments.length ? assessments.map((item) => `<div class="skill"><div class="skill-line"><span><b>${esc(item.skill)}</b> <span class="tag ${item.score >= 70 ? 'success' : 'warning'}">${esc(item.rating)}</span></span><span><b>${item.score}%</b> <button class="btn-plain" data-action="retake-assessment" data-skill="${esc(item.skill)}">Retake</button></span></div><div class="bar"><span style="width:${item.score}%"></span></div></div>`).join('') : emptyState('No skills assessed yet.')}</section><section class="dash-panel"><div class="panel-head"><h3>Assessment History</h3><button class="btn-plain" data-action="route" data-route="/student/skills">View all →</button></div>${assessmentHistoryMarkup(4)}</section></div><section class="dash-panel"><div class="panel-head"><h3>Recommended Opportunities</h3><button class="btn-plain" data-action="route" data-route="/student/opportunities">View all opportunities →</button></div>${state.opportunities.slice(0, 3).map(opportunityRow).join('')}</section></div>`);
@@ -2412,6 +2428,13 @@
 			if (action === 'tutor-delete-course') { const account = currentTutorAccount(); if (!account || !confirm('Delete this course?')) return; account.courses = (account.courses || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course deleted.'); renderFunctional(); return; }
 			if (action === 'logout') { clearStudentSession(); state.activeRole = null; saveState(); go('/login'); return; }
 			if (action === 'start-assignment') { openExamPortal(); return; }
+			if (action === 'view-skill') {
+				const skillName = sourceEvent.currentTarget.dataset.skill;
+				const details = skillRecordDetails((state.assessments || []).find((item) => item.skill === skillName) || (state.skills || []).find((item) => item.name === skillName) || { name: skillName });
+				const assessmentText = details.assessment ? `<b>Assessment:</b> ${details.assessment.correct ?? '—'} / ${details.assessment.total ?? '—'} correct · ${new Date(details.assessment.completedAt).toLocaleDateString()}` : '<b>Assessment:</b> No completed assessment recorded.';
+				document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card skill-detail-modal" role="dialog" aria-modal="true" aria-labelledby="skill-detail-title" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close skill details">×</button><span class="tag ${details.score >= 70 ? 'success' : 'warning'}">${esc(details.status)}</span><h2 id="skill-detail-title">${esc(details.name)}</h2><div class="skill-detail-score">${details.score}%</div><p><b>Current score:</b> ${details.score}%<br><b>Verification:</b> ${esc(details.status)}<br>${details.target !== undefined ? `<b>Target score:</b> ${details.target}%<br><b>Skill gap:</b> ${details.gap}%<br>` : ''}${assessmentText}</p><div class="card-actions"><button class="btn btn-primary" data-action="route" data-route="/student/assessment">View Details →</button></div></div></div>`);
+				return;
+			}
 			if (action === 'view-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (program) document.body.insertAdjacentHTML('beforeend', csrProgramDetails(program)); return; }
 			if (action === 'edit-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (!program || program.companyId !== currentCompanyAccount()?.id) return; app.innerHTML = shell('company', 'Edit CSR Program', `${pageIntro('Edit CSR Program', 'Update your company-owned CSR program.')}${csrProgramForm(program)}`); bindFunctionalEvents(); bindThemeToggle(); return; }
 			if (action === 'publish-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (!program || program.companyId !== currentCompanyAccount()?.id) return; program.status = 'Published'; saveState(); showToast('CSR program published.'); renderFunctional(); return; }
@@ -2635,7 +2658,7 @@
 			if (!document.body.dataset.globalSearchOutsideBound) {
 				document.addEventListener('click', (event) => { if (globalSearchState.open && !event.target.closest('[data-search-root]')) { closeGlobalSearch(); event.preventDefault(); event.stopPropagation(); } }, true);
 				document.addEventListener('click', (event) => { const closeTarget = event.target.closest('[data-action="close-modal"]'); if (closeTarget) closeTarget.closest('.modal-backdrop')?.remove(); }, true);
-				document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); focusGlobalSearch(); } });
+				document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { document.querySelector('.modal-backdrop')?.remove(); return; } if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); focusGlobalSearch(); } });
 				document.body.dataset.globalSearchOutsideBound = 'true';
 			}
 			document.querySelectorAll('input[name="assessment-answer"]').forEach((input) => input.addEventListener('change', () => {
@@ -2647,6 +2670,14 @@
 			document.querySelectorAll('[data-action="filter"]').forEach((input) => input.addEventListener('input', () => { const query = input.value.toLowerCase().trim(); const container = input.closest('.dash-content'); const results = [...container.querySelectorAll('[data-searchable]')]; results.forEach((item) => { item.hidden = query && !item.dataset.searchable.toLowerCase().includes(query); }); const visible = results.some((item) => !item.hidden); container.querySelector('.empty-state')?.remove(); if (!visible) container.insertAdjacentHTML('beforeend', emptyState('No results found.')); }));
 			document.querySelectorAll('[data-action="status"]').forEach((select) => select.addEventListener('change', () => { const application = state.applications.find((item) => item.id === select.dataset.id); if (application) { application.status = select.value; notify(`Application status updated to ${select.value}.`); saveState(); showToast('Application status updated.'); } }));
 			document.querySelectorAll('form[data-form]').forEach((form) => form.addEventListener('submit', (event) => { event.preventDefault(); handleForm(form, event); }));
+			document.querySelectorAll('.skill-card[role="button"]').forEach((card) => {
+				if (card.dataset.keyboardBound) return;
+				card.dataset.keyboardBound = 'true';
+				card.addEventListener('keydown', (event) => {
+					if (event.target.closest('button')) return;
+					if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
+				});
+			});
 			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => {
 				const demoRole = button.dataset.demo;
 					if (!['student', 'tutor'].includes(demoRole)) return;
@@ -2866,10 +2897,21 @@
 			const end = parse(to);
 			return `rgb(${start.map((channel, index) => Math.round(channel + (end[index] - channel) * amount)).join(', ')})`;
 		}
+		function lightAuroraColor(progress) {
+			const palette = ['#CFFAF4', '#DCEBFF', '#EEE4FF', '#FFE3F1', '#FFE9D6', '#DDF8EA', '#E5E9FF'];
+			const position = Math.min(1, Math.max(0, progress)) * (palette.length - 1);
+			const index = Math.min(palette.length - 2, Math.floor(position));
+			return mixColor(palette[index], palette[index + 1], position - index);
+		}
+		function lightAuroraRgba(progress, alpha) {
+			const channels = lightAuroraColor(progress).match(/\d+/g).map(Number);
+			return `rgba(${channels.join(', ')}, ${alpha})`;
+		}
 		function updateGlobalBackground() {
 			const background = document.getElementById('global-background');
 			const root = document.querySelector('.landing');
-			if (!background || !root || !document.body.classList.contains('home-page')) return;
+			if (!background) return;
+			const isHomePage = document.body.classList.contains('home-page');
 				const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
 				const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
 				const transitionLimit = .25;
@@ -2878,17 +2920,35 @@
 				const darkness = normalized * normalized * (3 - 2 * normalized);
 				const calculatedBackgroundColor = selectedTheme === 'dark'
 					? mixColor('#101719', '#000000', darkness)
-					: mixColor('#ffffff', '#f4fafa', darkness);
+					: '#F7FAFA';
 				const currentBackgroundColor = window.__skillAuraBackgroundOverride || calculatedBackgroundColor;
+				background.style.setProperty('--bg-shift-x', `${(progress * 80 - 40).toFixed(2)}px`);
+				background.style.setProperty('--bg-shift-y', `${(progress * -120).toFixed(2)}px`);
+				background.style.setProperty('--bg-rotate', `${(progress * 120).toFixed(2)}deg`);
+				background.style.setProperty('--bg-scale', `${(1.04 + progress * .12).toFixed(3)}`);
+				background.style.setProperty('--bg-grid-y', `${(progress * 180).toFixed(2)}px`);
+				background.style.setProperty('--bg-sheen', `${(progress * 100).toFixed(2)}%`);
+				background.style.setProperty('--bg-depth', `${(progress * 18).toFixed(2)}px`);
+				if (selectedTheme === 'dark') {
+					background.style.setProperty('--bg-glow', '0.95');
+					background.style.setProperty('--bg-aurora-a', 'rgba(79, 209, 197, 0.42)');
+					background.style.setProperty('--bg-aurora-b', 'rgba(21, 154, 156, 0.32)');
+					background.style.setProperty('--bg-aurora-c', 'rgba(117, 76, 255, 0.24)');
+				} else if (isHomePage) {
+					background.style.setProperty('--bg-glow', '0.52');
+					background.style.setProperty('--bg-aurora-a', lightAuroraRgba(progress, .34));
+					background.style.setProperty('--bg-aurora-b', lightAuroraRgba(Math.min(1, progress + .2), .24));
+					background.style.setProperty('--bg-aurora-c', lightAuroraRgba(Math.max(0, progress - .2), .2));
+				}
 				background.style.backgroundColor = currentBackgroundColor;
 			const scrollColors = selectedTheme === 'dark'
 				? { ink: mixColor('#f4f7f7', '#ffffff', darkness), muted: mixColor('#b7c4c5', '#91a5a7', darkness), line: mixColor('#35474b', '#243538', darkness), surface: mixColor('#101719', '#0b1113', darkness), soft: mixColor('#0b1113', '#070b0d', darkness), header: mixColor('#101719', '#000000', darkness) }
 				: { ink: mixColor('#17333a', '#17333a', darkness), muted: mixColor('#668087', '#668087', darkness), line: mixColor('#d7e9e9', '#c4dddd', darkness), surface: mixColor('#ffffff', '#f4fafa', darkness), soft: mixColor('#f4fafa', '#e8f4f3', darkness), header: mixColor('#17333a', '#123039', darkness) };
-			root.style.setProperty('--scroll-ink', scrollColors.ink);
-			root.style.setProperty('--scroll-muted', scrollColors.muted);
-			root.style.setProperty('--scroll-line', scrollColors.line);
-			root.style.setProperty('--scroll-surface', scrollColors.surface);
-			root.style.setProperty('--scroll-soft', scrollColors.soft);
+			root?.style.setProperty('--scroll-ink', scrollColors.ink);
+			root?.style.setProperty('--scroll-muted', scrollColors.muted);
+			root?.style.setProperty('--scroll-line', scrollColors.line);
+			root?.style.setProperty('--scroll-surface', scrollColors.surface);
+			root?.style.setProperty('--scroll-soft', scrollColors.soft);
 			document.body.style.setProperty('--scroll-ink', scrollColors.ink);
 			document.body.style.setProperty('--scroll-muted', scrollColors.muted);
 			document.body.style.setProperty('--scroll-line', scrollColors.line);
@@ -2896,24 +2956,133 @@
 			document.body.style.setProperty('--scroll-soft', scrollColors.soft);
 			document.body.style.setProperty('--scroll-header', scrollColors.header);
 				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-				const heroCopy = root.querySelector('.hero > .container:first-child');
-				const ecosystem = root.querySelector('.ecosystem');
-				if (!reducedMotion) {
-					if (heroCopy) heroCopy.style.transform = `translateY(${progress * -42}px)`;
+				const heroCopy = root?.querySelector('.hero > .container:first-child');
+				const ecosystem = root?.querySelector('.ecosystem');
+				if (isHomePage && !reducedMotion) {
+					if (heroCopy) {
+						const heroExit = Math.min(1, Math.max(0, -root.getBoundingClientRect().top / Math.max(root.offsetHeight * .55, 1)));
+						heroCopy.style.transform = `translateY(${progress * -42}px)`;
+						heroCopy.style.opacity = String(1 - heroExit * .7);
+					}
 					if (ecosystem) ecosystem.style.transform = `translateY(${progress * 28}px)`;
 				}
 				const center = window.scrollY + window.innerHeight * .42;
 				let activeId = '';
-				root.querySelectorAll('section[id]').forEach((section) => {
+				root?.querySelectorAll('section[id]').forEach((section) => {
 					if (section.offsetTop <= center) activeId = section.id;
 				});
-				root.querySelectorAll('.navlinks a').forEach((link) => {
+				root?.querySelectorAll('.navlinks a').forEach((link) => {
 					const href = link.getAttribute('href');
 					const active = activeId ? href === `#${activeId}` : href === '#/';
 					link.classList.toggle('active', active);
 					if (active) link.setAttribute('aria-current', 'page');
 					else link.removeAttribute('aria-current');
 				});
+		}
+		function setupSparkCursor() {
+			if (window.__skillAuraSparkCursor) return;
+			const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches && navigator.maxTouchPoints === 0;
+			if (!finePointer) return;
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const canvas = document.createElement('canvas');
+			canvas.className = 'spark-cursor-trail';
+			canvas.setAttribute('aria-hidden', 'true');
+			const dot = document.createElement('div');
+			dot.className = 'spark-cursor-dot is-hidden';
+			dot.setAttribute('aria-hidden', 'true');
+			document.body.append(canvas, dot);
+			document.body.classList.add('spark-cursor-enabled');
+			const context = canvas.getContext('2d');
+			const particles = [];
+			const current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+			const target = { ...current };
+			let devicePixelRatio = 1;
+			let pointerActive = false;
+			let animationFrame = null;
+			let lastSpawnX = target.x;
+			let lastSpawnY = target.y;
+			const resize = () => {
+				devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+				canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+				canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
+				canvas.style.width = `${window.innerWidth}px`;
+				canvas.style.height = `${window.innerHeight}px`;
+				context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+			};
+			const isInteractive = (element) => element instanceof Element && Boolean(element.closest('a, button, input, select, textarea, summary, [role="button"], [data-action]'));
+			const spawn = (x, y) => {
+				if (reducedMotion || particles.length >= 36) return;
+				const angle = Math.random() * Math.PI * 2;
+				const distance = 4 + Math.random() * 7;
+				particles.push({ x, y, vx: Math.cos(angle) * distance, vy: Math.sin(angle) * distance, size: 1 + Math.random() * 1.5, life: 1, decay: .045 + Math.random() * .025 });
+			};
+			const animate = () => {
+				animationFrame = null;
+				current.x += (target.x - current.x) * .24;
+				current.y += (target.y - current.y) * .24;
+				dot.style.left = `${current.x}px`;
+				dot.style.top = `${current.y}px`;
+				context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+				particles.forEach((particle) => {
+					particle.x += particle.vx;
+					particle.y += particle.vy;
+					particle.vx *= .94;
+					particle.vy *= .94;
+					particle.life -= particle.decay;
+					context.beginPath();
+					context.fillStyle = `rgba(94, 234, 212, ${Math.max(0, particle.life * .7)})`;
+					context.shadowBlur = 8;
+					context.shadowColor = 'rgba(79, 209, 197, .55)';
+					context.arc(particle.x, particle.y, Math.max(.1, particle.size * particle.life), 0, Math.PI * 2);
+					context.fill();
+				});
+				context.shadowBlur = 0;
+				for (let index = particles.length - 1; index >= 0; index -= 1) if (particles[index].life <= 0) particles.splice(index, 1);
+				if ((!reducedMotion && pointerActive) || particles.length) animationFrame = requestAnimationFrame(animate);
+			};
+			const schedule = () => { if (!animationFrame) animationFrame = requestAnimationFrame(animate); };
+			const pointerMove = (event) => {
+				target.x = event.clientX;
+				target.y = event.clientY;
+				dot.classList.toggle('is-hovering', isInteractive(event.target));
+				dot.classList.remove('is-hidden');
+				if (reducedMotion) {
+					current.x = target.x;
+					current.y = target.y;
+					dot.style.left = `${current.x}px`;
+					dot.style.top = `${current.y}px`;
+					return;
+				}
+				const distance = Math.hypot(target.x - lastSpawnX, target.y - lastSpawnY);
+				if (distance > 7) {
+					spawn(target.x, target.y);
+					lastSpawnX = target.x;
+					lastSpawnY = target.y;
+				}
+				schedule();
+			};
+			const pointerEnter = () => { pointerActive = true; dot.classList.remove('is-hidden'); schedule(); };
+			const pointerLeave = () => { pointerActive = false; dot.classList.add('is-hidden'); schedule(); };
+			resize();
+			window.addEventListener('resize', resize, { passive: true });
+			document.addEventListener('pointermove', pointerMove, { passive: true });
+			document.addEventListener('pointerenter', pointerEnter, { passive: true });
+			document.addEventListener('pointerleave', pointerLeave, { passive: true });
+			window.__skillAuraSparkCursor = { canvas, dot, resize };
+		}
+		function setupGlobalBackground() {
+			if (!window.__skillAuraGlobalScrollHandler) {
+				window.__skillAuraGlobalScrollHandler = () => {
+					if (window.__skillAuraGlobalScrollFrame) return;
+					window.__skillAuraGlobalScrollFrame = requestAnimationFrame(() => {
+						window.__skillAuraGlobalScrollFrame = null;
+						updateGlobalBackground();
+					});
+				};
+				window.addEventListener('scroll', window.__skillAuraGlobalScrollHandler, { passive: true });
+				window.addEventListener('resize', updateGlobalBackground, { passive: true });
+			}
+			updateGlobalBackground();
 		}
 		function teardownLandingExperience() {
 			if (window.__skillAuraScrollFrame) cancelAnimationFrame(window.__skillAuraScrollFrame);
@@ -2924,6 +3093,12 @@
 			delete window.__skillAuraStatsCleanup;
 			if (window.__skillAuraScrollHandler) window.removeEventListener('scroll', window.__skillAuraScrollHandler);
 			if (window.__skillAuraResizeHandler) window.removeEventListener('resize', window.__skillAuraResizeHandler);
+			if (window.__skillAuraHeroPointerHandler) document.querySelector('.hero')?.removeEventListener('pointermove', window.__skillAuraHeroPointerHandler);
+			delete window.__skillAuraHeroPointerHandler;
+			if (window.__skillAuraEcosystemScrollHandler) window.removeEventListener('scroll', window.__skillAuraEcosystemScrollHandler);
+			delete window.__skillAuraEcosystemScrollHandler;
+			if (window.__skillAuraEcosystemCleanup) window.__skillAuraEcosystemCleanup();
+			delete window.__skillAuraEcosystemCleanup;
 			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
 			delete window.__skillAuraScrollHandler;
 			delete window.__skillAuraResizeHandler;
@@ -2948,11 +3123,30 @@
 			return `<section class="home-stats section" aria-label="SkillAura at a glance"><div class="container"><div class="home-section-kicker">The network in motion</div><div class="home-stats-grid">${[['2,450','Students building readiness','+'],['42','Industry partners','+'],['18','Live projects','+'],['72','Average readiness signal','%']].map(([value,label,suffix]) => `<div class="home-stat" data-stat-value="${value.replace(',','')}" data-stat-suffix="${suffix}"><strong>${value}${suffix}</strong><span>${label}</span></div>`).join('')}</div></div></section><section class="home-skills section soft" id="home-skills"><div class="container home-skill-layout"><div><div class="home-section-kicker">Skills with a signal</div><h2>See where potential becomes momentum.</h2><p class="home-section-copy">Explore the capabilities that connect classroom learning to meaningful opportunities.</p><div class="home-skill-tabs" role="list">${Object.keys(skillDetails).map((skill, index) => `<button type="button" class="home-skill-tab${index === 0 ? ' active' : ''}" data-home-skill="${skill}" role="listitem">${skill}</button>`).join('')}</div></div><div class="home-skill-detail" aria-live="polite"><span class="tag blue">Verified signal</span><h3>${data.skills[0][0]}</h3><p>${skillDetails[data.skills[0][0]]}</p><strong>${data.skills[0][1]}% readiness</strong><div class="bar"><span style="width:${data.skills[0][1]}%"></span></div></div></div></section><section class="home-opportunities section" id="home-opportunities"><div class="container"><div class="section-heading"><div class="eyebrow">A practical next step</div><h2>Opportunities matched to momentum.</h2><p>Move from a verified signal to a real conversation with industry.</p></div><div class="home-opportunity-grid">${state.opportunities.slice(0, 3).map((opportunity) => `<article class="home-opportunity-card" data-action="view-opportunity" data-title="${esc(opportunity.title)}" tabindex="0"><div class="home-opportunity-top"><span class="tag success">${esc(opportunity.match)} match</span><span>${esc(opportunity.location)}</span></div><h3>${esc(opportunity.title)}</h3><p>${esc(opportunity.company)} · ${esc(opportunity.duration)}</p><small>${esc(opportunity.skills)}</small><div class="home-opportunity-more"><span>Eligibility: relevant foundational skills</span><span>Deadline: ${esc(opportunity.deadline)}</span></div><button class="btn btn-light" type="button" data-action="view-opportunity" data-title="${esc(opportunity.title)}">View details →</button></article>`).join('')}</div></div></section><section class="home-ecosystem section soft" id="home-ecosystem"><div class="container home-ecosystem-grid"><div class="home-ecosystem-sticky"><div class="home-ecosystem-visual"><span class="home-ecosystem-node active">Students</span><span class="home-ecosystem-line"></span><span class="home-ecosystem-node">Academia</span><span class="home-ecosystem-line"></span><span class="home-ecosystem-node">Industry</span></div></div><div class="home-ecosystem-steps"><div class="home-section-kicker">The bridge in five moves</div>${[['01','Discover','Students find a clear next step based on their current signal.'],['02','Develop','Skills become visible, verifiable, and easier to improve.'],['03','Track','Academia sees readiness, gaps, and outcomes in one view.'],['04','Connect','Industry discovers candidates through meaningful evidence.'],['05','Move forward','Applications become the beginning of a stronger connection.']].map(([number,title,copy]) => `<article class="home-ecosystem-step" data-ecosystem-step="${number}"><span>${number}</span><div><h3>${title}</h3><p>${copy}</p></div></article>`).join('')}</div></div></section><section class="home-final-cta section"><div class="container"><div><div class="home-section-kicker">Make the next move</div><h2>Your skills. Your opportunities. Your future.</h2><p>Explore the SkillAura workspace and turn readiness into momentum.</p></div><a class="btn btn-primary" href="#/student/opportunities">Explore SkillAura →</a></div></section>`;
 		}
 
+		function homeEcosystemJourneyMarkup() {
+			const session = currentAuthSession();
+			const studentRoute = session?.loggedIn && normalizeRole(session.role) === 'student' ? '/student/dashboard' : '/role-selection';
+			const skillsRoute = session?.loggedIn && normalizeRole(session.role) === 'student' ? '/student/skills' : '/login';
+			const opportunityRoute = session?.loggedIn && normalizeRole(session.role) === 'student' ? '/student/opportunities' : '/role-selection';
+			const careerRoute = session?.loggedIn && normalizeRole(session.role) === 'student' ? '/student/career-path' : '/login';
+			const stages = [
+				['01', 'Student/Employee', 'Build your profile and showcase your abilities.', '♙', studentRoute],
+				['02', 'Skills & Verification', 'Assess your abilities and build a verified skill profile.', '✦', skillsRoute],
+				['03', 'Industry Opportunity', 'Discover internships, jobs, and opportunities matched to your skills.', '◈', opportunityRoute],
+				['04', 'Career Growth', 'Apply, interview, learn, and move toward your career goals.', '◎', careerRoute]
+			];
+			return `<section class="home-ecosystem section soft" id="home-ecosystem"><div class="container home-ecosystem-grid"><div class="home-ecosystem-sticky"><div class="home-ecosystem-visual" data-ecosystem-visual><span class="home-ecosystem-progress" aria-hidden="true"></span>${stages.map(([number, title, copy, icon, route], index) => `<a class="home-ecosystem-node${index === 0 ? ' active' : ''}" data-ecosystem-node="${index}" href="#${route}"><span class="home-ecosystem-node-icon">${icon}</span><span><small>${number}</small>${title}</span></a>${index < stages.length - 1 ? '<span class="home-ecosystem-line" data-ecosystem-line="' + index + '"></span>' : ''}`).join('')}</div></div><div class="home-ecosystem-steps"><div class="home-section-kicker">The SkillAura journey</div>${stages.map(([number, title, copy, icon, route], index) => `<a class="home-ecosystem-step${index === 0 ? ' active' : ''}" data-ecosystem-step="${number}" data-ecosystem-index="${index}" href="#${route}"><span>${number}</span><div><h3>${title}</h3><p>${copy}</p></div></a>`).join('')}</div></div></section>`;
+		}
+
 		function enhanceHomePage(landingRoot) {
 			if (landingRoot.querySelector('.home-stats')) return;
 			landingRoot.querySelector('.cta')?.insertAdjacentHTML('beforebegin', homeEnhancementsMarkup());
-			landingRoot.querySelector('#roles')?.remove();
-			landingRoot.querySelector('#home-opportunities')?.remove();
+			const existingEcosystem = landingRoot.querySelector('#home-ecosystem');
+			if (existingEcosystem) {
+				const template = document.createElement('template');
+				template.innerHTML = homeEcosystemJourneyMarkup();
+				existingEcosystem.replaceWith(template.content.firstElementChild);
+			}
 			const skillDetails = {
 				Python: 'Automation, data, and backend foundations used across SkillAura opportunities.',
 				JavaScript: 'The language behind interactive products, dashboards, and modern web experiences.',
@@ -3029,15 +3223,32 @@
 				if (opportunity) document.body.insertAdjacentHTML('beforeend', detailModal(opportunity));
 			}));
 			const ecosystemSteps = [...landingRoot.querySelectorAll('.home-ecosystem-step')];
-			const ecosystemObserver = new IntersectionObserver((entries) => {
-				entries.forEach((entry) => {
-					if (!entry.isIntersecting) return;
-					const index = ecosystemSteps.indexOf(entry.target);
-					ecosystemSteps.forEach((step, stepIndex) => step.classList.toggle('active', stepIndex === index));
-					landingRoot.querySelectorAll('.home-ecosystem-node').forEach((node, nodeIndex) => node.classList.toggle('active', nodeIndex === Math.min(2, Math.floor(index / 2))));
-				});
-			}, { threshold: .55 });
+			const ecosystemVisual = landingRoot.querySelector('[data-ecosystem-visual]');
+			const setEcosystemStage = (index) => {
+				ecosystemSteps.forEach((step, stepIndex) => step.classList.toggle('active', stepIndex === index));
+				landingRoot.querySelectorAll('.home-ecosystem-node').forEach((node, nodeIndex) => node.classList.toggle('active', nodeIndex === index));
+				landingRoot.querySelectorAll('.home-ecosystem-line').forEach((line, lineIndex) => line.classList.toggle('active', lineIndex < index));
+				if (ecosystemVisual) ecosystemVisual.style.setProperty('--ecosystem-progress', `${(index / Math.max(1, ecosystemSteps.length - 1)) * 100}%`);
+			};
+			const updateEcosystemStage = () => {
+				const section = landingRoot.querySelector('#home-ecosystem');
+				if (!section || !ecosystemSteps.length) return;
+				const sectionBounds = section.getBoundingClientRect();
+				if (sectionBounds.bottom < 0 || sectionBounds.top > window.innerHeight) return;
+				const focusLine = window.innerHeight * .48;
+				const index = ecosystemSteps.reduce((closest, step, stepIndex) => {
+					const bounds = step.getBoundingClientRect();
+					const distance = Math.abs((bounds.top + bounds.height / 2) - focusLine);
+					return distance < closest.distance ? { index: stepIndex, distance } : closest;
+				}, { index: 0, distance: Infinity }).index;
+				setEcosystemStage(index);
+			};
+			window.__skillAuraEcosystemScrollHandler = updateEcosystemStage;
+			window.addEventListener('scroll', window.__skillAuraEcosystemScrollHandler, { passive: true });
+			const ecosystemObserver = new IntersectionObserver(updateEcosystemStage, { threshold: .1 });
 			ecosystemSteps.forEach((step) => ecosystemObserver.observe(step));
+			window.__skillAuraEcosystemCleanup = () => ecosystemObserver.disconnect();
+			updateEcosystemStage();
 		}
 
 		function animatePercentages(root = document) {
@@ -3071,6 +3282,35 @@
 			requestAnimationFrame(tick);
 		}
 
+		function setupHomeStats(landingRoot) {
+			const stats = landingRoot.querySelector('.home-stats');
+			if (!stats || stats.dataset.countBound) return;
+			stats.dataset.countBound = 'true';
+			const items = [...stats.querySelectorAll('[data-stat-value]')];
+			const render = (progress) => items.forEach((item) => {
+				const value = Number(item.dataset.statValue || 0);
+				const suffix = item.dataset.statSuffix || '';
+				const current = Math.round(value * progress);
+				item.querySelector('strong').textContent = `${current.toLocaleString()}${suffix}`;
+			});
+			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (reducedMotion) { render(1); return; }
+			const observer = new IntersectionObserver(([entry], observerInstance) => {
+				if (!entry.isIntersecting) return;
+				observerInstance.disconnect();
+				const start = performance.now();
+				const tick = (now) => {
+					const progress = Math.min(1, (now - start) / 650);
+					const eased = 1 - Math.pow(1 - progress, 3);
+					render(eased);
+					if (progress < 1) requestAnimationFrame(tick);
+				};
+				requestAnimationFrame(tick);
+			}, { threshold: .35 });
+			observer.observe(stats);
+			window.__skillAuraStatsCleanup = () => observer.disconnect();
+		}
+
 		function setupLandingExperience() {
 			const landingRoot = document.querySelector('.landing');
 			if (!landingRoot) {
@@ -3079,6 +3319,7 @@
 			}
 			document.body.classList.add('home-page');
 			enhanceHomePage(landingRoot);
+			setupHomeStats(landingRoot);
 			const mobileMenu = landingRoot.querySelector('.mobile-menu');
 			if (mobileMenu) {
 				mobileMenu.onclick = () => setMobileNavState(mobileMenu.getAttribute('aria-expanded') !== 'true');
@@ -3098,8 +3339,22 @@
 			window.addEventListener('scroll', window.__skillAuraScrollHandler, { passive: true });
 			window.addEventListener('resize', window.__skillAuraResizeHandler, { passive: true });
 			const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-			const revealTargets = landingRoot.querySelectorAll('.hero > *, .section-heading, .section > .container > .grid-3 > *, .solution > *, .steps > *, .feature-grid > *, .cta .container, footer .footer-grid, .home-stats, .home-skill-layout, .home-opportunity-grid, .home-ecosystem-grid, .home-final-cta .container');
-			revealTargets.forEach((element) => element.classList.add('reveal'));
+			const hero = landingRoot.querySelector('.hero');
+			if (hero && !reducedMotion && window.matchMedia('(pointer: fine)').matches) {
+				window.__skillAuraHeroPointerHandler = (event) => {
+					const bounds = hero.getBoundingClientRect();
+					const x = ((event.clientX - bounds.left) / bounds.width - .5) * 2;
+					const y = ((event.clientY - bounds.top) / bounds.height - .5) * 2;
+					hero.style.setProperty('--hero-pointer-x', `${(x * 8).toFixed(2)}px`);
+					hero.style.setProperty('--hero-pointer-y', `${(y * 8).toFixed(2)}px`);
+				};
+				hero.addEventListener('pointermove', window.__skillAuraHeroPointerHandler, { passive: true });
+			}
+			const revealTargets = landingRoot.querySelectorAll('.hero > *, .section-heading, .section > .container > .grid-3 > *, .solution > *, .steps > *, .feature-grid > *, .cta .container, footer .footer-grid, .home-stats, .home-stats-grid > *, .home-skill-layout, .home-opportunity-grid, .home-opportunity-grid > *, .home-ecosystem-grid, .home-ecosystem-step, .home-final-cta .container');
+			revealTargets.forEach((element, index) => {
+				element.classList.add('reveal');
+				element.style.setProperty('--reveal-delay', `${Math.min((index % 5) * .06, .24)}s`);
+			});
 			if (window.__skillAuraRevealObserver) window.__skillAuraRevealObserver.disconnect();
 			window.__skillAuraRevealObserver = new IntersectionObserver((entries, observer) => {
 				entries.forEach((entry) => {
@@ -3190,6 +3445,7 @@
 			else if (path === '/company/csr-analytics') app.innerHTML = companyCsrAnalyticsPage();
 			else if (match) { const [, role, section] = match; const normalizedRole = normalizeRole(role); const pages = { dashboard: normalizedRole === 'student' ? studentDashboardPage : normalizedRole === 'company' ? companyDashboardPage : institutionDashboardPage, profile: normalizedRole === 'company' ? companyProfilePage : normalizedRole === 'institution' ? institutionProfilePage : () => profilePage(normalizedRole), skills: normalizedRole === 'student' ? skillsPage : normalizedRole === 'institution' ? institutionSkillsAnalyticsPage : institutionSkillsPage, opportunities: normalizedRole === 'company' ? companyOpportunitiesPage : () => opportunitiesPage(normalizedRole), applications: normalizedRole === 'student' ? studentApplicationsPage : normalizedRole === 'company' ? companyApplicationsPage : () => applicationsPage(normalizedRole), shortlist: companyShortlistPage, interviews: normalizedRole === 'student' ? studentInterviewsPage : companyInterviewsPage, offers: studentOffersPage, messages: companyMessagesPage, notifications: normalizedRole === 'student' ? studentNotificationsPage : normalizedRole === 'institution' ? institutionNotificationsPage : companyNotificationsPage, settings: normalizedRole === 'institution' ? institutionSettingsPage : () => settingsPage(normalizedRole), 'career-path': careerPage, candidates: companyCandidatesPage, analytics: normalizedRole === 'company' ? companyAnalyticsPage : normalizedRole === 'institution' ? institutionAnalyticsPage : () => analyticsPage(normalizedRole), partnerships: normalizedRole === 'institution' ? institutionPartnershipsPage : partnershipsPage, 'post-opportunity': normalizedRole === 'company' ? companyOpportunityFormPage : postOpportunityPage, programs: programsPage, onboarding: normalizedRole === 'company' ? companyOnboardingPage : normalizedRole === 'institution' ? institutionOnboardingPage : onboardingPage, assessment: normalizedRole === 'student' ? assessmentPage : institutionAssessmentsPage, 'skill-profile': skillProfilePage, 'skill-gaps': normalizedRole === 'institution' ? institutionSkillGapsPage : skillGapsPage, 'learning-recommendations': learningRecommendationsPage, students: institutionStudentsPage, assessments: institutionAssessmentsPage, learning: institutionLearningPage, internships: normalizedRole === 'student' ? studentInternshipsPage : institutionInternshipsPage, placements: normalizedRole === 'student' ? studentPlacementsPage : institutionPlacementsPage, industry: institutionIndustryPage, faculty: institutionFacultyPage, reports: institutionReportsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
 			else app.innerHTML = notFound();
+			if (path === '/student/dashboard' || path === '/student/skill-profile') upgradeSkillCards();
 			if (path.startsWith('/tutor/')) {
 				app.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', tutorExamManagementMarkup());
 				addTutorTakeExamButton();
@@ -3206,6 +3462,8 @@
 			}
 			if (path === '/company/dashboard') document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', csrCompanyDashboardMarkup());
 			bindFunctionalEvents();
+			setupGlobalBackground();
+			setupSparkCursor();
 			setupLandingExperience();
 			setupPageMotion();
 			bindThemeToggle();
