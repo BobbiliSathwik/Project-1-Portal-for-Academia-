@@ -56,9 +56,34 @@
 			home: '⌂',
 			profile: '◉',
 			skills: '✦',
+			'skill-gaps': '⚠',
+			learning: '▤',
+			assessments: '✓',
 			jobs: '▣',
+			opportunities: '▣',
+			applications: '▤',
 			briefcase: '▤',
+			internships: '◈',
+			placements: '↗',
+			interviews: '◷',
+			offers: '◆',
+			'csr-opportunities': '♡',
+			'csr-applications': '♡',
+			'csr-programs': '♡',
+			'csr-create': '＋',
+			'csr-participants': '♙',
+			'csr-analytics': '▥',
+			candidates: '♙',
 			analytics: '▥',
+			notifications: '◌',
+			'skill-gaps': '⚠',
+			students: '♙',
+			faculty: '♙',
+			partnerships: '◎',
+			reports: '▥',
+			messages: '□',
+			programs: '◈',
+			'career-path': '◎',
 			settings: '⚙',
 			logout: '↪',
 			bell: '◌',
@@ -76,7 +101,6 @@
 				institution: 'You are the SkillAura Institution Assistant. Help institutions understand student development, skill gaps, internships, placements, and industry demand. Use actual SkillAura data. Do not expose private recruiter or student information beyond the user\'s permissions.'
 			}
 		};
-		const THEME_KEY = 'skillaura-theme';
 		const LEGACY_USER_KEYS = ['skillaura-current-user', 'skillaura_current_user'];
 		function readStoredSession() {
 			for (const key of LEGACY_USER_KEYS) {
@@ -94,37 +118,14 @@
 				try { localStorage.setItem(key, JSON.stringify(session)); } catch (error) {}
 			}
 		}
-		let selectedTheme = loadThemePreference();
-		document.documentElement.dataset.theme = selectedTheme;
+		const selectedTheme = 'dark';
+		document.documentElement.dataset.theme = 'dark';
 		let chatbotState = {
 			lastOpportunity: null,
 			pendingApplication: null,
 			memory: {}
 		};
 		let globalSearchState = { query: '', results: [], activeIndex: -1, open: false };
-
-		function loadThemePreference() {
-			return 'dark';
-		}
-
-		function themeToggleMarkup() {
-			const isDark = selectedTheme === 'dark';
-			return `<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="${isDark}" aria-label="Switch to ${isDark ? 'light' : 'dark'} mode"><span class="theme-toggle-icon" aria-hidden="true">${isDark ? '🌙' : '☀️'}</span><span class="theme-toggle-label">${isDark ? 'Dark Mode' : 'Light Mode'}</span></button>`;
-		}
-
-		function setTheme(theme) {
-			selectedTheme = theme === 'dark' ? 'dark' : 'light';
-			document.documentElement.dataset.theme = selectedTheme;
-			try { localStorage.setItem(THEME_KEY, selectedTheme); } catch (error) { }
-			const isDark = selectedTheme === 'dark';
-			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
-				button.setAttribute('aria-pressed', String(isDark));
-				button.setAttribute('aria-label', `Switch to ${isDark ? 'light' : 'dark'} mode`);
-				button.querySelector('.theme-toggle-icon').textContent = isDark ? '🌙' : '☀️';
-				button.querySelector('.theme-toggle-label').textContent = isDark ? 'Dark Mode' : 'Light Mode';
-			});
-			if (document.body.classList.contains('home-page')) updateGlobalBackground();
-		}
 
 		function brand() {
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillAura</a>`;
@@ -188,7 +189,7 @@
 			const auth = currentAuthSession();
 			const isLoggedIn = Boolean(auth?.loggedIn);
 			const dashboardRoute = currentUserDashboardRoute();
-			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started ↗</a>`;
+			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a><button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `<a class="btn btn-primary" href="#/role-selection">Get Started ↗</a>`;
 			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Student/Employees</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" type="button" aria-expanded="false" aria-label="Open navigation menu">☰</button></div></nav>
 			<section class="hero"><div class="hero-atmosphere" aria-hidden="true"><span class="hero-particle particle-one"></span><span class="hero-particle particle-two"></span><span class="hero-particle particle-three"></span><span class="hero-particle particle-four"></span><span class="hero-thread thread-one"></span><span class="hero-thread thread-two"></span></div><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student/Employee</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Student/Employees</h3><p>Clarity is hard to find when the path from learning to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
@@ -294,7 +295,7 @@
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const hidden = ['settings', 'career-path', 'applications', 'programs', 'post-opportunity'];
 			const items = Object.entries(dashboardRoutes[role]).filter(([key]) => !hidden.includes(key));
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()">${icons[key]||'◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()"><span>⚙</span> Settings</a><button class="logout" onclick="location.hash='#/'">↪ &nbsp; Logout</button></aside>`
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key]||'◉'}</span><span class="side-label">${label}</span></a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()" title="Settings" data-tooltip="Settings"><span class="side-icon" aria-hidden="true">⚙</span><span class="side-label">Settings</span></a><button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" onclick="location.hash='#/'" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`
 		}
 
 		function dash(role) {
@@ -324,6 +325,28 @@
 
 		function closeSidebar() {
 			document.getElementById('sidebar')?.classList.remove('open');
+		}
+
+		const SIDEBAR_PIN_KEY = 'skillaura-sidebar-pinned';
+		function isSidebarPinned() {
+			try { return localStorage.getItem(SIDEBAR_PIN_KEY) === 'true'; } catch (error) { return false; }
+		}
+		function setSidebarPinned(pinned) {
+			try { localStorage.setItem(SIDEBAR_PIN_KEY, String(pinned)); } catch (error) { }
+			const sidebarElement = document.getElementById('sidebar');
+			if (!sidebarElement) return;
+			sidebarElement.classList.toggle('pinned', pinned);
+			sidebarElement.closest('.app')?.classList.toggle('sidebar-pinned', pinned);
+			const button = sidebarElement.querySelector('[data-action="sidebar-pin"]');
+			if (button) {
+				button.setAttribute('aria-pressed', String(pinned));
+				button.setAttribute('aria-label', pinned ? 'Unpin sidebar' : 'Pin sidebar');
+				button.title = pinned ? 'Unpin sidebar' : 'Pin sidebar';
+			}
+		}
+		function setupSidebarState() {
+			const sidebarElement = document.getElementById('sidebar');
+			if (sidebarElement) setSidebarPinned(isSidebarPinned());
 		}
 
 		function chatbotMarkup() {
@@ -2014,7 +2037,7 @@
 			const routeRole = normalizedRole;
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const routes = dashboardRoutes[routeRole] || dashboardRoutes.company || {};
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()">${icons[key] || '◉'} ${label}</a>`).join('')}</nav><div class="side-spacer"></div><button class="logout" data-action="logout">↪ &nbsp; Logout</button></aside>`;
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key] || '◉'}</span><span class="side-label">${label}</span></a>`).join('')}</nav><div class="side-spacer"></div><button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" data-action="logout" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`;
 		}
 		function globalSearchMarkup() { return `<div class="global-search" data-search-root><div class="global-search-input-wrap"><span class="global-search-icon" aria-hidden="true">⌕</span><input class="search" data-global-search-input type="search" placeholder="Search anything" aria-label="Search anything" aria-controls="global-search-results" autocomplete="off"><kbd>⌘ K</kbd><button class="global-search-clear" data-action="clear-global-search" type="button" aria-label="Clear search" hidden>×</button></div><div class="global-search-results" id="global-search-results" role="listbox" hidden></div></div>`; }
 		function shell(role, title, content) {
@@ -2022,7 +2045,7 @@
 			const person = personFor(normalizedRole);
 			const unread = state.notifications.filter((item) => !item.read).length + currentEcosystemNotifications().filter((item) => !item.read).length;
 			const demoTag = person.demoAccount ? '<span class="tag blue">Demo Account</span>' : '';
-			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right">${globalSearchMarkup()}${themeToggleMarkup()}${demoTag}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
+			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right">${globalSearchMarkup()}${demoTag}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
 		}
 		function pageIntro(title, text, action = '') { return `<div class="dash-intro"><div><h1>${esc(title)}</h1><p>${esc(text)}</p></div>${action}</div>`; }
 		function searchBox(placeholder = 'Search this workspace') { return `<input class="page-search" data-action="filter" placeholder="⌕  ${placeholder}" aria-label="${placeholder}">`; }
@@ -2414,6 +2437,7 @@
 			}).join('')}</div></section>`);
 		}
 		function navigateFromAction(action, sourceEvent) {
+			if (action === 'sidebar-pin') { setSidebarPinned(!isSidebarPinned()); return; }
 			if (action === 'tutor-add-question') { document.querySelector('[data-tutor-questions]')?.insertAdjacentHTML('beforeend', tutorExamQuestion()); bindFunctionalEvents(); return; }
 			if (action === 'tutor-remove-question') { const questions = document.querySelectorAll('[data-tutor-questions] .tutor-question'); if (questions.length > 1) sourceEvent.currentTarget.closest('.tutor-question')?.remove(); return; }
 			if (action === 'tutor-new-exam') { document.querySelector('#tutor-exam-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.querySelector('[data-form="tutor-exam"] input[name="title"]')?.focus(); return; }
@@ -2562,6 +2586,7 @@
 			});
 		}
 		function bindFunctionalEvents() {
+			setupSidebarState();
 			setupLoginRoleSelection();
 			setupRoleDemoButtons();
 			if (!document.body.dataset.demoLoginBound) {
@@ -2658,7 +2683,7 @@
 			if (!document.body.dataset.globalSearchOutsideBound) {
 				document.addEventListener('click', (event) => { if (globalSearchState.open && !event.target.closest('[data-search-root]')) { closeGlobalSearch(); event.preventDefault(); event.stopPropagation(); } }, true);
 				document.addEventListener('click', (event) => { const closeTarget = event.target.closest('[data-action="close-modal"]'); if (closeTarget) closeTarget.closest('.modal-backdrop')?.remove(); }, true);
-				document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { document.querySelector('.modal-backdrop')?.remove(); return; } if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); focusGlobalSearch(); } });
+				document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { document.querySelector('.modal-backdrop')?.remove(); closeSidebar(); return; } if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); focusGlobalSearch(); } });
 				document.body.dataset.globalSearchOutsideBound = 'true';
 			}
 			document.querySelectorAll('input[name="assessment-answer"]').forEach((input) => input.addEventListener('change', () => {
@@ -2898,7 +2923,7 @@
 			return `rgb(${start.map((channel, index) => Math.round(channel + (end[index] - channel) * amount)).join(', ')})`;
 		}
 		function lightAuroraColor(progress) {
-			const palette = ['#CFFAF4', '#DCEBFF', '#EEE4FF', '#FFE3F1', '#FFE9D6', '#DDF8EA', '#E5E9FF'];
+			const palette = ['#BFF7EF', '#D5F7FF', '#DCEBFF', '#E5E8FF', '#EEE4FF', '#F2E5FF', '#FFE4F1', '#FFE8D5', '#DDF7EA', '#D5F7FF'];
 			const position = Math.min(1, Math.max(0, progress)) * (palette.length - 1);
 			const index = Math.min(palette.length - 2, Math.floor(position));
 			return mixColor(palette[index], palette[index + 1], position - index);
@@ -2906,6 +2931,12 @@
 		function lightAuroraRgba(progress, alpha) {
 			const channels = lightAuroraColor(progress).match(/\d+/g).map(Number);
 			return `rgba(${channels.join(', ')}, ${alpha})`;
+		}
+		function lightBackgroundColor(progress) {
+			const palette = ['#E7F0EF', '#E5EEF1', '#E8E9F3', '#EEE8F1', '#F3E9E9', '#F4ECE2', '#E8F1EA', '#E4EEF0'];
+			const position = Math.min(1, Math.max(0, progress)) * (palette.length - 1);
+			const index = Math.min(palette.length - 2, Math.floor(position));
+			return mixColor(palette[index], palette[index + 1], position - index);
 		}
 		function updateGlobalBackground() {
 			const background = document.getElementById('global-background');
@@ -2920,7 +2951,7 @@
 				const darkness = normalized * normalized * (3 - 2 * normalized);
 				const calculatedBackgroundColor = selectedTheme === 'dark'
 					? mixColor('#101719', '#000000', darkness)
-					: '#F7FAFA';
+					: lightBackgroundColor(progress);
 				const currentBackgroundColor = window.__skillAuraBackgroundOverride || calculatedBackgroundColor;
 				background.style.setProperty('--bg-shift-x', `${(progress * 80 - 40).toFixed(2)}px`);
 				background.style.setProperty('--bg-shift-y', `${(progress * -120).toFixed(2)}px`);
@@ -2934,11 +2965,24 @@
 					background.style.setProperty('--bg-aurora-a', 'rgba(79, 209, 197, 0.42)');
 					background.style.setProperty('--bg-aurora-b', 'rgba(21, 154, 156, 0.32)');
 					background.style.setProperty('--bg-aurora-c', 'rgba(117, 76, 255, 0.24)');
+					background.style.setProperty('--ribbon-x', `${(progress * 150 - 55).toFixed(2)}px`);
+					background.style.setProperty('--ribbon-y', `${(progress * -190 + 30).toFixed(2)}px`);
+					background.style.setProperty('--ribbon-rotate', `${(progress * 34 - 22).toFixed(2)}deg`);
+					background.style.setProperty('--ribbon-scale', `${(1.02 + progress * .1).toFixed(3)}`);
+					background.style.setProperty('--ribbon-opacity', `${(.08 + Math.sin(progress * Math.PI) * .38).toFixed(3)}`);
 				} else if (isHomePage) {
-					background.style.setProperty('--bg-glow', '0.52');
+					background.style.setProperty('--bg-glow', '0.6');
 					background.style.setProperty('--bg-aurora-a', lightAuroraRgba(progress, .34));
 					background.style.setProperty('--bg-aurora-b', lightAuroraRgba(Math.min(1, progress + .2), .24));
 					background.style.setProperty('--bg-aurora-c', lightAuroraRgba(Math.max(0, progress - .2), .2));
+					background.style.setProperty('--bg-aurora-d', lightAuroraRgba(Math.min(1, progress + .35), .2));
+					background.style.setProperty('--bg-aurora-e', lightAuroraRgba(Math.max(0, progress - .25), .16));
+					background.style.setProperty('--light-ribbon-x', `${(progress * 170 - 70).toFixed(2)}px`);
+					background.style.setProperty('--light-ribbon-y', `${(progress * -210 + 34).toFixed(2)}px`);
+					background.style.setProperty('--light-ribbon-rotate', `${(progress * 38 - 24).toFixed(2)}deg`);
+					background.style.setProperty('--light-ribbon-scale', `${(1.01 + progress * .11).toFixed(3)}`);
+					background.style.setProperty('--light-ribbon-opacity', `${(.06 + Math.sin(progress * Math.PI) * .28).toFixed(3)}`);
+					background.style.setProperty('--light-ribbon-gradient', `${(progress * 100).toFixed(2)}%`);
 				}
 				background.style.backgroundColor = currentBackgroundColor;
 			const scrollColors = selectedTheme === 'dark'
@@ -3390,11 +3434,7 @@
 			targets.forEach((element) => window.__skillAuraRevealObserver.observe(element));
 		}
 		function bindThemeToggle() {
-			const toggleHost = document.querySelector('.auth-aside, .role-top');
-			if (toggleHost && !toggleHost.querySelector('[data-theme-toggle]')) toggleHost.insertAdjacentHTML('afterbegin', themeToggleMarkup());
-			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
-				button.onclick = () => setTheme(selectedTheme === 'dark' ? 'light' : 'dark');
-			});
+			document.documentElement.dataset.theme = 'dark';
 		}
 		function renderFunctional() {
 			const path = location.hash.slice(1) || '/';
