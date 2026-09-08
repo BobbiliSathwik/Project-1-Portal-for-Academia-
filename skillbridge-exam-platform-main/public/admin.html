@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SkillBridge - Examiner Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="portal">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            SkillBridge
+        </div>
+
+        <nav>
+            <button onclick="showSection('dashboard')">
+                🏠 Dashboard
+            </button>
+
+            <button onclick="showSection('create')">
+                ➕ Create Exam
+            </button>
+
+            <button onclick="showSection('questionBanks')">
+        📚 Question Banks
+    </button>
+
+            <button onclick="showSection('exams')">
+                📋 My Exams
+            </button>
+
+            <button onclick="showSection('attempts')">
+                👨‍🎓 Student Attempts
+            </button>
+
+            <button onclick="showSection('results')">
+                📊 Results
+            </button>
+
+            <button onclick="showSection('recordings')">
+                🎥 Recordings
+            </button>
+        </nav>
+
+        <button class="logout" onclick="logout()">
+            🚪 Logout
+        </button>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header>
+            <h1>Examiner Portal</h1>
+            <p>Welcome, Examiner</p>
+        </header>
+
+
+        <!-- DASHBOARD -->
+
+        <!-- DASHBOARD -->
+
+<section id="dashboard" class="section dashboard-section">
+
+    <div class="dashboard-header">
+        <div>
+            <h2>Dashboard</h2>
+            <p>Manage your examinations and monitor student activity.</p>
+        </div>
+
+        <button class="primary-action" onclick="showSection('create')">
+            ➕ Create New Exam
+        </button>
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card purple">
+            <div class="stat-icon">📋</div>
+            <div>
+                <span>My Exams</span>
+                <h2>0</h2>
+            </div>
+        </div>
+
+        <div class="stat-card blue">
+            <div class="stat-icon">👨‍🎓</div>
+            <div>
+                <span>Student Attempts</span>
+                <h2>0</h2>
+            </div>
+        </div>
+
+        <div class="stat-card green">
+            <div class="stat-icon">📊</div>
+            <div>
+                <span>Results</span>
+                <h2>0</h2>
+            </div>
+        </div>
+
+        <div class="stat-card orange">
+            <div class="stat-icon">🎥</div>
+            <div>
+                <span>Recordings</span>
+                <h2>0</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="dashboard-panel">
+
+        <div class="panel-title">
+            <h3>Quick Actions</h3>
+        </div>
+
+        <div class="quick-actions">
+
+            <button onclick="showSection('create')">
+                ➕ Create Exam
+            </button>
+
+            <button onclick="showSection('exams')">
+                📋 View My Exams
+            </button>
+
+            <button onclick="showSection('attempts')">
+                👨‍🎓 Student Attempts
+            </button>
+
+            <button onclick="showSection('results')">
+                📊 View Results
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+        <!-- CREATE EXAM -->
+
+<section id="create" class="section" style="display:none;">
+
+    <div class="dashboard-header">
+        <div>
+            <h2>Create Examination</h2>
+            <p>Create an examination using one of your question banks.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-panel">
+
+        <h3>Exam Details</h3>
+
+        <input
+            id="title"
+            placeholder="Exam title"
+        >
+
+        <br><br>
+
+        <label>
+            Question Bank
+        </label>
+
+        <br>
+
+        <select id="questionBankSelect">
+            <option value="">
+                Loading question banks...
+            </option>
+        </select>
+
+        <br><br>
+
+        <label>
+            Number of Questions
+        </label>
+
+        <br>
+
+        <input
+            id="questionCount"
+            type="number"
+            min="1"
+            placeholder="Number of questions"
+        >
+
+        <br><br>
+
+        <label>
+            Duration
+        </label>
+
+        <br>
+
+        <input
+            id="duration"
+            type="number"
+            min="1"
+            placeholder="Duration in minutes"
+        >
+
+        <br><br>
+
+        <button onclick="createExam()">
+            ➕ Create Exam
+        </button>
+
+        <h3 id="result"></h3>
+
+    </div>
+
+</section>
+
+<!-- QUESTION BANKS -->
+
+<section id="questionBanks" class="section" style="display:none;">
+
+    <div class="dashboard-header">
+        <div>
+            <h2>Question Banks</h2>
+            <p>Upload and manage your question banks.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-panel">
+
+        <h3>Upload Question Bank</h3>
+
+        <p>
+            Upload a <strong>.txt</strong> file containing your questions.
+        </p>
+
+        <input
+            type="file"
+            id="questionBankFile"
+            accept=".txt"
+        >
+
+        <br><br>
+
+        <button onclick="uploadQuestionBank()">
+            📤 Upload Question Bank
+        </button>
+
+        <p id="questionBankMessage"></p>
+
+    </div>
+
+    <br>
+
+    <div class="dashboard-panel">
+
+        <h3>My Question Banks</h3>
+
+        <div id="questionBankList">
+            <p>Loading question banks...</p>
+        </div>
+
+    </div>
+
+</section>
+       <!-- MY EXAMS -->
+
+<section id="exams" class="section" style="display:none;">
+
+    <div class="dashboard-header">
+        <div>
+            <h2>My Exams</h2>
+            <p>View and manage the examinations you have created.</p>
+        </div>
+
+        <button class="primary-action" onclick="showSection('create')">
+            ➕ Create New Exam
+        </button>
+    </div>
+
+    <div class="dashboard-panel" style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.6rem;">🛡️</span>
+            <div>
+                <strong>Exam management</strong>
+                <p style="margin:4px 0 0;">Delete an assessment when you no longer want students or employees to see it.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="examList" class="exam-list">
+        <div class="dashboard-panel">
+            <p>Loading exams...</p>
+        </div>
+    </div>
+
+</section>
+
+
+        <!-- ATTEMPTS / RESULTS / RECORDINGS -->
+<section id="attempts" class="section" style="display:none;">
+  <div class="dashboard-header">
+    <div><h2>Student Attempts</h2><p>Every completed assessment, score and recording in one place.</p></div>
+    <button class="primary-action" onclick="loadAdminResults()">↻ Refresh</button>
+  </div>
+  <div id="attemptsList" class="attempt-table"><div class="dashboard-panel"><p>Loading attempts...</p></div></div>
+</section>
+
+<section id="results" class="section" style="display:none;">
+  <div class="dashboard-header">
+    <div><h2>Results & Performance</h2><p>Open a student to see their score history and performance graph.</p></div>
+    <button class="primary-action" onclick="loadAdminResults()">↻ Refresh Results</button>
+  </div>
+  <div class="results-summary">
+    <div class="result-box purple-box"><span>Total Results</span><strong id="adminTotalResults">0</strong></div>
+    <div class="result-box green-box"><span>Passed</span><strong id="adminPassedResults">0</strong></div>
+    <div class="result-box red-box"><span>Needs Practice</span><strong id="adminNeedsPractice">0</strong></div>
+  </div>
+  <div class="dashboard-panel result-analytics-panel">
+    <div class="panel-title"><div><h3>Student performance</h3><p id="selectedStudentLabel">Select “View” on any result.</p></div></div>
+    <div id="studentGraph" class="student-graph"><div class="graph-empty">📈 Choose a student result to see their progress.</div></div>
+  </div>
+  <div id="resultsList" class="results-table"><div class="dashboard-panel"><p>Loading results...</p></div></div>
+</section>
+
+<section id="recordings" class="section" style="display:none;">
+  <div class="dashboard-header">
+    <div><h2>Exam Recordings</h2><p>Watch the recorded session for each submitted assessment.</p></div>
+    <button class="primary-action" onclick="loadAdminResults()">↻ Refresh</button>
+  </div>
+  <div id="recordingsList" class="recording-list"><div class="dashboard-panel"><p>Loading recordings...</p></div></div>
+</section>
+
+<div id="attemptModal" class="admin-modal" style="display:none;" onclick="closeAttemptModal(event)" aria-hidden="true">
+  <div class="admin-modal-card admin-result-modal" role="dialog" aria-modal="true" aria-labelledby="modalStudentName" onclick="event.stopPropagation()">
+    <button class="modal-close" aria-label="Close result" onclick="closeAttemptModal()">×</button>
+    <div class="modal-topline"><span class="modal-kicker">ASSESSMENT RESULT</span><span id="modalStatusPill" class="modal-status-pill">Completed</span></div>
+    <div class="modal-identity">
+      <div id="modalAvatar" class="modal-avatar">S</div>
+      <div><h2 id="modalStudentName">Student</h2><p id="modalStudentCode" class="modal-muted">—</p></div>
+    </div>
+    <div class="modal-hero">
+      <div class="modal-score-ring"><span id="modalPercentage">0%</span><small>Score</small></div>
+      <div class="modal-exam-copy"><span>Assessment</span><strong id="modalExamTitle">Exam</strong><p id="modalMeta">—</p></div>
+    </div>
+    <div class="modal-stat-grid">
+      <div class="modal-stat"><span>Correct</span><strong id="modalCorrect">0</strong><small id="modalTotalLabel">of 0 questions</small></div>
+      <div class="modal-stat"><span>Performance</span><strong id="modalPerformance">—</strong><small>overall result</small></div>
+      <div class="modal-stat"><span>Submitted</span><strong id="modalSubmitted">—</strong><small>date &amp; time</small></div>
+      <div class="modal-stat"><span>Recording</span><strong id="modalRecording">Not available</strong><small>session evidence</small></div>
+    </div>
+    <div class="modal-insight"><div class="insight-icon">📈</div><div><strong>Student performance</strong><p id="modalInsightText">Performance history is available in Results.</p></div><button id="modalGraphButton" class="ghost-action" onclick="openPerformanceFromModal()">View graph</button></div>
+    <div class="modal-actions"><a id="modalVideo" class="primary-action" href="#" target="_blank" rel="noopener" style="display:none;text-decoration:none;">🎥 Watch Recording</a><button class="secondary-action modal-close-action" onclick="closeAttemptModal()">Close</button></div>
+  </div>
+</div>
+
+    </main>
+
+</div>
+
+
+<script>
+
+function showSection(section) {
+
+    closeAttemptModal();
+    document.querySelectorAll(".section").forEach(element => {
+        element.style.display = "none";
+    });
+
+    document.getElementById(section).style.display = "block";
+    if (["attempts", "results", "recordings"].includes(section)) loadAdminResults();
+}
+
+
+let questionNumber = 0;
+
+function addQuestion() {
+
+    questionNumber++;
+
+    const div = document.createElement("div");
+
+    div.className = "question";
+
+    div.innerHTML = `
+        <h3>Question ${questionNumber}</h3>
+
+        <input class="questionText"
+               placeholder="Enter question">
+
+        <input class="optionA"
+               placeholder="Option A">
+
+        <input class="optionB"
+               placeholder="Option B">
+
+        <input class="optionC"
+               placeholder="Option C">
+
+        <input class="optionD"
+               placeholder="Option D">
+
+        <select class="answer">
+            <option value="A">Correct Answer: A</option>
+            <option value="B">Correct Answer: B</option>
+            <option value="C">Correct Answer: C</option>
+            <option value="D">Correct Answer: D</option>
+        </select>
+    `;
+
+    document.getElementById("questions").appendChild(div);
+}
+
+
+async function createExam() {
+
+    const title =
+        document.getElementById("title").value.trim();
+
+    const duration =
+        Number(document.getElementById("duration").value);
+
+    const bankId =
+        document.getElementById("questionBankSelect").value;
+
+    const questionCount =
+        Number(document.getElementById("questionCount").value);
+
+    const result =
+        document.getElementById("result");
+
+
+    if (!title) {
+        alert("Enter an exam title.");
+        return;
+    }
+
+    if (!bankId) {
+        alert("Select a question bank.");
+        return;
+    }
+
+    if (!questionCount || questionCount < 1) {
+        alert("Enter the number of questions.");
+        return;
+    }
+
+    if (!duration || duration < 1) {
+        alert("Enter the exam duration.");
+        return;
+    }
+
+
+    result.textContent =
+        "Creating exam...";
+
+
+    try {
+
+        const response =
+            await fetch("/api/exams", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    title,
+                    duration,
+                    bankId,
+                    questionCount
+                })
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            result.textContent =
+                "Exam created successfully.";
+            await loadExams();
+
+        } else {
+
+            result.textContent = "";
+
+            alert(
+                data.error ||
+                "Could not create exam."
+            );
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        result.textContent = "";
+
+        alert(
+            "Could not connect to the server."
+        );
+    }
+}
+async function loadExams() {
+    const list = document.getElementById("examList");
+    if (!list) return;
+
+    try {
+        const response = await fetch("/api/exams");
+        const data = await response.json();
+
+        if (!response.ok || !Array.isArray(data)) {
+            throw new Error(data.error || "Could not load exams.");
+        }
+
+        if (data.length === 0) {
+            list.innerHTML = `
+                <div class="dashboard-panel" style="text-align:center;padding:48px;">
+                    <div style="font-size:3rem;">📝</div>
+                    <h3>No exams yet</h3>
+                    <p>Create your first assessment and it will appear here.</p>
+                    <button class="primary-action" onclick="showSection('create')">➕ Create Exam</button>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = data.map(exam => `
+            <div class="exam-card" data-exam-id="${escapeHtml(exam.id)}">
+                <div class="exam-info">
+                    <div class="exam-icon">📝</div>
+                    <div>
+                        <h3>${escapeHtml(exam.title)}</h3>
+                        <p>Assessment ID: <strong>${escapeHtml(exam.id)}</strong></p>
+                    </div>
+                </div>
+                <div class="exam-details">
+                    <div><span>Questions</span><strong>${exam.questionCount}</strong></div>
+                    <div><span>Duration</span><strong>${exam.duration} min</strong></div>
+                    <div><span>Status</span><strong class="status-active">Active</strong></div>
+                </div>
+                <div class="exam-actions">
+                    <button onclick="viewExam('${escapeJs(exam.id)}')">👁 View</button>
+                    <button class="danger-button" onclick="deleteExam('${escapeJs(exam.id)}', '${escapeJs(exam.title)}')">🗑 Delete</button>
+                </div>
+            </div>
+        `).join("");
+    } catch (error) {
+        console.error(error);
+        list.innerHTML = `<div class="dashboard-panel"><p>Could not load exams.</p></div>`;
+    }
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>'"]/g, char => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+    }[char]));
+}
+
+function escapeJs(value) {
+    return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function viewExam(id) {
+    try {
+        const response = await fetch(`/api/exams/${encodeURIComponent(id)}`);
+        const data = await response.json();
+        if (!response.ok) {
+            alert(data.error || "Could not load exam.");
+            return;
+        }
+        const bankId = data.questions && data.questions.bankId ? data.questions.bankId : "—";
+        const count = data.questions && data.questions.questionCount ? data.questions.questionCount : 0;
+        alert(`${data.title}\n\nQuestions: ${count}\nDuration: ${data.duration} minutes\nQuestion Bank: ${bankId}\nAssessment ID: ${data.id}`);
+    } catch (error) {
+        alert("Could not connect to the server.");
+    }
+}
+
+async function deleteExam(id, title) {
+    const confirmed = confirm(`Delete \"${title}\"?\n\nThis removes the exam from the platform. This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/exams/${encodeURIComponent(id)}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            alert(data.error || "Could not delete exam.");
+            return;
+        }
+        await loadExams();
+        alert("Exam deleted successfully.");
+    } catch (error) {
+        console.error(error);
+        alert("Could not connect to the server.");
+    }
+}
+
+async function loadQuestionBankOptions() {
+
+    const select =
+        document.getElementById("questionBankSelect");
+
+    try {
+
+        const response =
+            await fetch("/api/question-banks");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            select.innerHTML =
+                `<option value="">Could not load question banks</option>`;
+
+            return;
+        }
+
+        if (data.banks.length === 0) {
+
+            select.innerHTML =
+                `<option value="">No question banks available</option>`;
+
+            return;
+        }
+
+        select.innerHTML =
+            `<option value="">Select a question bank</option>`;
+
+        data.banks.forEach(bank => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = bank.id;
+
+            option.textContent =
+                `${bank.name} (${bank.questionCount} questions)`;
+
+            select.appendChild(option);
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        select.innerHTML =
+            `<option value="">Could not connect to server</option>`;
+    }
+}
+async function uploadQuestionBank() {
+
+    const fileInput =
+        document.getElementById("questionBankFile");
+
+    const message =
+        document.getElementById("questionBankMessage");
+
+    if (!fileInput.files.length) {
+        message.textContent =
+            "Please select a .txt file.";
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    if (!file.name.toLowerCase().endsWith(".txt")) {
+        message.textContent =
+            "Only .txt files are allowed.";
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+        "questionBank",
+        file
+    );
+
+    message.textContent =
+        "Uploading...";
+
+    try {
+
+        const response = await fetch(
+            "/api/question-banks/upload",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (data.success) {
+
+            message.textContent =
+                `Uploaded successfully! ${data.questionCount} questions found.`;
+
+            fileInput.value = "";
+
+            loadQuestionBanks();
+
+        } else {
+
+            message.textContent =
+                data.error || "Upload failed.";
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Could not connect to the server.";
+    }
+}
+
+
+async function loadQuestionBanks() {
+
+    const list =
+        document.getElementById("questionBankList");
+
+    try {
+
+        const response =
+            await fetch("/api/question-banks");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            list.innerHTML =
+                "<p>Could not load question banks.</p>";
+
+            return;
+        }
+
+        if (data.banks.length === 0) {
+
+            list.innerHTML =
+                "<p>No question banks uploaded yet.</p>";
+
+            return;
+        }
+
+        list.innerHTML = "";
+
+        data.banks.forEach(bank => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "exam-card";
+
+            card.innerHTML = `
+                <div class="exam-info">
+
+                    <div class="exam-icon">📚</div>
+
+                    <div>
+                        <h3>${bank.name}</h3>
+                        <p>Question Bank</p>
+                    </div>
+
+                </div>
+
+                <div class="exam-actions">
+
+                    <button onclick="viewQuestionBank(${bank.id})">
+                        👁 View
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        onclick="deleteQuestionBank(${bank.id})"
+                    >
+                        🗑 Delete
+                    </button>
+
+                </div>
+            `;
+
+            list.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        list.innerHTML =
+            "<p>Could not connect to the server.</p>";
+    }
+}
+
+
+async function viewQuestionBank(id) {
+
+    const response =
+        await fetch(`/api/question-banks/${id}`);
+
+    const data =
+        await response.json();
+
+    if (!data.success) {
+
+        alert(data.error || "Could not load question bank.");
+
+        return;
+    }
+
+    alert(
+        `${data.bank.name}\n\nQuestions: ${data.bank.questions.length}`
+    );
+}
+
+
+async function deleteQuestionBank(id) {
+
+    if (!confirm("Delete this question bank?")) {
+        return;
+    }
+
+    const response =
+        await fetch(`/api/question-banks/${id}`, {
+            method: "DELETE"
+        });
+
+    const data =
+        await response.json();
+
+    if (data.success) {
+
+        loadQuestionBanks();
+
+    } else {
+
+        alert(data.error || "Could not delete question bank.");
+    }
+}
+
+
+
+let adminResultsCache = [];
+
+async function loadAdminResults() {
+  try {
+    const response = await fetch('/api/admin/results');
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Could not load results.');
+    adminResultsCache = data.results || [];
+    renderAdminResults(adminResultsCache);
+    renderAdminAttempts(adminResultsCache);
+    renderAdminRecordings(adminResultsCache);
+    document.getElementById('adminTotalResults').textContent = adminResultsCache.length;
+    document.getElementById('adminPassedResults').textContent = adminResultsCache.filter(r => r.percentage >= 50).length;
+    document.getElementById('adminNeedsPractice').textContent = adminResultsCache.filter(r => r.percentage < 50).length;
+  } catch (error) {
+    console.error(error);
+    ['resultsList','attemptsList','recordingsList'].forEach(id => {
+      const el=document.getElementById(id); if(el) el.innerHTML=`<div class="dashboard-panel"><p>${escapeHtml(error.message)}</p></div>`;
+    });
+  }
+}
+
+function renderAdminResults(results) {
+  const list=document.getElementById('resultsList');
+  if(!results.length){ list.innerHTML='<div class="dashboard-panel empty-panel"><div class="empty-icon">📊</div><h3>No student results yet</h3><p>Results will appear automatically after a student submits an exam.</p></div>'; return; }
+  list.innerHTML=`<div class="results-header"><span>Student</span><span>Exam</span><span>Score</span><span>Status</span><span>Action</span></div>`+
+    results.map(r=>`<div class="results-row admin-result-row">
+      <span><strong>${escapeHtml(r.studentName)}</strong><small>${escapeHtml(r.studentCode)}</small></span>
+      <span>${escapeHtml(r.examTitle)}<small>${new Date(r.submittedAt).toLocaleString()}</small></span>
+      <span class="result-percent">${r.percentage}% <small>${r.score}/${r.total}</small></span>
+      <span class="${r.percentage>=50?'status-active':'status-pending'}">${r.status==='completed'?'Completed':'Terminated'}</span>
+      <span class="admin-result-actions"><button onclick="viewAdminAttempt('${escapeJs(r.id)}')">View</button>${r.videoUrl?`<a href="${escapeHtml(r.videoUrl)}" target="_blank">🎥</a>`:''}<button onclick="viewStudentPerformance(${Number(r.studentId)})">📈</button></span>
+    </div>`).join('');
+}
+
+function renderAdminAttempts(results) {
+  const list=document.getElementById('attemptsList');
+  if(!results.length){ list.innerHTML='<div class="dashboard-panel empty-panel"><div class="empty-icon">👨‍🎓</div><h3>No attempts yet</h3></div>'; return; }
+  list.innerHTML=`<div class="attempt-header"><span>Student</span><span>Exam</span><span>Submitted</span><span>Status</span><span>Action</span></div>`+
+    results.map(r=>`<div class="attempt-row admin-attempt-row"><span><strong>${escapeHtml(r.studentName)}</strong><small>${escapeHtml(r.studentCode)}</small></span><span>${escapeHtml(r.examTitle)}</span><span>${new Date(r.submittedAt).toLocaleString()}</span><span class="${r.status==='completed'?'status-active':'status-pending'}">${escapeHtml(r.status)}</span><span><button onclick="viewAdminAttempt('${escapeJs(r.id)}')">View</button></span></div>`).join('');
+}
+
+function renderAdminRecordings(results) {
+  const list=document.getElementById('recordingsList');
+  const recordings=results.filter(r=>r.videoUrl);
+  if(!recordings.length){ list.innerHTML='<div class="dashboard-panel empty-panel"><div class="empty-icon">🎥</div><h3>No recordings yet</h3><p>Completed exam recordings will appear here automatically.</p></div>'; return; }
+  list.innerHTML=recordings.map(r=>`<div class="recording-card admin-recording-card"><div class="recording-icon">🎥</div><div class="recording-info"><h3>${escapeHtml(r.studentName)} — ${escapeHtml(r.examTitle)}</h3><p>${new Date(r.submittedAt).toLocaleString()} · ${r.percentage}% (${r.score}/${r.total})</p></div><div class="recording-status">Saved</div><a class="primary-action" href="${escapeHtml(r.videoUrl)}" target="_blank" style="text-decoration:none;">Watch</a></div>`).join('');
+}
+
+let activeModalStudentId = null;
+
+async function viewAdminAttempt(id) {
+  try {
+    const response=await fetch(`/api/admin/attempts/${encodeURIComponent(id)}`);
+    const data=await response.json();
+    if(!response.ok||!data.success) throw new Error(data.error||'Could not load result.');
+    const r=data.result;
+    activeModalStudentId = Number(r.studentId);
+    document.getElementById('modalStudentName').textContent=r.studentName;
+    document.getElementById('modalStudentCode').textContent=r.studentCode;
+    document.getElementById('modalAvatar').textContent=(r.studentName||'S').trim().charAt(0).toUpperCase();
+    document.getElementById('modalPercentage').textContent=`${r.percentage}%`;
+    document.getElementById('modalExamTitle').textContent=r.examTitle;
+    document.getElementById('modalMeta').textContent=`${r.score} correct out of ${r.total} questions`;
+    document.getElementById('modalCorrect').textContent=r.score;
+    document.getElementById('modalTotalLabel').textContent=`of ${r.total} questions`;
+    document.getElementById('modalPerformance').textContent=r.percentage>=80?'Excellent':r.percentage>=60?'Strong':r.percentage>=50?'Developing':'Needs Practice';
+    const submitted = r.submittedAt ? new Date(r.submittedAt) : null;
+    document.getElementById('modalSubmitted').textContent=submitted ? submitted.toLocaleDateString([], {day:'2-digit',month:'short',year:'numeric'}) : '—';
+    document.getElementById('modalRecording').textContent=r.videoUrl?'Available':'Not available';
+    document.getElementById('modalStatusPill').textContent=r.status==='completed'?'Completed':'Terminated';
+    document.getElementById('modalInsightText').textContent = r.videoUrl ? 'A recording is attached to this assessment. You can review the student session before evaluating the result.' : 'Open the performance graph to compare this assessment with the student’s other results.';
+    const video=document.getElementById('modalVideo');
+    video.style.display=r.videoUrl?'inline-flex':'none';
+    if(r.videoUrl) video.href=r.videoUrl;
+    document.getElementById('attemptModal').style.display='flex';
+    document.getElementById('attemptModal').setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+  } catch(e){ alert(e.message); }
+}
+
+function closeAttemptModal(event){
+  const modal=document.getElementById('attemptModal');
+  if(event && event.target!==modal) return;
+  modal.style.display='none';
+  modal.setAttribute('aria-hidden','true');
+  document.body.classList.remove('modal-open');
+}
+
+function openPerformanceFromModal(){
+  if(!activeModalStudentId) return;
+  closeAttemptModal();
+  showSection('results');
+  viewStudentPerformance(activeModalStudentId);
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeAttemptModal(); });
+
+async function viewStudentPerformance(studentId) {
+  try {
+    const response=await fetch(`/api/admin/students/${encodeURIComponent(studentId)}/performance`);
+    const data=await response.json();
+    if(!response.ok||!data.success) throw new Error(data.error||'Could not load performance.');
+    document.getElementById('selectedStudentLabel').textContent=`${data.student.name} · ${data.student.code}`;
+    drawStudentGraph(data.performance, data.student.name);
+  } catch(e){ console.error(e); alert(e.message); }
+}
+
+function drawStudentGraph(points, name) {
+  const box=document.getElementById('studentGraph');
+  if(!points.length){box.innerHTML='<div class="graph-empty">No performance data available.</div>';return;}
+  const width=900,height=300,pad={l:55,r:25,t:28,b:65};
+  const max=100,min=0,innerW=width-pad.l-pad.r,innerH=height-pad.t-pad.b;
+  const x=i=>pad.l+(points.length===1?innerW/2:(i/(points.length-1))*innerW);
+  const y=v=>pad.t+((max-v)/(max-min))*innerH;
+  const poly=points.map((p,i)=>`${x(i)},${y(p.percentage)}`).join(' ');
+  const circles=points.map((p,i)=>`<g><circle cx="${x(i)}" cy="${y(p.percentage)}" r="12" class="graph-point-halo"/><circle cx="${x(i)}" cy="${y(p.percentage)}" r="6" fill="#8b5cf6" stroke="#fff" stroke-width="3"><title>${escapeHtml(p.examTitle)}: ${p.percentage}%</title></circle><text x="${x(i)}" y="${y(p.percentage)-15}" text-anchor="middle" class="graph-value">${p.percentage}%</text></g>`).join('');
+  const labels=points.map((p,i)=>`<text x="${x(i)}" y="${height-25}" text-anchor="middle" class="graph-label">${escapeHtml(p.examTitle.length>16?p.examTitle.slice(0,15)+'…':p.examTitle)}</text>`).join('');
+  const grids=[0,25,50,75,100].map(v=>`<g><line x1="${pad.l}" x2="${width-pad.r}" y1="${y(v)}" y2="${y(v)}" class="graph-grid"/><text x="${pad.l-12}" y="${y(v)+4}" text-anchor="end" class="graph-y">${v}%</text></g>`).join('');
+  box.innerHTML=`<div class="graph-title"><strong>${escapeHtml(name)}'s progress</strong><span>${points.length} assessment${points.length===1?'':'s'}</span></div><div class="graph-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(name)} performance graph">${grids}<polyline points="${poly}" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>${circles}${labels}</svg></div>`;
+}
+
+async function logout() {
+
+    await fetch("/api/admin/logout", {
+        method: "POST"
+    });
+
+    window.location.href =
+        "/admin-login.html";
+}
+loadQuestionBankOptions();
+loadQuestionBanks();
+loadExams();
+</script>
+
+</body>
+</html>

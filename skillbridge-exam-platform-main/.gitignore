@@ -1,0 +1,6 @@
+credentials.json
+.env
+uploads/
+node_modules/
+exam-platform.db
+.DS_Store

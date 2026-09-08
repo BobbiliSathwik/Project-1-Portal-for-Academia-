@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillBridge - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="portal demo-portal">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-symbol">S</span> SkillBridge</div>
+        <div class="student-mini">
+            <div class="avatar" id="sidebarAvatar">SB</div>
+            <div><strong id="sidebarName">Student</strong><span id="sidebarStudentId">—</span></div>
+        </div>
+        <nav>
+            <button onclick="showSection('dashboard')">🏠 Dashboard</button>
+            <button onclick="showSection('available')">📝 Available Exams</button>
+            <button onclick="showSection('upcoming')">📅 Upcoming Exams</button>
+            <button onclick="showSection('results')">📊 Results</button>
+            <button onclick="showSection('profile')">👤 Profile</button>
+        </nav>
+        <button class="logout" onclick="logout()">🚪 Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <header class="portal-topbar">
+            <div><div class="eyebrow">STUDENT WORKSPACE</div><h1>Student Portal</h1><p>Welcome back, <span id="welcomeName">Student</span>. Here's your examination overview.</p></div>
+            <div class="top-student"><div class="avatar" id="topAvatar">SB</div><div><strong id="topName">Student</strong><span>Student</span></div></div>
+        </header>
+
+        <section id="dashboard" class="dashboard-section">
+            <div class="dashboard-header"><div><h2>Your performance at a glance</h2><p>Everything you need for your next examination.</p></div><button class="primary-action" onclick="showSection('available')">📝 View Exams</button></div>
+            <div class="stats-grid">
+                <div class="stat-card purple"><div class="stat-icon">📝</div><div><span>Available Exams</span><h2 id="availableCount">0</h2></div></div>
+                <div class="stat-card blue"><div class="stat-icon">📅</div><div><span>Upcoming Exams</span><h2 id="upcomingCount">0</h2></div></div>
+                <div class="stat-card green"><div class="stat-icon">🏆</div><div><span>Completed Exams</span><h2 id="completedCount">0</h2></div></div>
+                <div class="stat-card orange"><div class="stat-icon">📈</div><div><span>Average Score</span><h2 id="averageScore">0%</h2></div></div>
+            </div>
+            <div class="student-grid">
+                <div class="dashboard-panel performance-panel">
+                    <div class="panel-title"><div><h3>Performance trend</h3><p>Your recent exam scores</p></div><span class="score-badge" id="bestScore">Best 0%</span></div>
+                    <canvas id="performanceChart" height="230"></canvas>
+                </div>
+                <div class="dashboard-panel highlight-panel">
+                    <div class="highlight-glow"></div><span class="eyebrow">PROFILE SNAPSHOT</span><h3 id="snapshotName">Student</h3><p id="snapshotClass">Student</p>
+                    <div class="profile-row"><span>Student ID</span><strong>SB2026-1042</strong></div>
+                    <div class="profile-row"><span>Accuracy</span><strong id="accuracyScore">0%</strong></div>
+                    <div class="profile-row"><span>Questions attempted</span><strong id="totalQuestions">0</strong></div>
+                    <button onclick="showSection('profile')" class="secondary-action">View full profile →</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="available" class="section" style="display:none;"><div class="dashboard-header"><div><h2>Available Exams</h2><p>Examinations currently available for you.</p></div></div><div id="availableExams" class="exam-list">Loading exams...</div></section>
+
+        <section id="upcoming" class="section" style="display:none;"><div class="dashboard-header"><div><h2>Upcoming Exams</h2><p>Your scheduled examinations.</p></div></div><div class="dashboard-panel empty-panel"><div class="empty-icon">📅</div><h3>No upcoming exams</h3><p>New scheduled examinations will appear here.</p></div></section>
+
+        <section id="results" class="section" style="display:none;">
+            <div class="dashboard-header"><div><h2>My Results</h2><p>Review your completed examination history.</p></div></div>
+            <div class="results-summary"><div><span>Average</span><strong id="resultsAverage">0%</strong></div><div><span>Best</span><strong id="resultsBest">0%</strong></div><div><span>Accuracy</span><strong id="resultsAccuracy">0%</strong></div></div>
+            <div class="dashboard-panel"><div class="panel-title"><div><h3>Exam history</h3><p>Your previous SkillBridge attempts</p></div></div><div id="resultsTable" class="results-table">Loading results...</div></div>
+        </section>
+
+        <section id="profile" class="section" style="display:none;">
+            <div class="dashboard-header"><div><h2>My Profile</h2><p>Your registered SkillBridge information.</p></div></div>
+            <div class="profile-layout">
+                <div class="dashboard-panel profile-card-main"><div class="profile-avatar">AS</div><h3 id="profileName">Aarav Sharma</h3><p id="profileClass">B.Tech CSE</p><span class="profile-status">● Active student</span></div>
+                <div class="dashboard-panel profile-details"><h3>Student information</h3><div class="detail-grid"><div><span>Student ID</span><strong id="profileStudentId">—</strong></div><div><span>Email</span><strong id="profileEmail">—</strong></div><div><span>Phone</span><strong id="profilePhone">—</strong></div><div><span>Institution</span><strong id="profileInstitution">—</strong></div><div><span>Department</span><strong id="profileDepartment">—</strong></div><div><span>Joined</span><strong id="profileJoined">—</strong></div></div></div>
+            </div>
+            <div class="dashboard-panel"><h3>About</h3><p id="profileBio">Loading...</p></div>
+        </section>
+    </main>
+</div>
+<script>
+let resultData = [];
+function showSection(section) { document.querySelectorAll('.section,.dashboard-section').forEach(e=>e.style.display='none'); document.getElementById(section).style.display='block'; if(section==='results') renderResults(); }
+async function loadExams(){ try{const r=await fetch('/api/exams');const exams=await r.json();document.getElementById('availableCount').textContent=Array.isArray(exams)?exams.length:0;const c=document.getElementById('availableExams');if(!Array.isArray(exams)||!exams.length){c.innerHTML='<div class="dashboard-panel empty-panel"><div class="empty-icon">📝</div><h3>No exams are currently available</h3><p>Check back when an examiner publishes a new exam.</p></div>';return;}c.innerHTML=exams.map(e=>`<div class="exam-card"><div class="exam-info"><div class="exam-icon">📝</div><div><h3>${e.title}</h3><p>${e.questionCount} Questions • ${e.duration} Minutes</p></div></div><div class="exam-details"><div><span>Duration</span><strong>${e.duration} min</strong></div><div><span>Status</span><strong class="status-active">Available</strong></div></div><div class="exam-actions">${e.canAttempt ? `<button onclick="startExam('${e.id}')">Start Exam</button>` : `<button disabled title="Available again next month">Available after 30 days</button><small class="monthly-lock">You can take this exam again 30 days after your last attempt.</small>`}</div></div>`).join('');}catch(e){document.getElementById('availableExams').innerHTML='<p>Could not load exams.</p>';}}
+function startExam(id){window.location.href='/student.html?exam='+id;}
+async function loadResults(){const r=await fetch('/api/student/results');const d=await r.json();if(!d.success)return;resultData=d.results;document.getElementById('completedCount').textContent=d.stats.completed;document.getElementById('averageScore').textContent=d.stats.average+'%';document.getElementById('bestScore').textContent='Best '+d.stats.best+'%';document.getElementById('accuracyScore').textContent=d.stats.accuracy+'%';document.getElementById('totalQuestions').textContent=d.stats.totalQuestions;document.getElementById('resultsAverage').textContent=d.stats.average+'%';document.getElementById('resultsBest').textContent=d.stats.best+'%';document.getElementById('resultsAccuracy').textContent=d.stats.accuracy+'%';drawChart(d.results);}
+async function loadProfile(){const r=await fetch('/api/student/profile');const d=await r.json().catch(()=>({}));if(!d.success){if(r.status===401||r.status===403){window.location.href='/admin-login.html';}return;}const p=d.profile;const name=p.full_name||'Student';const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'SB';document.getElementById('profileName').textContent=name;document.getElementById('profileClass').textContent=p.class_name||'Student';document.getElementById('profileStudentId').textContent=p.student_id||'—';document.getElementById('profileEmail').textContent=p.email||'—';document.getElementById('profilePhone').textContent=p.phone||'—';document.getElementById('profileInstitution').textContent=p.institution||'—';document.getElementById('profileDepartment').textContent=p.department||'—';document.getElementById('profileJoined').textContent=p.joined_date||'—';document.getElementById('profileBio').textContent=p.bio||'Profile information is managed by your main SkillBridge account.';document.getElementById('sidebarName').textContent=name;document.getElementById('sidebarStudentId').textContent=p.student_id||'—';document.getElementById('topName').textContent=name;document.getElementById('welcomeName').textContent=name.split(' ')[0];document.getElementById('snapshotName').textContent=name;document.getElementById('snapshotClass').textContent=p.class_name||'Student';document.getElementById('sidebarAvatar').textContent=initials;document.getElementById('topAvatar').textContent=initials;}
+function renderResults(){const c=document.getElementById('resultsTable');c.innerHTML=resultData.map(r=>{const pct=Math.round(r.score/r.total*100);return `<div class="result-row"><div><strong>${r.exam_name}</strong><span>${new Date(r.exam_date+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span></div><strong>${r.score}/${r.total}</strong><span class="result-percent">${pct}%</span><span class="result-status">${r.status}</span></div>`}).join('');}
+function drawChart(results){const canvas=document.getElementById('performanceChart');const ctx=canvas.getContext('2d');const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth;const h=230;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);if(!results.length)return;const pad={l:34,r:18,t:20,b:38};const iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;for(let i=0;i<=4;i++){const y=pad.t+ih-i*ih/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillStyle='#777f99';ctx.font='11px Inter, sans-serif';ctx.fillText((i*25)+'%',3,y+4);}const pts=results.map((r,i)=>({x:pad.l+(results.length===1?iw/2:i*iw/(results.length-1)),y:pad.t+ih-(r.score/r.total)*ih,p:Math.round(r.score/r.total*100)}));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle='#8b6cff';ctx.lineWidth=3;ctx.stroke();pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle='#a78bfa';ctx.fill();ctx.strokeStyle='#0e1222';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#aeb6ce';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.fillText(results[i].exam_name.length>11?results[i].exam_name.slice(0,10)+'…':results[i].exam_name,p.x,h-12);});}
+async function logout(){await fetch('/api/admin/logout',{method:'POST'});window.location.href='/admin-login.html';}
+loadExams();loadResults();loadProfile();
+</script>
+</body>
+</html>

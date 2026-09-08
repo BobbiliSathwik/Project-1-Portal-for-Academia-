@@ -126,6 +126,8 @@
 			memory: {}
 		};
 		let globalSearchState = { query: '', results: [], activeIndex: -1, open: false };
+		let serverAuthReady = false;
+		let serverAuthSession = null;
 
 		function brand() {
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillAura</a>`;
@@ -142,6 +144,7 @@
 		}
 
 		function currentAuthSession() {
+			if (serverAuthReady) return serverAuthSession;
 			try {
 				const session = readStoredSession();
 				if (!session || typeof session !== 'object') return null;
@@ -2588,7 +2591,7 @@
 			if (action === 'tutor-edit-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); const form = document.querySelector('[data-form="tutor-course"]'); if (!course || !form) return; Object.entries(course).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ''; }); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); form.elements.title?.focus(); return; }
 			if (action === 'tutor-publish-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (course) { course.status = 'Published'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course published.'); renderFunctional(); } return; }
 			if (action === 'tutor-delete-course') { const account = currentTutorAccount(); if (!account || !confirm('Delete this course?')) return; account.courses = (account.courses || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course deleted.'); renderFunctional(); return; }
-			if (action === 'logout') { clearStudentSession(); state.activeRole = null; saveState(); go('/login'); return; }
+			if (action === 'logout') { fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => { serverAuthSession = null; serverAuthReady = true; clearStudentSession(); state.activeRole = null; saveState(); go('/login'); }); return; }
 			if (action === 'start-assignment') { openExamPortal(); return; }
 			if (action === 'view-skill') {
 				const skillName = sourceEvent.currentTarget.dataset.skill;
@@ -2728,14 +2731,17 @@
 			setupLoginRoleSelection();
 			setupRoleDemoButtons();
 			if (!document.body.dataset.demoLoginBound) {
-				document.body.addEventListener('click', (event) => {
+				document.body.addEventListener('click', async (event) => {
 					const button = event.target.closest('[data-demo]');
 					if (!button || !['company', 'institution'].includes(button.dataset.demo)) return;
 					const role = button.dataset.demo;
 					const accounts = role === 'company' ? loadCompanyAccounts() : loadInstitutionAccounts();
 					const account = accounts.find((item) => item.demoAccount);
-					if (role === 'company') startCompanySession(account);
-					else startInstitutionSession(account);
+					const user = await serverAuthRequest('/api/auth/demo', { role });
+					if (!user) return;
+					const serverAccount = localAccountFromServer(user);
+					if (role === 'company') startCompanySession(serverAccount);
+					else startInstitutionSession(serverAccount);
 					go(role === 'company' ? '/company/dashboard' : '/institution/dashboard');
 				}, true);
 				document.body.dataset.demoLoginBound = 'true';
@@ -2841,23 +2847,44 @@
 					if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
 				});
 			});
-			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => {
+			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', async () => {
 				const demoRole = button.dataset.demo;
 					if (!['student', 'tutor'].includes(demoRole)) return;
+					const user = await serverAuthRequest('/api/auth/demo', { role: demoRole });
+					if (!user) return;
 				if (demoRole === 'tutor') {
 					let account = loadTutorAccounts().find((item) => item.email === 'demo@tutor.skillaura');
 					if (!account) {
 						account = { id: 'tutor-demo', email: 'demo@tutor.skillaura', passwordHash: prototypeHash('demo-access'), role: 'tutor', demoAccount: true, profile: { name: 'Demo Tutor', email: 'demo@tutor.skillaura', initials: 'DT', expertise: 'JavaScript, Web Development', bio: 'I help learners build practical skills for modern digital careers.' }, courses: [{ id: 'course-demo-js', title: 'Modern JavaScript Foundations', description: 'Build a strong foundation in JavaScript and browser development.', category: 'Web Development', difficulty: 'Beginner', skills: 'JavaScript, DOM, Accessibility', modules: 'Module 1: Language foundations\nModule 2: Browser projects', duration: '6 weeks', price: 'Free', status: 'Published', learners: 24, completion: 68 }] };
 						saveTutorAccounts([...(loadTutorAccounts()), account]);
 					}
-					startTutorSession(account); go('/tutor/dashboard'); return;
+					account.id = user.id; account.email = user.email; startTutorSession(account); go('/tutor/dashboard'); return;
 				}
 				let account = loadStudentAccounts().find((item) => item.email === 'demo@student.skillaura');
 				if (!account) { const profile = { ...clone(defaultState.student), name: 'Demo Student/Employee', email: 'demo@student.skillaura', initials: 'DS', title: 'Welcome, Demo', subtitle: 'Here is your career readiness overview.' }; account = { id: 'student-demo', email: profile.email, passwordHash: prototypeHash('demo-access'), profile, workspace: studentWorkspace(), createdAt: new Date().toISOString() }; saveStudentAccounts([...loadStudentAccounts(), account]); }
-				startStudentSession(account, 'student'); go('/student/dashboard');
+				account.id = user.id; account.email = user.email; startStudentSession(account, 'student'); go('/student/dashboard');
 			}));
 		}
-		function handleForm(form, submitEvent) {
+		async function serverAuthRequest(path, body) {
+			try {
+				const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+				const payload = await response.json().catch(() => ({}));
+				if (!response.ok || !payload.success) { showFormError(document.querySelector('form[data-form]'), payload.error || 'Authentication failed.'); return null; }
+				serverAuthSession = { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true };
+				serverAuthReady = true;
+				persistAuthSession(serverAuthSession);
+				return payload.user;
+			} catch (error) { showToast('Authentication service is unavailable.'); return null; }
+		}
+		function localAccountFromServer(user, values = {}) {
+			const role = normalizeRole(user.role);
+			const profile = { name: user.name, email: user.email, initials: user.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), college: values.college || '', course: values.course || '', year: values.year || '', expertise: values.expertise || '', bio: values.bio || '', industryType: values.industryType || '', institutionType: values.institutionType || '' };
+			if (role === 'student') { const accounts = loadStudentAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, workspace: newStudentWorkspace() }; account.id = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; account.workspace ||= newStudentWorkspace(); saveStudentAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			if (role === 'tutor') { const accounts = loadTutorAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, courses: [], exams: [] }; account.id = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveTutorAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			if (role === 'company') { const accounts = loadCompanyAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, companyId: user.id, email: user.email, profile }; account.id = user.id; account.companyId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveCompanyAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			const accounts = loadInstitutionAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, institutionId: user.id, email: user.email, profile }; account.id = user.id; account.institutionId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveInstitutionAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account;
+		}
+		async function handleForm(form, submitEvent) {
 			const values = Object.fromEntries(new FormData(form).entries());
 			if (submitEvent?.submitter?.name) values[submitEvent.submitter.name] = submitEvent.submitter.value;
 			clearFormErrors(form);
@@ -2884,9 +2911,9 @@
 				if (!/^[+()\d\s-]{7,20}$/.test(values.phone || '')) return showFieldError(form, 'phone', 'Enter a valid phone number.');
 				if (values.website && !/^https?:\/\/\S+$/i.test(values.website)) return showFieldError(form, 'website', 'Use a valid website URL.');
 				if (loadInstitutionAccounts().some((account) => account.email === email)) return showFieldError(form, 'email', 'This institution email is already registered.');
-				const profile = { name: values.name.trim(), email, institutionType: values.institutionType.trim(), affiliation: values.affiliation.trim(), accreditation: values.accreditation || '', website: values.website || '', location: values.location.trim(), contactPerson: values.contactPerson.trim(), designation: values.designation.trim(), phone: values.phone.trim(), initials: values.name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), title: `Welcome, ${values.name.trim()}`, subtitle: 'Monitor readiness, skills, internships, and outcomes.' };
-				const institutionId = `institution-${Date.now()}`; const account = { id: institutionId, institutionId, role: 'institution', email, passwordHash: prototypeHash(values.password), profile, createdAt: new Date().toISOString() };
-				const accounts = loadInstitutionAccounts(); accounts.push(account); saveInstitutionAccounts(accounts); saveInstitutionWorkspace(blankInstitutionWorkspace(account));
+				const user = await serverAuthRequest('/api/auth/register', { name: values.name.trim(), email, password: values.password, role: 'institution', profile: { institutionType: values.institutionType.trim(), affiliation: values.affiliation.trim(), accreditation: values.accreditation || '', website: values.website || '', location: values.location.trim(), contactPerson: values.contactPerson.trim(), designation: values.designation.trim(), phone: values.phone.trim() } });
+				if (!user) return;
+				const account = localAccountFromServer(user, values); saveInstitutionWorkspace(blankInstitutionWorkspace(account));
 				const institutionName = profile.name.trim().toLowerCase();
 				const students = loadStudentAccounts().map((student) => {
 					const college = String(student.profile?.college || student.college || '').trim().toLowerCase();
@@ -2900,8 +2927,10 @@
 				saveState(); startInstitutionSession(account); go('/institution/onboarding'); return;
 			}
 			if (form.dataset.form === 'institution-login') {
-				const email = (values.email || '').trim().toLowerCase(); const account = loadInstitutionAccounts().find((item) => item.email === email);
-				if (!account || account.passwordHash !== prototypeHash(values.password)) return showFormError(form, 'That institution email or password is not correct.');
+				const email = (values.email || '').trim().toLowerCase();
+				const user = await serverAuthRequest('/api/auth/login', { email, password: values.password, role: 'institution' });
+				if (!user) return;
+				const account = localAccountFromServer(user, values);
 				startInstitutionSession(account); go('/institution/dashboard'); return;
 			}
 			if (form.dataset.form === 'institution-onboarding') {
@@ -2926,14 +2955,15 @@
 				if (!/^[+()\d\s-]{7,20}$/.test(values.phone || '')) return showFieldError(form, 'phone', 'Enter a valid phone number.');
 				if (values.website && !/^https?:\/\/\S+$/i.test(values.website)) return showFieldError(form, 'website', 'Use a valid website URL.');
 				if (loadCompanyAccounts().some((account) => account.email === email)) return showFieldError(form, 'email', 'This company email is already registered.');
-				const profile = { name: values.name.trim(), email, industryType: values.industryType.trim(), website: values.website.trim(), size: values.size.trim(), location: values.location.trim(), contactPerson: values.contactPerson.trim(), designation: values.designation.trim(), phone: values.phone.trim(), initials: values.name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), title: `Welcome, ${values.name.trim()}`, subtitle: 'Build your team with verified skill signals.' };
-				const companyId = `company-${Date.now()}`; const account = { id: companyId, companyId, role: 'company', email, passwordHash: prototypeHash(values.password), profile, createdAt: new Date().toISOString() };
-				const accounts = loadCompanyAccounts(); accounts.push(account); saveCompanyAccounts(accounts); saveCompanyWorkspace(blankCompanyWorkspace(account)); startCompanySession(account); go('/company/onboarding'); return;
+				const user = await serverAuthRequest('/api/auth/register', { name: values.name.trim(), email, password: values.password, role: 'company', profile: { industryType: values.industryType.trim(), website: values.website.trim(), size: values.size.trim(), location: values.location.trim(), contactPerson: values.contactPerson.trim(), designation: values.designation.trim(), phone: values.phone.trim() } });
+				if (!user) return;
+				const account = localAccountFromServer(user, values); saveCompanyWorkspace(blankCompanyWorkspace(account)); startCompanySession(account); go('/company/onboarding'); return;
 			}
 			if (form.dataset.form === 'company-login') {
 				const email = (values.email || '').trim().toLowerCase();
-				const account = loadCompanyAccounts().find((item) => item.email === email);
-				if (!account || account.passwordHash !== prototypeHash(values.password)) return showFormError(form, 'That company email or password is not correct.');
+				const user = await serverAuthRequest('/api/auth/login', { email, password: values.password, role: 'company' });
+				if (!user) return;
+				const account = localAccountFromServer(user, values);
 				startCompanySession(account); go('/company/dashboard'); return;
 			}
 			if (form.dataset.form === 'company-onboarding') {
@@ -3000,9 +3030,9 @@
 				if (invalid) return;
 				const role = values.loginRole || 'student';
 				if (!isLearnerRole(role)) return showFormError(form, 'Choose Student/Employee or Tutor.');
-				const accounts = role === 'tutor' ? loadTutorAccounts() : loadStudentAccounts();
-				const account = accounts.find((item) => item.email === values.email.trim().toLowerCase());
-				if (!account || account.passwordHash !== prototypeHash(values.password)) return showFormError(form, 'That email or password is not correct.');
+				const user = await serverAuthRequest('/api/auth/login', { email: values.email, password: values.password, role });
+				if (!user) return;
+				const account = localAccountFromServer(user, values);
 				if (role === 'tutor') { startTutorSession(account); go('/tutor/dashboard'); return; }
 				startStudentSession(account, role);
 				go('/student/dashboard'); return;
@@ -3020,10 +3050,9 @@
 				if (values.phone && !/^[+()\d\s-]{7,20}$/.test(values.phone)) { showFieldError(form, 'phone', 'Enter a valid phone number or leave this blank.'); invalid = true; }
 				if (loadStudentAccounts().some((account) => account.email === email)) { showFieldError(form, 'email', 'This email is already registered. Please log in.'); invalid = true; }
 				if (invalid) return;
-				const profile = { name, email, college: values.college.trim(), course: values.course.trim(), year: values.year, phone: (values.phone || '').trim(), initials: name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), title: `Welcome, ${name.split(/\s+/)[0]}`, subtitle: "Let's turn your skills into your next opportunity." };
-				const registeredAt = new Date().toISOString();
-				const studentId = `student-${Date.now()}`; const account = { id: studentId, studentId, fullName: name, email, college: profile.college, course: profile.course, year: profile.year, phone: profile.phone, institutionId: null, role: 'student', registeredAt, onboardingCompleted: false, onboarding: {}, passwordHash: prototypeHash(values.password), profile, workspace: newStudentWorkspace() };
-				const accounts = loadStudentAccounts(); accounts.push(account); saveStudentAccounts(accounts);
+				const user = await serverAuthRequest('/api/auth/register', { name, email, password: values.password, role: 'student', originalRole: 'student', profile: { college: values.college.trim(), course: values.course.trim(), year: values.year, phone: (values.phone || '').trim() } });
+				if (!user) return;
+				const account = localAccountFromServer(user, values);
 				startStudentSession(account, 'student');
 				notify('Your student account was created.');
 				go('/student/onboarding');
@@ -3796,4 +3825,14 @@
 		window.removeEventListener('hashchange', render);
 		window.addEventListener('hashchange', renderFunctional);
 		initializeDemoAccounts();
-		renderFunctional();
+		async function bootstrapServerAuth() {
+			try {
+				const response = await fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' });
+				const payload = await response.json().catch(() => ({}));
+				serverAuthSession = payload.authenticated && payload.user ? { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true } : null;
+				if (serverAuthSession) persistAuthSession(serverAuthSession);
+			} catch (error) { serverAuthSession = null; }
+			serverAuthReady = true;
+			renderFunctional();
+		}
+		bootstrapServerAuth();

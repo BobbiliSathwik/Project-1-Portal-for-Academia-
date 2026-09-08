@@ -1,0 +1,25 @@
+{
+  "name": "exam-platform",
+  "version": "1.0.0",
+  "description": "Online examination platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "reset-exams": "node reset-exams.js"
+  },
+  "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
+    "@google-cloud/storage": "^7.16.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-session": "^1.19.0",
+    "google-auth-library": "^11.0.2",
+    "googleapis": "^178.0.0",
+    "multer": "^2.3.0",
+    "svg-captcha": "^1.4.0"
+  }
+}

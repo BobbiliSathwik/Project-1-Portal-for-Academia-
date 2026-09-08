@@ -1,13 +1,18 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const port = Number(process.env.PORT || 4173);
 const providerUrl = process.env.AI_BASE_URL || 'https://api.openai.com/v1/chat/completions';
 const providerModel = process.env.AI_MODEL || 'gpt-4o-mini';
+const authStorePath = join(root, 'data', 'skillaura-auth-users.json');
+const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+const sessionTtlMs = 8 * 60 * 60 * 1000;
+const authSessions = new Map();
 const contentTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.ico': 'image/x-icon' };
 
 const sendJson = (response, status, payload) => {
@@ -23,6 +28,62 @@ const readBody = async (request) => {
   }
   return JSON.parse(body || '{}');
 };
+
+const normalizeAuthRole = (role) => role === 'employee' ? 'student' : role;
+const publicAuthUser = (user) => ({ id: user.id, role: user.role, originalRole: user.originalRole || user.role, email: user.email, name: user.name });
+const passwordHash = (password, salt = randomBytes(16).toString('hex')) => ({ salt, hash: scryptSync(password, salt, 32).toString('hex') });
+const passwordMatches = (password, stored) => {
+  if (!stored?.salt || !stored?.hash) return false;
+  const actual = scryptSync(password, stored.salt, 32);
+  const expected = Buffer.from(stored.hash, 'hex');
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+};
+const signSessionId = (id) => createHmac('sha256', sessionSecret).update(id).digest('base64url');
+const parseCookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map((part) => part.trim()).filter(Boolean).map((part) => { const index = part.indexOf('='); return [index < 0 ? part : part.slice(0, index), index < 0 ? '' : decodeURIComponent(part.slice(index + 1))]; }));
+const sessionCookie = (id, maxAge = sessionTtlMs / 1000) => `skillaura_session=${encodeURIComponent(`${id}.${signSessionId(id)}`)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+const validSession = (request) => {
+  const value = parseCookies(request).skillaura_session || '';
+  const [id, signature] = value.split('.');
+  if (!id || !signature || signature !== signSessionId(id)) return null;
+  const session = authSessions.get(id);
+  if (!session || session.expiresAt <= Date.now()) { authSessions.delete(id); return null; }
+  session.expiresAt = Date.now() + sessionTtlMs;
+  return session;
+};
+const sendAuthJson = (response, status, payload, cookie = '') => {
+  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...(cookie ? { 'Set-Cookie': cookie } : {}) });
+  response.end(JSON.stringify(payload));
+};
+async function readAuthStore() {
+  try { return JSON.parse(await readFile(authStorePath, 'utf8')); } catch (error) { return { users: [] }; }
+}
+async function writeAuthStore(store) {
+  await mkdir(join(root, 'data'), { recursive: true });
+  await writeFile(authStorePath, JSON.stringify(store, null, 2), 'utf8');
+}
+async function ensureDemoAuthUsers() {
+  const store = await readAuthStore();
+  const demos = [
+    ['student-demo', 'demo@student.skillaura', 'Demo Student/Employee', 'student'],
+    ['tutor-demo', 'demo@tutor.skillaura', 'Demo Tutor', 'tutor'],
+    ['company-demo', 'demo@company.skillaura', 'Demo Company', 'company'],
+    ['institution-demo', 'demo@institution.skillaura', 'Demo Institution', 'institution']
+  ];
+  let changed = false;
+  demos.forEach(([id, email, name, role]) => {
+    if (!store.users.some((user) => user.email === email)) {
+      store.users.push({ id, email, name, role, originalRole: role, password: passwordHash('demo-access'), createdAt: new Date().toISOString(), demoAccount: true });
+      changed = true;
+    }
+  });
+  if (changed) await writeAuthStore(store);
+  return store;
+}
+async function createAuthSession(user, response) {
+  const id = randomUUID();
+  authSessions.set(id, { userId: user.id, expiresAt: Date.now() + sessionTtlMs });
+  sendAuthJson(response, 200, { success: true, user: publicAuthUser(user) }, sessionCookie(id));
+}
 
 const systemPrompt = (role, context) => `You are SkillAura AI, a grounded ${role || 'student'} assistant inside the SkillAura prototype. Use only the supplied SkillAura context for website-specific facts, records, statuses, people, opportunities, and routes. Never invent missing data. If the context does not contain an answer, say that it is unavailable. Give practical, concise guidance. Current page: ${context?.currentPage || 'unknown'}.`;
 
@@ -58,6 +119,56 @@ async function handleChat(request, response) {
   }
 }
 
+async function handleAuth(request, response, pathname) {
+  if (pathname === '/api/auth/session' && request.method === 'GET') {
+    const session = validSession(request);
+    if (!session) return sendAuthJson(response, 200, { authenticated: false });
+    const store = await readAuthStore();
+    const user = store.users.find((item) => item.id === session.userId);
+    if (!user) return sendAuthJson(response, 200, { authenticated: false });
+    return sendAuthJson(response, 200, { authenticated: true, user: publicAuthUser(user) }, sessionCookie(parseCookies(request).skillaura_session.split('.')[0]));
+  }
+  if (pathname === '/api/auth/logout' && request.method === 'POST') {
+    const value = parseCookies(request).skillaura_session || '';
+    const [id] = value.split('.');
+    if (id) authSessions.delete(id);
+    return sendAuthJson(response, 200, { success: true }, sessionCookie('', 0));
+  }
+  if (pathname === '/api/auth/demo' && request.method === 'POST') {
+    const body = await readBody(request).catch(() => ({}));
+    const role = normalizeAuthRole(body.role);
+    const store = await ensureDemoAuthUsers();
+    const user = store.users.find((item) => item.demoAccount && item.role === role);
+    if (!user) return sendAuthJson(response, 400, { error: 'Demo role is unavailable.' });
+    return createAuthSession(user, response);
+  }
+  if (pathname === '/api/auth/login' && request.method === 'POST') {
+    const body = await readBody(request).catch(() => ({}));
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const role = normalizeAuthRole(body.role);
+    const store = await readAuthStore();
+    const user = store.users.find((item) => item.email === email && (!role || item.role === role));
+    if (!user || !passwordMatches(password, user.password)) return sendAuthJson(response, 401, { error: 'That email or password is not correct.' });
+    return createAuthSession(user, response);
+  }
+  if (pathname === '/api/auth/register' && request.method === 'POST') {
+    const body = await readBody(request).catch(() => ({}));
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const role = normalizeAuthRole(body.role || 'student');
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    if (!email || !password || !name || !['student', 'tutor', 'company', 'institution'].includes(role)) return sendAuthJson(response, 400, { error: 'Name, email, password, and a valid role are required.' });
+    const store = await readAuthStore();
+    if (store.users.some((item) => item.email === email)) return sendAuthJson(response, 409, { error: 'An account with that email already exists.' });
+    const user = { id: `user-${randomUUID()}`, email, name, role, originalRole: body.originalRole || role, profile: body.profile && typeof body.profile === 'object' ? body.profile : {}, password: passwordHash(password), createdAt: new Date().toISOString() };
+    store.users.push(user);
+    await writeAuthStore(store);
+    return createAuthSession(user, response);
+  }
+  return false;
+}
+
 async function serveStatic(request, response, pathname) {
   let decodedPathname;
   try {
@@ -81,6 +192,9 @@ async function serveStatic(request, response, pathname) {
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+  if (url.pathname.startsWith('/api/auth/')) {
+    try { const handled = await handleAuth(request, response, url.pathname); if (handled !== false) return; } catch (error) { return sendJson(response, 500, { error: 'Authentication service unavailable.' }); }
+  }
   if (url.pathname === '/api/health') return sendJson(response, 200, { ok: true, aiConfigured: Boolean(process.env.AI_API_KEY) });
   if (url.pathname === '/api/ai/chat') {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'Method not allowed.' });

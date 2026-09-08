@@ -1,3 +1,5 @@
 
 test-results/
 playwright-report/
+data/skillaura-auth-users.json
+.env

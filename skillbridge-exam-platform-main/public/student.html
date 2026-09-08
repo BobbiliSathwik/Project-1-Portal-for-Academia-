@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Take Exam</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Take Examination</h1>
+
+    <div id="examLoading">Loading your selected assessment...</div>
+
+    <div id="candidateIdentity" class="candidate-identity" style="display:none;">
+        <span class="candidate-label">Candidate</span>
+        <strong id="studentNameDisplay">Loading...</strong>
+    </div>
+
+    <div id="proctorHud" class="proctor-hud" style="display:none;">
+        <div class="proctor-main-status">
+            <span id="proctorStatusDot" class="proctor-dot"></span>
+            <strong id="proctorStatusText">AI Proctor Starting...</strong>
+        </div>
+        <div class="proctor-meta">
+            <span id="proctorFaceStatus">Face: checking</span>
+            <span id="proctorEyeStatus">Eyes: checking</span>
+            <span id="proctorMicStatus">Mic: AI monitoring</span>
+            <span id="proctorBodyStatus">Body: checking</span>
+            <span id="proctorWarnings">Focus warnings: 0/5</span>
+            <span id="proctorVoiceWarnings">Voice warnings: 0/5</span>
+            <span id="proctorVoiceStatus">Mic: monitoring</span>
+        </div>
+    </div>
+
+    <section class="assessment-rules" aria-labelledby="assessmentRulesTitle">
+        <div class="assessment-rules-header">
+            <div class="assessment-rules-icon">✓</div>
+            <div>
+                <h2 id="assessmentRulesTitle">SkillBridge Assessment Rules</h2>
+                <p>Please read these rules before starting your assessment.</p>
+            </div>
+        </div>
+        <ol>
+            <li>Keep your face clearly visible to the camera during the assessment.</li>
+            <li>Stay focused on the assessment and avoid looking away for extended periods.</li>
+            <li>Do not switch to other tabs, windows, or applications during the assessment.</li>
+            <li>Do not use unauthorized websites, notes, devices, or external assistance.</li>
+            <li>Keep your environment quiet and avoid unnecessary talking or voice disturbances.</li>
+            <li>Your webcam and microphone may be used for AI monitoring and assessment recording.</li>
+            <li>Focus/eye monitoring allows up to <strong>5 warnings</strong>.</li>
+            <li>Voice/audio monitoring allows up to <strong>5 warnings</strong>.</li>
+            <li>Exceeding either warning limit may automatically terminate and submit the assessment.</li>
+            <li>Complete the assessment honestly and independently.</li>
+        </ol>
+    </section>
+
+    <button onclick="startExam()">
+        Start Assessment
+    </button>
+
+    <div id="examArea"></div>
+
+    <video
+        id="camera"
+        autoplay
+        muted
+        playsinline
+    ></video>
+
+</div>
+
+
+<script>
+
+let exam = null;
+let stream = null;
+let recorder = null;
+let chunks = [];
+let examActive = false;
+let answers = {};
+let recorderStopHandler = null;
+let submissionInProgress = false;
+let timerInterval = null;
+let remainingSeconds = 0;
+
+// ===============================
+// ADAPTIVE EXAM STATE
+// ===============================
+let adaptiveEnabled = false;
+let adaptiveBatchSize = 5;
+let adaptiveCurrentBatch = [];
+let adaptiveWaitingForNext = false;
+
+const MAX_FOCUS_WARNINGS = 5;
+const MAX_VOICE_WARNINGS = 5;
+let focusWarningCount = 0;
+let voiceWarningCount = 0;
+let proctorEvents = [];
+let proctorTerminationInProgress = false;
+let proctorWarningDialogOpen = false;
+let proctorCooldownUntil = 0;
+
+
+// ===============================
+// AI FACE PROCTOR
+// ===============================
+
+function updateProctorHud(status, detail = "") {
+    const hud = document.getElementById("proctorHud");
+    const statusText = document.getElementById("proctorStatusText");
+    const statusDot = document.getElementById("proctorStatusDot");
+    const faceStatus = document.getElementById("proctorFaceStatus");
+    const eyeStatus = document.getElementById("proctorEyeStatus");
+    const bodyStatus = document.getElementById("proctorBodyStatus");
+
+    if (!hud || !statusText || !statusDot || !faceStatus) {
+        return;
+    }
+
+    hud.style.display = "flex";
+
+    const labels = {
+        initializing: "AI Proctor Starting...",
+        active: "AI Proctor Active",
+        "face-ok": "AI Proctor Active",
+        "no-face": "Face Not Detected",
+        "multiple-face": "Multiple Faces Detected",
+        "looking-away": "Please Face the Camera",
+        "ai-error": "AI Proctor Unavailable"
+    };
+
+    statusText.textContent = labels[status] || "AI Proctor Active";
+    statusDot.className = "proctor-dot";
+
+    if (status === "active" || status === "face-ok") {
+        statusDot.classList.add("proctor-ok");
+    } else if (status === "ai-error") {
+        statusDot.classList.add("proctor-error");
+    } else {
+        statusDot.classList.add("proctor-warning");
+    }
+
+    if (status === "face-ok") {
+        faceStatus.textContent = "Face: ✓ detected";
+    } else if (status === "multiple-face") {
+        faceStatus.textContent = "Face: ⚠ multiple";
+    } else if (status === "no-face") {
+        faceStatus.textContent = "Face: ⚠ not detected";
+    } else if (status === "looking-away") {
+        faceStatus.textContent = "Face: ⚠ orientation";
+    } else if (status === "gaze-away") {
+        faceStatus.textContent = "Face: ✓ detected";
+    } else {
+        faceStatus.textContent = detail || "Face: checking";
+    }
+
+    if (bodyStatus) {
+        if (status === "body-ok") bodyStatus.textContent = "Body: ✓ detected";
+        else if (status === "body-move") bodyStatus.textContent = "Body: ⚠ movement";
+        else bodyStatus.textContent = "Body: checking";
+    }
+
+    if (eyeStatus) {
+        if (status === "gaze-away") {
+            eyeStatus.textContent = "Eyes: ⚠ looking away";
+        } else if (status === "face-ok") {
+            eyeStatus.textContent = "Eyes: ✓ screen focus";
+        } else if (status === "looking-away") {
+            eyeStatus.textContent = "Eyes: ⚠ head/gaze";
+        } else {
+            eyeStatus.textContent = "Eyes: checking";
+        }
+    }
+}
+
+function pauseAllProctoring(ms = 5000) {
+    proctorCooldownUntil = Date.now() + Math.max(0, ms);
+    if (window.FaceProctor) window.FaceProctor.pauseFor(ms);
+    if (window.VoiceProctor) window.VoiceProctor.pauseFor(ms);
+    const status = document.getElementById("proctorStatusText");
+    if (status) status.textContent = `AI Proctor paused for ${Math.ceil(ms / 1000)}s`;
+}
+
+function recordProctorEvent(event) {
+    if (!event || !examActive || proctorTerminationInProgress) return;
+
+    proctorEvents.push(event);
+
+    const isVoiceViolation = event.type === "audio_activity" || event.type === "voice_activity" || event.type === "voice_disturbance";
+    const warningLimit = isVoiceViolation ? MAX_VOICE_WARNINGS : MAX_FOCUS_WARNINGS;
+    const warningCount = isVoiceViolation ? ++voiceWarningCount : ++focusWarningCount;
+
+    const warningElement = document.getElementById("proctorWarnings");
+    const voiceWarningElement = document.getElementById("proctorVoiceWarnings");
+    if (warningElement) warningElement.textContent = `Focus warnings: ${focusWarningCount}/${MAX_FOCUS_WARNINGS}`;
+    if (voiceWarningElement) voiceWarningElement.textContent = `Voice warnings: ${voiceWarningCount}/${MAX_VOICE_WARNINGS}`;
+
+    console.warn(`AI Proctor ${isVoiceViolation ? "voice" : "focus"} warning ${warningCount}/${warningLimit}:`, event);
+
+    const reasonLabels = {
+        no_face: "Your face was not detected for an extended period.",
+        multiple_faces: "More than one face was detected in the camera frame.",
+        looking_away: "Your head remained turned away from the screen.",
+        gaze_away: "Your eye gaze remained outside the normal screen-focus area.",
+        body_movement: "Significant body movement was detected.",
+        audio_activity: "Unexpected microphone audio activity was detected.",
+        voice_activity: "Voice or unexpected microphone activity was detected.",
+        voice_disturbance: "A voice or audio disturbance was detected.",
+        tab_hidden: "The exam page was left or hidden."
+    };
+
+    if (warningCount > warningLimit) {
+        proctorTerminationInProgress = true;
+        terminateExam(
+            `ai_${event.type}`,
+            `The AI proctor detected ${reasonLabels[event.type] || "a proctoring violation"} more than ${warningLimit} times. The assessment has been terminated.`
+        );
+        return;
+    }
+
+    pauseAllProctoring(5000);
+    proctorWarningDialogOpen = true;
+    try {
+        alert(`${isVoiceViolation ? "Voice" : "AI Proctor"} Warning ${warningCount}/${warningLimit}\n\n${reasonLabels[event.type] || "A proctoring anomaly was detected."}\n\nMonitoring will pause for 5 seconds, then resume.`);
+    } finally {
+        proctorWarningDialogOpen = false;
+    }
+}
+
+async function startFaceProctoring() {
+    if (!window.FaceProctor) {
+        console.warn("FaceProctor module is not loaded.");
+        updateProctorHud(
+            "ai-error",
+            "AI proctor module is unavailable."
+        );
+        return false;
+    }
+
+    try {
+        return await window.FaceProctor.start({
+            video: document.getElementById("camera"),
+            onStatus: updateProctorHud,
+            onViolation: recordProctorEvent
+        });
+    } catch (error) {
+        console.error(
+            "Could not start face proctoring:",
+            error
+        );
+
+        updateProctorHud(
+            "ai-error",
+            "AI face monitoring could not start."
+        );
+
+        return false;
+    }
+}
+
+
+// ===============================
+// VOICE BASELINE
+// ===============================
+
+// ===============================
+// START EXAM
+// ===============================
+
+async function startExam() {
+
+    const examId = new URLSearchParams(window.location.search).get("exam");
+
+    if (!examId) {
+        alert("Please select an assessment from Available Exams.");
+        window.location.href = "/student-portal.html";
+        return;
+    }
+
+    // The candidate name is taken automatically from the logged-in student profile.
+    const profileResponse = await fetch("/api/student/profile");
+    const profilePayload = await profileResponse.json().catch(() => ({}));
+    if (!profileResponse.ok || !profilePayload.success || !profilePayload.profile?.full_name) {
+        alert(profilePayload.error || "We could not load your student account. Please return to the Student Portal.");
+        window.location.href = "/student-portal.html";
+        return;
+    }
+    const name = profilePayload.profile.full_name;
+
+    document.getElementById("studentNameDisplay").textContent = name;
+    document.getElementById("candidateIdentity").style.display = "flex";
+
+    // Get the selected exam from the server.
+    const response =
+        await fetch(`/api/exams/${encodeURIComponent(examId)}`);
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (response.status === 429 && payload.code === "COOLDOWN_30_DAYS") {
+        const nextDate = payload.nextAvailableAt
+            ? new Date(payload.nextAvailableAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+            : "30 days after your last attempt";
+        alert(`30-day cooldown reached. You can take this exam again from ${nextDate}.`);
+        window.location.href = "/student-portal.html";
+        return;
+    }
+
+    if (!response.ok) {
+        alert(payload.error || "Exam not found.");
+        return;
+    }
+
+    exam = payload;
+    document.getElementById("examLoading").style.display = "none";
+
+
+    // Ask for camera and microphone
+
+    try {
+
+        stream =
+            await navigator.mediaDevices.getUserMedia({
+
+                video: true,
+                audio: true
+
+            });
+
+
+        document.getElementById("camera")
+            .srcObject = stream;
+
+        await new Promise(resolve => {
+            const video = document.getElementById("camera");
+            if (video.readyState >= 2) {
+                resolve();
+                return;
+            }
+            video.onloadeddata = () => resolve();
+        });
+
+
+    }
+
+    catch (error) {
+
+        alert(
+            "Camera and microphone permission are required."
+        );
+
+        return;
+    }
+
+
+    // Start recording with audio + video explicitly.
+    chunks = [];
+
+    const audioTracks = stream.getAudioTracks();
+    if (!audioTracks.length || audioTracks.some(track => track.readyState !== "live" || track.enabled === false)) {
+        stream.getTracks().forEach(track => track.stop());
+        alert("The microphone is not active. Please allow microphone access and start the assessment again.");
+        return;
+    }
+
+    // Visual eye-reading calibration. No voice calibration is used.
+    // The candidate reads both passages and explicitly advances after finishing
+    // each one; the eye trace learned here becomes the personalized gaze envelope.
+    if (window.FaceProctor?.calibrateGaze) {
+        try {
+            await window.FaceProctor.calibrateGaze({
+                video: document.getElementById("camera")
+            });
+        } catch (calibrationError) {
+            console.error("Eye calibration failed:", calibrationError);
+            stream?.getTracks?.().forEach(track => track.stop());
+            alert(calibrationError?.message || "Eye calibration could not be completed. Please try again.");
+            return;
+        }
+    } else {
+        stream?.getTracks?.().forEach(track => track.stop());
+        alert("AI eye calibration is unavailable. Please refresh and start the assessment again.");
+        return;
+    }
+
+    const recordingTypes = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm"
+    ];
+
+    const recordingMimeType = recordingTypes.find(type =>
+        typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(type)
+    ) || "";
+
+    // Build a fresh combined recording stream so BOTH camera and microphone
+    // tracks are explicitly attached to the MediaRecorder.
+    const recordingStream = new MediaStream([
+        ...stream.getVideoTracks(),
+        ...stream.getAudioTracks()
+    ]);
+
+    recorder = recordingMimeType
+        ? new MediaRecorder(recordingStream, {
+            mimeType: recordingMimeType,
+            audioBitsPerSecond: 128000,
+            videoBitsPerSecond: 2500000
+        })
+        : new MediaRecorder(recordingStream);
+
+    console.info("[RECORDING] mimeType:", recorder.mimeType);
+    console.info("[RECORDING] audio tracks:", stream.getAudioTracks().map(track => ({
+        label: track.label,
+        enabled: track.enabled,
+        readyState: track.readyState
+    })));
+
+
+    recorder.ondataavailable = function(event) {
+
+        if (event.data.size > 0) {
+
+            chunks.push(event.data);
+
+        }
+
+    };
+
+
+    recorder.onstop = async function() {
+        // Submission/termination installs its own promise handler before
+        // stopping the recorder. This fallback keeps the recording safe if
+        // the recorder is stopped for another reason.
+        if (recorderStopHandler) {
+            const handler = recorderStopHandler;
+            recorderStopHandler = null;
+            await handler();
+        }
+    };
+
+
+    recorder.start();
+
+    // The existing exam flow remains unchanged; AI monitoring uses
+    // the same camera/microphone stream that is already being recorded.
+    examActive = true;
+
+    if (window.VoiceProctor) {
+        try {
+            await window.VoiceProctor.startMonitoring({
+                stream,
+                onStatus: (text) => updateProctorHud("active", text),
+                onViolation: recordProctorEvent
+            });
+        } catch (voiceError) {
+            console.warn("Microphone AI monitor unavailable:", voiceError);
+        }
+    }
+
+    const proctorStarted = await startFaceProctoring();
+
+    if (!proctorStarted) {
+        examActive = false;
+
+        alert(
+            "AI face proctoring could not be initialized. " +
+            "Please check your internet connection, allow camera access, " +
+            "and start the assessment again."
+        );
+
+        if (window.VoiceProctor) {
+            window.VoiceProctor.stop();
+        }
+
+        if (recorder && recorder.state !== "inactive") {
+            try {
+                recorder.stop();
+            } catch (error) {}
+        }
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        return;
+    }
+
+    displayExam();
+
+}
+
+
+// ===============================
+// DISPLAY EXAM
+// ===============================
+
+// ===============================
+// DISPLAY EXAM + TIMER
+// ===============================
+
+function normalizeOptions(q) {
+    if (!q || !q.options) {
+        return [];
+    }
+
+    // New server format:
+    // [{ id: "...", text: "..." }, ...]
+    if (Array.isArray(q.options)) {
+        return q.options.map((option, index) => {
+            if (option && typeof option === "object") {
+                return {
+                    id: option.id || `${q.id}-option-${index}`,
+                    text: String(option.text ?? "")
+                };
+            }
+
+            return {
+                id: `${q.id}-option-${index}`,
+                text: String(option ?? "")
+            };
+        });
+    }
+
+    // Old server format:
+    // { A: "...", B: "...", C: "...", D: "..." }
+    if (typeof q.options === "object") {
+        return ["A", "B", "C", "D"]
+            .map((letter, index) => ({
+                id: `${q.id}-option-${index}`,
+                text: String(q.options[letter] ?? "")
+            }))
+            .filter(option => option.text !== "");
+    }
+
+    return [];
+}
+
+
+function formatTime(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+
+function startTimer() {
+    clearInterval(timerInterval);
+
+    remainingSeconds = Math.max(
+        0,
+        Number(exam?.duration || 0) * 60
+    );
+
+    const timerElement =
+        document.getElementById("examTimer");
+
+    if (!timerElement) {
+        console.error("Timer element not found.");
+        return;
+    }
+
+    timerElement.textContent =
+        formatTime(remainingSeconds);
+
+    timerElement.classList.remove("timer-warning");
+    timerElement.classList.remove("timer-danger");
+
+    timerInterval = setInterval(() => {
+
+        if (!examActive) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            return;
+        }
+
+        remainingSeconds--;
+
+        if (remainingSeconds <= 0) {
+
+            remainingSeconds = 0;
+
+            timerElement.textContent = "00:00";
+
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            timerElement.classList.remove("timer-warning");
+            timerElement.classList.add("timer-danger");
+
+            alert(
+                "Time is up! Your exam will be submitted automatically."
+            );
+
+            submitExam();
+
+            return;
+        }
+
+        timerElement.textContent =
+            formatTime(remainingSeconds);
+
+        // Last 5 minutes
+        if (
+            remainingSeconds <= 300 &&
+            remainingSeconds > 60
+        ) {
+            timerElement.classList.add("timer-warning");
+        }
+
+        // Last 60 seconds
+        if (remainingSeconds <= 60) {
+            timerElement.classList.remove("timer-warning");
+            timerElement.classList.add("timer-danger");
+        }
+
+    }, 1000);
+}
+
+
+function displayExam() {
+
+    const area = document.getElementById("examArea");
+
+    if (!area) {
+        console.error("examArea not found.");
+        return;
+    }
+
+    if (!exam || !Array.isArray(exam.questions)) {
+        area.innerHTML = `
+            <div class="exam-error">
+                <h2>Unable to load questions</h2>
+                <p>No questions were received for this assessment.</p>
+            </div>
+        `;
+        return;
+    }
+
+    adaptiveEnabled = exam.adaptive === true;
+    adaptiveBatchSize = Math.max(1, Number(exam.adaptiveBatchSize || 5));
+    adaptiveCurrentBatch = exam.questions.slice(0, adaptiveBatchSize);
+
+    renderAdaptiveBatch(adaptiveCurrentBatch, 0);
+    startTimer();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function renderAdaptiveBatch(batch, globalStartIndex) {
+    const area = document.getElementById("examArea");
+    if (!area) return;
+
+    adaptiveCurrentBatch = batch || [];
+
+    const total = Number(exam.totalQuestionCount || exam.questionCount || exam.questions.length);
+    const endIndex = Math.min(globalStartIndex + adaptiveCurrentBatch.length, total);
+    const isLastBatch = endIndex >= total;
+
+    area.innerHTML = `
+        <div class="exam-header">
+            <div class="exam-title-section">
+                <h2>${escapeHtml(exam.title || "Assessment")}</h2>
+                <p>Adaptive Assessment · Questions ${globalStartIndex + 1}–${endIndex} of ${total}</p>
+            </div>
+            <div id="examTimer" class="exam-timer" aria-label="Exam time remaining">
+                ${formatTime(remainingSeconds || Number(exam.duration || 0) * 60)}
+            </div>
+        </div>
+
+        <div class="adaptive-progress" style="margin:12px 0 18px;padding:12px 16px;border:1px solid #e5eaf1;border-radius:12px;background:#f5f8fc;font-size:14px;font-weight:600;">
+            🧠 Adaptive mode · Difficulty adjusts after every ${adaptiveBatchSize} questions based on your answers.
+        </div>
+
+        <div id="questions"></div>
+
+        <div class="submit-area" style="display:flex;gap:10px;justify-content:flex-end;">
+            ${isLastBatch
+                ? `<button class="submit-exam-btn" onclick="submitExam()">Submit Exam</button>`
+                : `<button class="submit-exam-btn" id="nextAdaptiveBtn" onclick="loadNextAdaptiveBatch()">Next ${adaptiveBatchSize} Questions →</button>`}
+        </div>
+    `;
+
+    const questionsContainer = document.getElementById("questions");
+    adaptiveCurrentBatch.forEach((q, localIndex) => {
+        const globalIndex = globalStartIndex + localIndex;
+        const options = normalizeOptions(q);
+
+        const questionHTML = `
+            <div class="examQuestion">
+                <h3>${globalIndex + 1}. ${escapeHtml(q.question || "Question unavailable")}</h3>
+                <div class="options-container">
+                    ${options.map((option, optionIndex) => {
+                        const label = ["A", "B", "C", "D"][optionIndex] || String.fromCharCode(65 + optionIndex);
+                        const checked = answers[q.id] === option.id ? "checked" : "";
+                        return `
+                            <label class="option-label">
+                                <input type="radio" name="q${globalIndex}" value="${escapeHtml(option.id)}" ${checked}
+                                    onchange="saveAnswerById('${String(q.id).replace(/'/g, "\\'")}', '${String(option.id).replace(/'/g, "\\'")}')">
+                                <span class="option-letter">${label}</span>
+                                <span class="option-text">${escapeHtml(option.text)}</span>
+                            </label>
+                        `;
+                    }).join("")}
+                </div>
+            </div>
+        `;
+        questionsContainer.insertAdjacentHTML("beforeend", questionHTML);
+    });
+
+    // The global timer continues; do not restart it when moving between batches.
+    const timerElement = document.getElementById("examTimer");
+    if (timerElement) timerElement.textContent = formatTime(remainingSeconds);
+}
+
+function saveAnswerById(questionId, optionId) {
+    answers[String(questionId)] = String(optionId);
+}
+
+async function loadNextAdaptiveBatch() {
+    if (!examActive || adaptiveWaitingForNext) return;
+
+    const button = document.getElementById("nextAdaptiveBtn");
+    adaptiveWaitingForNext = true;
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Analyzing answers…";
+    }
+
+    try {
+        const currentIds = adaptiveCurrentBatch.map(q => q.id);
+        const usedQuestionIds = exam.questions.map(q => q.id);
+
+        const response = await fetch(`/api/exams/${encodeURIComponent(exam.id)}/adaptive-next`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                questionIds: currentIds,
+                answers,
+                usedQuestionIds
+            })
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || "Could not load the next adaptive questions.");
+        }
+
+        if (result.done || !Array.isArray(result.questions) || result.questions.length === 0) {
+            renderAdaptiveBatch([], exam.questions.length);
+            const area = document.getElementById("examArea");
+            if (area) {
+                const submit = area.querySelector(".submit-exam-btn");
+                if (submit) submit.onclick = submitExam;
+            }
+            return;
+        }
+
+        const startIndex = exam.questions.length;
+        exam.questions.push(...result.questions);
+        exam.questionCount = exam.questions.length;
+        exam.completedQuestionCount = result.completedQuestionCount;
+
+        renderAdaptiveBatch(result.questions, startIndex);
+    } catch (error) {
+        console.error("Adaptive exam error:", error);
+        alert(error.message || "Could not load the next questions. Please try again.");
+        if (button) {
+            button.disabled = false;
+            button.textContent = `Next ${adaptiveBatchSize} Questions →`;
+        }
+    } finally {
+        adaptiveWaitingForNext = false;
+    }
+}
+
+// ===============================
+// SAVE ANSWER
+// ===============================
+
+function saveAnswer(questionIndex, optionId) {
+    const question = exam?.questions?.[questionIndex];
+    if (!question) return;
+    answers[String(question.id || `q-${questionIndex + 1}`)] = String(optionId);
+}
+
+
+// ===============================
+// DETECT TAB OR WINDOW SWITCH
+// ===============================
+
+document.addEventListener(
+    "visibilitychange",
+    function() {
+
+        if (!document.hidden || !examActive) {
+            return;
+        }
+
+        // Native warning dialogs can temporarily affect browser focus/visibility.
+        // Do not turn the warning itself into a second violation. During the
+        // explicit 5-second cooldown, focus changes are ignored as well.
+        if (proctorWarningDialogOpen || Date.now() < proctorCooldownUntil || proctorTerminationInProgress) {
+            return;
+        }
+
+        recordProctorEvent({
+            type: "tab_hidden",
+            timestamp: new Date().toISOString(),
+            detector: "browser-visibility",
+            source: "browser",
+            confidence: 0.99,
+            note: "The exam page became hidden."
+        });
+    }
+);
+
+// Intentionally no window.blur termination: clicking outside the page or
+// dismissing a browser dialog must not immediately terminate the assessment.
+// Actual tab hiding is handled above as a normal focus-warning proctor event.
+
+
+// ===============================
+// TERMINATE EXAM
+// ===============================
+
+async function terminateExam(reason, message = "") {
+
+    if (!examActive) {
+        return;
+    }
+
+
+    examActive = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    if (window.FaceProctor) {
+        window.FaceProctor.stop();
+    }
+
+    if (window.VoiceProctor) {
+        window.VoiceProctor.stop();
+    }
+
+    const terminationMessage =
+        message ||
+        (
+            reason === "tab_or_window_switch"
+                ? "The exam was terminated because you left the exam tab."
+                : "The exam was terminated because a proctoring rule was triggered."
+        );
+
+    document.getElementById("examArea")
+        .innerHTML = `
+
+            <h1>Exam Terminated</h1>
+
+            <p>${terminationMessage}</p>
+
+        `;
+
+
+    if (recorder && recorder.state !== "inactive") {
+        await stopRecordingAndSubmit("terminated", reason);
+    }
+
+}
+
+
+// ===============================
+// SUBMIT EXAM
+// ===============================
+
+async function submitExam() {
+
+    if (!examActive) {
+        return;
+    }
+
+
+    examActive = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+
+    document.getElementById("examArea")
+        .innerHTML = `
+
+            <h1>Exam Submitted</h1>
+
+            <p>
+                Your exam is being saved...
+            </p>
+
+        `;
+
+
+    if (recorder && recorder.state !== "inactive") {
+        await stopRecordingAndSubmit("completed", "");
+    } else {
+        await finishAttemptWithoutRecording("completed", "");
+    }
+}
+
+
+// ===============================
+// STOP RECORDER SAFELY THEN SEND
+// ===============================
+
+function stopRecordingAndSubmit(status, reason) {
+    return new Promise(function(resolve) {
+        recorderStopHandler = async function() {
+            try {
+                const videoBlob = new Blob(chunks, {
+                    type: recorder?.mimeType || "video/webm"
+                });
+                console.info("[RECORDING] final blob size:", videoBlob.size, "type:", videoBlob.type);
+                await sendAttempt(videoBlob, status, reason);
+            } finally {
+                resolve();
+            }
+        };
+
+        try {
+            recorder.stop();
+        } catch (error) {
+            recorderStopHandler = null;
+            resolve();
+        }
+    });
+}
+
+async function finishAttemptWithoutRecording(status, reason) {
+    await sendAttempt(null, status, reason);
+}
+
+
+// ===============================
+// SEND TO SERVER
+// ===============================
+
+async function sendAttempt(
+    videoBlob,
+    status,
+    reason
+) {
+
+    const form =
+        new FormData();
+
+
+    if (videoBlob && videoBlob.size > 0) {
+        form.append("video", videoBlob, "recording.webm");
+    }
+
+
+    form.append(
+        "examId",
+        exam.id
+    );
+
+
+    // Name is resolved server-side from the authenticated student account.
+
+    form.append(
+        "answers",
+        JSON.stringify(answers)
+    );
+
+    form.append(
+        "questionIds",
+        JSON.stringify(exam.questions.map(q => q.id))
+    );
+
+
+    form.append(
+        "status",
+        status
+    );
+
+
+    form.append(
+        "reason",
+        reason || ""
+    );
+
+    form.append(
+        "proctorEvents",
+        JSON.stringify(proctorEvents)
+    );
+
+
+    const response =
+        await fetch(
+            "/api/attempts",
+            {
+                method: "POST",
+                body: form
+            }
+        );
+
+
+    const result =
+        await response.json();
+
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.error || "Could not save the exam.");
+    }
+
+    console.log("Attempt saved:", result.attemptId);
+
+    // Stop AI proctor and camera/microphone
+    if (window.FaceProctor) {
+        window.FaceProctor.stop();
+    }
+
+    if (window.VoiceProctor) {
+        window.VoiceProctor.stop();
+    }
+
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+
+    if (status === "completed" && result.attemptId) {
+        window.location.href = `/result.html?attempt=${encodeURIComponent(result.attemptId)}`;
+    } else if (status === "terminated") {
+        window.location.href = "/student-portal.html";
+    }
+
+}
+
+</script>
+
+<script src="proctor.js"></script>
+<script src="voiceProctor.js"></script>
+
+</body>
+
+</html>

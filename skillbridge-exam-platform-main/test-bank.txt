@@ -1,0 +1,20 @@
+Q1: What is 2 + 2?
+A) 3
+B) 4
+C) 5
+D) 6
+ANSWER: B
+
+Q2: Which language is used to style web pages?
+A) HTML
+B) Python
+C) CSS
+D) Java
+ANSWER: C
+
+Q3: What does CPU stand for?
+A) Central Processing Unit
+B) Computer Personal Unit
+C) Central Program Utility
+D) Control Processing User
+ANSWER: A

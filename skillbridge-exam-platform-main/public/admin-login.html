@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in • SkillBridge</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+
+<div class="login-shell login-centered-shell">
+    <section class="login-visual">
+        <div class="ambient ambient-one"></div>
+        <div class="ambient ambient-two"></div>
+        <div class="visual-content">
+            <div class="brand-mark">
+                <div class="brand-symbol">S</div>
+                <span>SkillBridge</span>
+            </div>
+
+            <div class="visual-copy">
+                <div class="eyebrow"><span></span> SMARTER ASSESSMENTS</div>
+                <h1>Measure skills.<br><em>Build futures.</em></h1>
+                <p>A modern examination experience built for focused learning, fair assessment, and meaningful progress.</p>
+            </div>
+
+            <div class="visual-stats">
+                <div><strong>Adaptive</strong><span>Assessment engine</span></div>
+                <div><strong>Secure</strong><span>Exam environment</span></div>
+                <div><strong>Insightful</strong><span>Performance analytics</span></div>
+            </div>
+
+            <div class="visual-orbit">
+                <div class="orbit-ring ring-one"></div>
+                <div class="orbit-ring ring-two"></div>
+                <div class="orbit-core"><span>SB</span></div>
+                <div class="orbit-dot dot-one"></div>
+                <div class="orbit-dot dot-two"></div>
+                <div class="orbit-dot dot-three"></div>
+            </div>
+        </div>
+    </section>
+
+    <main class="login-panel">
+        <div class="login-card">
+            <div class="mobile-brand">
+                <div class="brand-symbol">S</div>
+                <span>SkillBridge</span>
+            </div>
+
+            <div class="login-heading">
+                <div class="welcome-pill">Welcome back</div>
+                <h2>Sign in to your account</h2>
+                <p>Use your Student or Examiner ID to continue.</p>
+            </div>
+
+            <form id="loginForm" class="modern-login-form">
+                <div class="field-group">
+                    <label for="email">Student / Examiner ID</label>
+                    <div class="field-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/></svg>
+                        <input id="email" type="text" placeholder="Enter your ID" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label-row">
+                        <label for="password">Password</label>
+                    </div>
+                    <div class="field-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                        <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">Show</button>
+                    </div>
+                </div>
+
+                <div id="captchaBox" class="captcha-panel" style="display:none;">
+                    <div class="captcha-title">Security check</div>
+                    <p>Enter the characters shown below.</p>
+                    <div id="captcha" class="captcha-code"></div>
+                    <input id="captchaInput" type="text" placeholder="Enter CAPTCHA" autocomplete="off">
+                </div>
+
+                <button type="submit" class="login-submit">
+                    <span>Continue to SkillBridge</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+                </button>
+
+                <div class="login-security">
+                    <span class="secure-dot"></span>
+                    <span>Your session is protected</span>
+                </div>
+                <p id="error" class="login-error"></p>
+            </form>
+
+            <div class="login-footer">
+                <span>SkillBridge Examination Portal</span>
+                <span class="footer-separator">•</span>
+                <span>Authorized access only</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+let failedAttempts = 0;
+
+const passwordInput = document.getElementById("password");
+const passwordToggle = document.getElementById("passwordToggle");
+
+passwordToggle.addEventListener("click", () => {
+    const visible = passwordInput.type === "text";
+    passwordInput.type = visible ? "password" : "text";
+    passwordToggle.textContent = visible ? "Show" : "Hide";
+    passwordToggle.setAttribute("aria-label", visible ? "Show password" : "Hide password");
+});
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const error = document.getElementById("error");
+    const submit = document.querySelector(".login-submit");
+
+    error.textContent = "";
+    submit.classList.add("is-loading");
+    submit.querySelector("span").textContent = "Signing in…";
+
+    try {
+        const response = await fetch("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.role === "student") {
+                window.location.href = "/student-portal.html";
+            } else if (data.role === "examiner") {
+                window.location.href = "/admin.html";
+            }
+            return;
+        }
+
+        failedAttempts++;
+
+        if (failedAttempts >= 3) {
+            document.getElementById("captchaBox").style.display = "block";
+            document.getElementById("captcha").textContent = "7K4P9";
+        }
+
+        error.textContent = data.error || "Invalid login. Please check your details.";
+        submit.querySelector("span").textContent = "Continue to SkillBridge";
+        submit.classList.remove("is-loading");
+    } catch (err) {
+        console.error(err);
+        error.textContent = "Unable to connect. Please try again.";
+        submit.querySelector("span").textContent = "Continue to SkillBridge";
+        submit.classList.remove("is-loading");
+    }
+});
+</script>
+</body>
+</html>
