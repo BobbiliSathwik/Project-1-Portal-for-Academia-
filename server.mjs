@@ -59,7 +59,13 @@ async function handleChat(request, response) {
 }
 
 async function serveStatic(request, response, pathname) {
-  const requested = pathname === '/' ? '/index.html' : pathname;
+  let decodedPathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch (error) {
+    return sendJson(response, 400, { error: 'Invalid URL.' });
+  }
+  const requested = decodedPathname === '/' ? '/index.html' : decodedPathname;
   const filePath = resolve(join(root, normalize(requested)));
   const relativePath = relative(root, filePath);
   if (relativePath.startsWith('..') || relativePath.includes('..' + '/') || relativePath.includes('..\\')) return sendJson(response, 403, { error: 'Forbidden' });

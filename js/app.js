@@ -113,7 +113,7 @@
 
 		function themeToggleMarkup() {
 			const isDark = selectedTheme === 'dark';
-			return `<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="${isDark}" aria-label="Switch to ${isDark ? 'white' : 'black'} mode"><span class="theme-toggle-icon" aria-hidden="true">${isDark ? '☼' : '◐'}</span><span class="theme-toggle-label">${isDark ? 'Black' : 'White'}</span></button>`;
+			return `<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="${isDark}" aria-label="Switch to ${isDark ? 'light' : 'dark'} mode"><span class="theme-toggle-icon" aria-hidden="true">${isDark ? '🌙' : '☀️'}</span><span class="theme-toggle-label">${isDark ? 'Dark Mode' : 'Light Mode'}</span></button>`;
 		}
 
 		function setTheme(theme) {
@@ -123,15 +123,25 @@
 			const isDark = selectedTheme === 'dark';
 			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
 				button.setAttribute('aria-pressed', String(isDark));
-				button.setAttribute('aria-label', `Switch to ${isDark ? 'white' : 'black'} mode`);
-				button.querySelector('.theme-toggle-icon').textContent = isDark ? '☼' : '◐';
-				button.querySelector('.theme-toggle-label').textContent = isDark ? 'Black' : 'White';
+				button.setAttribute('aria-label', `Switch to ${isDark ? 'light' : 'dark'} mode`);
+				button.querySelector('.theme-toggle-icon').textContent = isDark ? '🌙' : '☀️';
+				button.querySelector('.theme-toggle-label').textContent = isDark ? 'Dark Mode' : 'Light Mode';
 			});
 			if (document.body.classList.contains('home-page')) updateGlobalBackground();
 		}
 
 		function brand() {
 			return `<a class="brand" href="#/"><span class="brand-mark">↗</span>SkillAura</a>`;
+		}
+
+		function setMobileNavState(isOpen) {
+			const nav = document.getElementById('navlinks');
+			const button = document.querySelector('.mobile-menu');
+			if (!nav || !button) return;
+			nav.classList.toggle('open', isOpen);
+			button.setAttribute('aria-expanded', String(isOpen));
+			button.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+			button.textContent = isOpen ? '×' : '☰';
 		}
 
 		function currentAuthSession() {
@@ -182,8 +192,8 @@
 			const auth = currentAuthSession();
 			const isLoggedIn = Boolean(auth?.loggedIn);
 			const dashboardRoute = currentUserDashboardRoute();
-			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get ˀˀed</a>`;
-			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Student/Employees</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button></div></nav>
+			const authenticatedNav = isLoggedIn ? `<a href="#${dashboardRoute}">${roleLabel(normalizeRole(auth.role))} Dashboard</a><a href="#/${normalizeRole(auth.role)}/profile">Profile</a>${themeToggleMarkup()}<button class="btn btn-light" type="button" data-action="logout">Logout</button>` : `${themeToggleMarkup()}<a class="btn btn-primary" href="#/role-selection">Get Started ↗</a>`;
+			return `<div class="landing"><nav class="navbar container">${brand()}<div class="navlinks" id="navlinks"><a href="#/">Home</a><a href="#how">How It Works</a><a href="#roles">For Student/Employees</a><a href="#roles">For Industry</a><a href="#roles">For Institutions</a><a href="#about">About</a></div><div class="nav-actions">${authenticatedNav}<button class="mobile-menu" type="button" aria-expanded="false" aria-label="Open navigation menu">☰</button></div></nav>
 			<section class="hero"><div class="container hero-copy"><div class="eyebrow">The collaboration layer for tomorrow's careers</div><div class="hero-wordmark" aria-label="SkillAura">Skill<span>Aura</span></div><h1>Connecting Skills, Academia <span>&amp; Industry</span></h1><p>Bridge the gap from learning to impact through verified skills, personalized career guidance, internships, jobs, and industry collaboration.</p><div class="hero-actions"><a class="btn btn-primary" href="#/role-selection">Get Started ↗</a><a class="btn btn-light" href="#how">Explore Platform ↓</a></div></div><div class="ecosystem"><div class="ecosystem-label"><span>SkillAura ecosystem</span><span>01 — 05</span></div><div class="flow"><div class="flow-item"><i>♙</i>Student/Employee</div><div class="flow-arrow">↓</div><div class="flow-item"><i>✦</i>Skills &amp; Verification</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◈</i>Industry Opportunity</div><div class="flow-arrow">↓</div><div class="flow-item"><i>◎</i>Career Growth</div></div></div></section>
 			<section class="section" id="about"><div class="container"><div class="section-heading"><div class="eyebrow">Why SkillAura</div><h2>The Skill Gap Problem</h2><p>Talent is everywhere. The right connections and signals are not.</p></div><div class="grid-3"><div class="card problem-card"><div class="icon-box">♙</div><h3>Student/Employees</h3><p>Clarity is hard to find when the path from learning to career is fragmented.</p><ul class="checklist"><li>Know which skills matter</li><li>Find relevant internships</li></ul></div><div class="card problem-card"><div class="icon-box">▤</div><h3>Industry</h3><p>Recruiters need better signals to find capable, motivated early talent.</p><ul class="checklist"><li>Reach suitable candidates</li><li>Identify genuine competencies</li></ul></div><div class="card problem-card"><div class="icon-box">⌂</div><h3>Institutions</h3><p>Colleges need a clear view of readiness, outcomes, and industry demand.</p><ul class="checklist"><li>Track skill development</li><li>Build industry partnerships</li></ul></div></div></div></section>
 			<section class="section soft"><div class="container solution"><div><div class="eyebrow">A connected journey</div><h2>One Platform. Multiple Stakeholders.</h2><p class="solution-copy">From the first assessment to the first opportunity, SkillAura gives every stakeholder a shared view of progress and potential.</p><a class="btn btn-primary" href="#/role-selection" style="margin-top:25px">Choose your workspace ↗</a></div><div class="card stack"><div class="stack-row"><span class="step-num">01</span>Student/Employee profile</div><div class="stack-row"><span class="step-num">02</span>Skill assessment</div><div class="stack-row"><span class="step-num">03</span>Verified profile</div><div class="stack-row"><span class="step-num">04</span>Learning &amp; career guidance</div><div class="stack-row"><span class="step-num">05</span>Internship / job matching</div><div class="stack-row"><span class="step-num">06</span>Industry collaboration ↕</div></div></div></section>
@@ -223,6 +233,8 @@
 				skills: 'My Skills',
 				opportunities: 'Opportunities',
 				applications: 'Applications',
+				'csr-opportunities': 'CSR Opportunities',
+				'csr-applications': 'My CSR Applications',
 				interviews: 'Interviews',
 				offers: 'Offers',
 				internships: 'Internships',
@@ -238,6 +250,11 @@
 				candidates: 'Candidates',
 				analytics: 'Analytics',
 				applications: 'Applications',
+				'csr-programs': 'CSR Programs',
+				'csr-create': 'Create CSR Program',
+				'csr-applications': 'CSR Applications',
+				'csr-participants': 'CSR Participants',
+				'csr-analytics': 'CSR Impact',
 				shortlist: 'Shortlist',
 				interviews: 'Interviews',
 				messages: 'Messages',
@@ -277,7 +294,6 @@
 			const description = `${title} is not available for this route.`;
 			return `<div class="app">${sidebar(role)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" onclick="toggleSidebar()">☰</button><h2>${title}</h2></div><div class="topbar-right"><span style="font-size:20px;color:#71829a">◌</span><div class="avatar">${data[role==='student'?'student':role==='industry'?'company':'institution'].initials}</div></div></header><div class="placeholder"><div class="placeholder-card"><div class="icon-box">✦</div><h1>${title}</h1><p>${description}<br><span class="prototype-note">This is a Day 1 prototype screen.</span></p><a class="btn btn-primary" href="#/${role}/dashboard">← Back to Dashboard</a></div></div></main></div>`
 		}
-
 		function sidebar(role) {
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const hidden = ['settings', 'career-path', 'applications', 'programs', 'post-opportunity'];
@@ -1483,6 +1499,7 @@
 			assessment: null,
 			mockInterviews: [],
 			mockInterviewSession: null,
+			csr: { programs: [], applications: [] },
 			companyWorkspaces: {},
 			institutionWorkspaces: {},
 			ecosystem: { opportunities: [], applications: [], interviews: [], offers: [], internships: [], placements: [], notifications: [] }
@@ -1852,7 +1869,7 @@
 			try {
 				const saved = JSON.parse(localStorage.getItem(STATE_KEY));
 				if (!saved) return clone(defaultState);
-				const loaded = { ...clone(defaultState), ...saved, student: { ...defaultState.student, ...saved.student }, company: { ...defaultState.company, ...saved.company }, institution: { ...defaultState.institution, ...saved.institution }, settings: { ...defaultState.settings, ...saved.settings }, ecosystem: { ...defaultState.ecosystem, ...saved.ecosystem, opportunities: saved.ecosystem?.opportunities || [], applications: saved.ecosystem?.applications || [], interviews: saved.ecosystem?.interviews || [], offers: saved.ecosystem?.offers || [], internships: saved.ecosystem?.internships || [], placements: saved.ecosystem?.placements || [], notifications: saved.ecosystem?.notifications || [] } };
+				const loaded = { ...clone(defaultState), ...saved, student: { ...defaultState.student, ...saved.student }, company: { ...defaultState.company, ...saved.company }, institution: { ...defaultState.institution, ...saved.institution }, settings: { ...defaultState.settings, ...saved.settings }, csr: { ...defaultState.csr, ...saved.csr, programs: saved.csr?.programs || [], applications: saved.csr?.applications || [] }, ecosystem: { ...defaultState.ecosystem, ...saved.ecosystem, opportunities: saved.ecosystem?.opportunities || [], applications: saved.ecosystem?.applications || [], interviews: saved.ecosystem?.interviews || [], offers: saved.ecosystem?.offers || [], internships: saved.ecosystem?.internships || [], placements: saved.ecosystem?.placements || [], notifications: saved.ecosystem?.notifications || [] } };
 				loaded.opportunities = (loaded.opportunities || []).filter((item) => !String(item.id || '').startsWith('seed-') && item.title !== 'Software Developer Intern' && item.title !== 'Frontend Developer Intern' && item.title !== 'Data Analyst Intern');
 				loaded.applications = (loaded.applications || []).filter((item) => !String(item.id || '').startsWith('seed-'));
 				loaded.partnerships = (loaded.partnerships || []).filter((item) => !String(item.id || '').startsWith('seed-'));
@@ -1930,6 +1947,10 @@
 			if (!ecosystem.applications.some((item) => item.applicationId === demoApplicationId)) ecosystem.applications.push({ applicationId: demoApplicationId, id: demoApplicationId, opportunityId: frontendOpportunityId, opportunity: 'Frontend Developer Intern', company: 'TechNova Solutions', companyId: demoCompany.id, institutionId: demoInstitution.id, studentId: demoStudent.id, studentName: 'Demo Student', status: 'Applied', stage: 'Applied', match: 90, applied: '2026-08-20', demoData: true });
 			const demoApplication = ecosystem.applications.find((item) => item.applicationId === demoApplicationId);
 			if (!companyWorkspace.applications.some((item) => item.applicationId === demoApplicationId)) companyWorkspace.applications.push(clone(demoApplication));
+			const demoCsrProgramId = 'demo-csr-python-development';
+			const csr = csrData();
+			if (!csr.programs.some((program) => program.id === demoCsrProgramId)) csr.programs.push({ id: demoCsrProgramId, companyId: demoCompany.id, companyName: demoCompany.profile.name, title: 'Python Skill Development Program', description: 'A company-sponsored program helping students build practical Python, SQL, and data-analysis skills.', objectives: 'Build job-ready foundations through guided training and projects.', category: 'Skill Development', skills: 'Python, SQL, Data Analysis', targetStudents: 25, trainingHours: 40, duration: '8 weeks', startDate: '2026-10-01', endDate: '2026-11-26', mode: 'Online', location: 'Online', eligibility: 'Computer science students or equivalent', benefits: 'Free training, mentorship, certificate, and consideration for internship opportunities.', sponsoredCourse: 'Python Foundations', scholarshipAmount: 0, internshipOpportunity: true, jobOpportunity: false, certificateAvailable: true, deadline: '2026-09-30', status: 'Published', createdAt: '2026-08-20T00:00:00.000Z', updatedAt: '2026-08-20T00:00:00.000Z', demoData: true });
+			if (!csr.applications.some((application) => application.id === 'demo-csr-application-python')) csr.applications.push({ id: 'demo-csr-application-python', programId: demoCsrProgramId, companyId: demoCompany.id, companyName: demoCompany.profile.name, institutionId: demoInstitution.id, studentId: demoStudent.id, studentName: demoStudent.profile.name, course: demoStudent.profile.course, skills: studentSkills.map((skill) => `${skill.name} ${skill.score}%`).join(' · '), assessmentCount: studentAssessments.length, status: 'Selected', appliedAt: '2026-08-20T00:00:00.000Z', demoData: true });
 			if (!institutionWorkspace.students.some((student) => student.studentId === demoStudent.id)) institutionWorkspace.students.push({ studentId: demoStudent.id, name: 'Demo Student', email: 'student@skillaura.demo', college: 'SkillAura Demo University', course: 'Computer Science and Engineering', year: '3rd Year', workspace: clone(demoStudent.workspace), demoAccount: true });
 			if (!institutionWorkspace.internships.some((item) => item.applicationId === demoApplicationId)) institutionWorkspace.internships.push({ id: 'demo-internship-frontend', applicationId: demoApplicationId, studentId: demoStudent.id, companyId: demoCompany.id, institutionId: demoInstitution.id, title: 'Frontend Developer Intern', company: 'TechNova Solutions', status: 'Application in progress', demoData: true });
 			saveCompanyWorkspace(companyWorkspace);
@@ -1955,6 +1976,17 @@
 		function personFor(role) { const normalized = normalizeRole(role); if (normalized === 'company') return state.company; if (normalized === 'institution') return state.institution; if (normalized === 'tutor') return currentTutorAccount()?.profile || { name: 'Tutor', initials: 'TU', role: 'tutor' }; return state.student; }
 		function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
 		function go(route) { location.hash = route.startsWith('#') ? route : `#${route}`; }
+		const EXAM_PORTAL_URL = '/Exam%20Potral/index.html';
+		async function openExamPortal() {
+			try {
+				const response = await fetch(EXAM_PORTAL_URL, { cache: 'no-store' });
+				if (!response.ok) throw new Error('Exam Portal is unavailable.');
+				await response.text();
+				window.location.assign(EXAM_PORTAL_URL);
+			} catch (error) {
+				showToast('Exam Portal is unavailable. Start the SkillBridge server and try again.');
+			}
+		}
 		function opportunityByTitle(title) { return state.opportunities.find((item) => item.title === title); }
 		function appFor(title) { const studentId = studentIdForSession(); return sharedEcosystem().applications.find((item) => item.opportunity === title && item.studentId === studentId); }
 		function addApplication(title) {
@@ -2145,6 +2177,49 @@
 		function companyMessagesPage() { const workspace = companyWorkspaceOrEmpty(); return shell('company', 'Messages', `${pageIntro('Messages', 'Keep candidate conversations in one place.')}${workspace.messages.length ? `<div class="dash-panel">${workspace.messages.map((item) => `<div class="application-row"><div><b>${esc(item.candidateName)}</b><p>${esc(item.text)}</p></div><small>${esc(item.time || '')}</small></div>`).join('')}</div>` : emptyState('No candidate conversations yet.')}`); }
 		function companyAnalyticsPage() { const workspace = companyWorkspaceOrEmpty(); if (!workspace.opportunities.length && !workspace.applications.length) return shell('company', 'Analytics', `${pageIntro('Recruitment Analytics', 'Measure activity across your company workspace.')}${emptyState('Recruitment analytics will appear after your first opportunity receives activity.')}`); const shortlisted = workspace.applications.filter((item) => item.stage === 'Shortlisted').length; const interviews = workspace.interviews.length; const selected = workspace.applications.filter((item) => ['Selected', 'Accepted'].includes(item.stage)).length; const average = workspace.applications.length ? Math.round(workspace.applications.reduce((sum, item) => sum + (item.match || 0), 0) / workspace.applications.length) : 0; return shell('company', 'Analytics', `${pageIntro('Recruitment Analytics', 'Metrics calculated from your stored opportunities and applications.')}<div class="kpis"><div class="kpi"><div class="kpi-top"><span>Applications</span></div><div class="kpi-value">${workspace.applications.length}</div></div><div class="kpi"><div class="kpi-top"><span>Shortlist Rate</span></div><div class="kpi-value">${workspace.applications.length ? Math.round(shortlisted / workspace.applications.length * 100) : 0}%</div></div><div class="kpi"><div class="kpi-top"><span>Interview Rate</span></div><div class="kpi-value">${workspace.applications.length ? Math.round(interviews / workspace.applications.length * 100) : 0}%</div></div><div class="kpi"><div class="kpi-top"><span>Average Skill Match</span></div><div class="kpi-value">${average}%</div></div></div><section class="dash-panel"><div class="metric-row"><span>Selections</span><strong>${selected}</strong></div><div class="metric-row"><span>Published opportunities</span><strong>${workspace.opportunities.filter((item) => item.status === 'Published').length}</strong></div><button class="btn btn-light" data-action="company-export-analytics">Export Report</button></section>`); }
 		function companyNotificationsPage() { const workspace = companyWorkspaceOrEmpty(); return shell('company', 'Notifications', `${pageIntro('Notifications', 'Updates from your recruitment workspace.')}${workspace.notifications.length ? `<div class="dash-panel">${workspace.notifications.map((item) => `<div class="notification-row ${item.read ? '' : 'unread'}"><span>${esc(item.text)}<small>${esc(item.time || '')}</small></span><button class="btn-plain" data-action="company-mark-notification" data-id="${item.id}">Mark read</button></div>`).join('')}</div>` : emptyState('No notifications yet.')}`); }
+		function csrData() { if (!state.csr) state.csr = { programs: [], applications: [] }; return state.csr; }
+		function csrPrograms() { return csrData().programs; }
+		function csrApplications() { return csrData().applications; }
+		function csrProgramById(id) { return csrPrograms().find((program) => program.id === id); }
+		function csrApplicationsFor(programId) { return csrApplications().filter((application) => application.programId === programId); }
+		function csrApplicationFor(programId, studentId = studentIdForSession()) { return csrApplications().find((application) => application.programId === programId && application.studentId === studentId); }
+		function csrStatusTag(status) { return `<span class="tag ${['Published', 'Selected', 'In Progress', 'Completed'].includes(status) ? 'success' : ['Rejected', 'Closed'].includes(status) ? 'warning' : 'blue'}">${esc(status)}</span>`; }
+		function csrDate(value) { return value ? new Date(`${value}T23:59:59`).toLocaleDateString() : 'Not set'; }
+		function csrIsOpen(program) { return program.status === 'Published' && (!program.deadline || new Date(`${program.deadline}T23:59:59`).getTime() >= Date.now()); }
+		function csrSelectedCount(programId) { return csrApplicationsFor(programId).filter((application) => ['Selected', 'In Progress', 'Completed'].includes(application.status)).length; }
+		function csrCompanyPrograms() { const account = currentCompanyAccount(); return csrPrograms().filter((program) => program.companyId === account?.id); }
+		function csrCompanyApplications() { const account = currentCompanyAccount(); return csrApplications().filter((application) => application.companyId === account?.id); }
+		function csrImpactForCompany() {
+			const programs = csrCompanyPrograms();
+			const applications = csrCompanyApplications();
+			const selected = applications.filter((application) => ['Selected', 'In Progress', 'Completed'].includes(application.status));
+			const completed = applications.filter((application) => application.status === 'Completed');
+			return {
+				programs: programs.length,
+				studentsSupported: new Set(selected.map((application) => application.studentId)).size,
+				applications: applications.length,
+				selected: selected.length,
+				completed: completed.length,
+				trainingHours: selected.reduce((total, application) => total + Number(csrProgramById(application.programId)?.trainingHours || 0), 0),
+				certificates: completed.filter((application) => csrProgramById(application.programId)?.certificateAvailable).length,
+				internships: selected.filter((application) => csrProgramById(application.programId)?.internshipOpportunity).length,
+				jobs: selected.filter((application) => csrProgramById(application.programId)?.jobOpportunity).length
+			};
+		}
+		function csrProgramForm(program = {}) {
+			const categories = ['Skill Development', 'Education', 'Scholarship', 'Training', 'Workshop', 'Internship', 'Career Development', 'Digital Literacy', 'Employability', 'Community Development'];
+			return `<form class="dash-panel editable-form" data-form="csr-program"><input type="hidden" name="programId" value="${esc(program.id || '')}"><label>Program Title *</label><input name="title" value="${esc(program.title || '')}" required><label>Program Description *</label><textarea name="description" rows="4" required>${esc(program.description || '')}</textarea><label>Objectives</label><textarea name="objectives" rows="3">${esc(program.objectives || '')}</textarea><div class="form-row"><div><label>CSR Category *</label><select name="category" required>${categories.map((category) => `<option ${program.category === category ? 'selected' : ''}>${category}</option>`).join('')}</select></div><div><label>Skills Covered *</label><input name="skills" value="${esc(program.skills || '')}" placeholder="Python, SQL, Data Analysis" required></div></div><div class="form-row"><div><label>Target Students *</label><input name="targetStudents" type="number" min="1" value="${esc(program.targetStudents || 1)}" required></div><div><label>Training Hours</label><input name="trainingHours" type="number" min="0" value="${esc(program.trainingHours || 0)}"></div></div><div class="form-row"><div><label>Program Duration</label><input name="duration" value="${esc(program.duration || '')}" placeholder="8 weeks"></div><div><label>Mode</label><select name="mode"><option ${program.mode === 'Online' ? 'selected' : ''}>Online</option><option ${program.mode === 'Offline' ? 'selected' : ''}>Offline</option><option ${program.mode === 'Hybrid' ? 'selected' : ''}>Hybrid</option></select></div></div><div class="form-row"><div><label>Start Date</label><input name="startDate" type="date" value="${esc(program.startDate || '')}"></div><div><label>End Date</label><input name="endDate" type="date" value="${esc(program.endDate || '')}"></div></div><label>Location</label><input name="location" value="${esc(program.location || '')}" placeholder="Online or city / campus"><label>Eligibility</label><input name="eligibility" value="${esc(program.eligibility || '')}" placeholder="Students with Python foundations"><label>Benefits</label><input name="benefits" value="${esc(program.benefits || '')}" placeholder="Free training, certificate, mentorship"><div class="form-row"><div><label>Sponsored Course</label><input name="sponsoredCourse" value="${esc(program.sponsoredCourse || '')}"></div><div><label>Scholarship Amount</label><input name="scholarshipAmount" type="number" min="0" value="${esc(program.scholarshipAmount || 0)}"></div></div><div class="form-row"><label><input name="internshipOpportunity" type="checkbox" ${program.internshipOpportunity ? 'checked' : ''}> Internship opportunity</label><label><input name="jobOpportunity" type="checkbox" ${program.jobOpportunity ? 'checked' : ''}> Employment opportunity</label><label><input name="certificateAvailable" type="checkbox" ${program.certificateAvailable !== false ? 'checked' : ''}> Certificate available</label></div><label>Application Deadline</label><input name="deadline" type="date" value="${esc(program.deadline || '')}"><label>Program Status</label><select name="status"><option ${program.status === 'Draft' ? 'selected' : ''}>Draft</option><option ${program.status === 'Published' ? 'selected' : ''}>Published</option></select><div class="card-actions"><button class="btn btn-primary" type="submit">${program.id ? 'Save CSR Program' : 'Create CSR Program'}</button><button class="btn btn-light" type="button" data-action="route" data-route="/company/csr-programs">Cancel</button></div></form>`;
+		}
+		function companyCsrProgramsPage() { const programs = csrCompanyPrograms(); return shell('company', 'CSR Programs', `${pageIntro('Corporate Social Responsibility', 'Create programs that turn company investment into measurable student outcomes.', '<button class="btn btn-primary" data-action="route" data-route="/company/csr-create">＋ Create CSR Program</button>')}${programs.length ? `<div class="dash-panel">${programs.map((program) => `<article class="opportunity-card"><div><span class="tag blue">${esc(program.category)}</span><h3>${esc(program.title)}</h3><p>${esc(program.targetStudents)} target students · ${esc(program.mode)} · Deadline ${esc(csrDate(program.deadline))}</p><small>${csrStatusTag(program.status)} · ${csrApplicationsFor(program.id).length} applications · ${csrSelectedCount(program.id)} selected</small></div><div class="card-actions"><button class="btn btn-light" data-action="view-csr-program" data-id="${esc(program.id)}">View details</button><button class="btn btn-light" data-action="edit-csr-program" data-id="${esc(program.id)}">Edit</button>${program.status === 'Draft' ? `<button class="btn btn-primary" data-action="publish-csr-program" data-id="${esc(program.id)}">Publish</button>` : ''}</div></article>`).join('')}</div>` : emptyState('No CSR programs yet. Create your first program to support students.')}`); }
+		function companyCsrCreatePage() { return shell('company', 'Create CSR Program', `${pageIntro('Create CSR Program', 'Publish a transparent education, training, scholarship, or employability program.')}${csrProgramForm()}`); }
+		function studentCsrOpportunitiesPage() { const programs = csrPrograms().filter((program) => program.status === 'Published'); return shell('student', 'CSR Opportunities', `${pageIntro('CSR Opportunities', 'Discover company-funded programs, scholarships, training, and career opportunities.')}${searchBox('Search program, company, category, or skill')}<div class="form-row" style="margin-top:18px"><select class="page-search" data-action="csr-filter" data-filter="category" aria-label="Filter by CSR category"><option value="">All categories</option>${[...new Set(programs.map((program) => program.category))].map((category) => `<option>${esc(category)}</option>`).join('')}</select><select class="page-search" data-action="csr-filter" data-filter="mode" aria-label="Filter by delivery mode"><option value="">All modes</option><option>Online</option><option>Offline</option><option>Hybrid</option></select></div><div class="dash-panel" style="margin-top:18px" id="csr-results">${programs.length ? programs.map((program) => csrStudentProgramCard(program)).join('') : emptyState('No CSR programs are published yet.')}</div>`); }
+		function csrStudentProgramCard(program) { const application = csrApplicationFor(program.id); const available = Math.max(0, Number(program.targetStudents || 0) - csrSelectedCount(program.id)); const open = csrIsOpen(program) && available > 0; return `<article class="opportunity-card" data-searchable="${esc(`${program.title} ${program.companyName} ${program.category} ${program.skills} ${program.mode}`)}" data-csr-category="${esc(program.category)}" data-csr-mode="${esc(program.mode)}"><div><span class="tag blue">${esc(program.category)}</span><h3>${esc(program.title)}</h3><p>Sponsored by ${esc(program.companyName)} · ${esc(program.duration || 'Duration not set')} · ${esc(program.mode)}</p><small>${esc(program.skills)}<br>${available} seats · Deadline ${esc(csrDate(program.deadline))}<br>${esc(program.benefits || 'Program benefits provided by the company.')}</small></div><div class="card-actions"><button class="btn btn-light" data-action="view-csr-program" data-id="${esc(program.id)}">View Details</button><button class="btn btn-primary" data-action="apply-csr" data-id="${esc(program.id)}" ${application || !open ? 'disabled' : ''}>${application ? `Applied · ${esc(application.status)}` : open ? 'Apply Now' : 'Closed'}</button></div></article>`; }
+		function studentCsrApplicationsPage() { const applications = csrApplications().filter((application) => application.studentId === studentIdForSession()); return shell('student', 'My CSR Applications', `${pageIntro('My CSR Applications', 'Track your applications, selections, participation, and completions.')}${applications.length ? `<div class="dash-panel">${applications.map((application) => { const program = csrProgramById(application.programId); return `<div class="application-row"><div><b>${esc(program?.title || 'CSR Program')}</b><p>${esc(program?.companyName || application.companyName)} · Applied ${esc(application.appliedAt.slice(0, 10))}</p></div>${csrStatusTag(application.status)}</div>`; }).join('')}</div>` : emptyState('No CSR applications yet. Explore CSR Opportunities to get started.')}`); }
+		function companyCsrApplicationsPage() { const applications = csrCompanyApplications(); return shell('company', 'CSR Applications', `${pageIntro('CSR Applications', 'Review students who applied to your CSR programs.')}${applications.length ? `<div class="dash-panel">${applications.map((application) => { const program = csrProgramById(application.programId); return `<div class="application-row"><div><b>${esc(application.studentName)}</b><p>${esc(program?.title || 'CSR Program')} · ${esc(application.course || 'Course not provided')} · Applied ${esc(application.appliedAt.slice(0, 10))}</p><small>${esc(application.skills || 'No verified skills')} · ${application.assessmentCount || 0} assessments</small></div><div class="card-actions">${csrStatusTag(application.status)}<button class="btn btn-light" data-action="view-csr-student" data-id="${esc(application.id)}">View Student</button>${application.status === 'Applied' || application.status === 'Under Review' ? `<button class="btn btn-primary" data-action="select-csr-student" data-id="${esc(application.id)}">Select</button><button class="btn btn-light" data-action="reject-csr-student" data-id="${esc(application.id)}">Reject</button>` : ''}${application.status === 'In Progress' ? `<button class="btn btn-light" data-action="complete-csr-student" data-id="${esc(application.id)}">Mark Completed</button>` : ''}</div></div>`; }).join('')}</div>` : emptyState('No CSR applications received yet.')}`); }
+		function companyCsrParticipantsPage() { const participants = csrCompanyApplications().filter((application) => ['Selected', 'In Progress', 'Completed'].includes(application.status)); return shell('company', 'CSR Participants', `${pageIntro('CSR Participants', 'Track selected students through participation and completion.')}${participants.length ? `<div class="dash-panel">${participants.map((application) => { const program = csrProgramById(application.programId); return `<div class="application-row"><div><b>${esc(application.studentName)}</b><p>${esc(program?.title || 'CSR Program')} · ${esc(application.course || 'Course not provided')}</p></div><div class="card-actions">${csrStatusTag(application.status)}${application.status === 'Selected' ? `<button class="btn btn-primary" data-action="start-csr-participation" data-id="${esc(application.id)}">Start Participation</button>` : ''}${application.status === 'In Progress' ? `<button class="btn btn-light" data-action="complete-csr-student" data-id="${esc(application.id)}">Mark Completed</button>` : ''}</div></div>`; }).join('')}</div>` : emptyState('No selected CSR participants yet.')}`); }
+		function companyCsrAnalyticsPage() { const impact = csrImpactForCompany(); const programs = csrCompanyPrograms(); return shell('company', 'CSR Impact', `${pageIntro('CSR Impact Analytics', 'All metrics are calculated from your stored CSR programs and application outcomes.') }<div class="kpis">${[['Programs Conducted', impact.programs], ['Students Supported', impact.studentsSupported], ['Applications Received', impact.applications], ['Students Selected', impact.selected], ['Students Completed', impact.completed], ['Training Hours', impact.trainingHours], ['Certificates Issued', impact.certificates], ['Internships Provided', impact.internships], ['Jobs Created', impact.jobs]].map(([label, value]) => `<div class="kpi"><div class="kpi-top"><span>${label}</span><span class="kpi-icon">◉</span></div><div class="kpi-value">${value}</div></div>`).join('')}</div>${programs.length ? `<section class="dash-panel"><div class="panel-head"><h3>Program-level impact</h3></div>${programs.map((program) => { const apps = csrApplicationsFor(program.id); return `<div class="metric-row"><span>${esc(program.title)}<small>${esc(program.companyName)} · ${apps.length} applications</small></span><strong>${csrSelectedCount(program.id)} selected · ${apps.filter((item) => item.status === 'Completed').length} completed</strong></div>`; }).join('')}</section>` : emptyState('CSR impact will appear after you create a program.')}`); }
+		function csrCompanyDashboardMarkup() { const impact = csrImpactForCompany(); return `<section class="dash-panel"><div class="panel-head"><div><h3>Corporate Social Responsibility</h3><p class="muted">Support students through skills, scholarships, training, and career access.</p></div><div class="card-actions"><button class="btn btn-primary" data-action="route" data-route="/company/csr-create">＋ Create CSR Program</button><button class="btn btn-light" data-action="route" data-route="/company/csr-analytics">View Impact</button></div></div><div class="metric-row"><span>Programs · Students supported · Applications</span><strong>${impact.programs} · ${impact.studentsSupported} · ${impact.applications}</strong></div></section>`; }
+		function csrProgramDetails(program) { const application = csrApplicationFor(program.id); const available = Math.max(0, Number(program.targetStudents || 0) - csrSelectedCount(program.id)); const canApply = normalizeRole(currentAuthSession()?.role) === 'student' && csrIsOpen(program) && available > 0 && !application; return `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close CSR program details">×</button><span class="tag blue">${esc(program.category)}</span><h2>${esc(program.title)}</h2><p><b>Company:</b> ${esc(program.companyName)}</p><p>${esc(program.description)}</p><p><b>Objectives:</b> ${esc(program.objectives || 'Not specified')}<br><b>Skills:</b> ${esc(program.skills)}<br><b>Eligibility:</b> ${esc(program.eligibility || 'Open to eligible students')}<br><b>Duration:</b> ${esc(program.duration || 'Not specified')}<br><b>Dates:</b> ${esc(csrDate(program.startDate))} to ${esc(csrDate(program.endDate))}<br><b>Mode:</b> ${esc(program.mode)} · ${esc(program.location || 'Flexible')}<br><b>Benefits:</b> ${esc(program.benefits || 'Not specified')}<br><b>Seats:</b> ${available} available of ${esc(program.targetStudents)}<br><b>Application deadline:</b> ${esc(csrDate(program.deadline))}<br><b>Certificate:</b> ${program.certificateAvailable ? 'Available' : 'Not offered'}${program.internshipOpportunity ? '<br><b>Internship:</b> Available for selected participants' : ''}${program.jobOpportunity ? '<br><b>Employment:</b> Opportunity available for selected participants' : ''}</p>${application ? `<p>${csrStatusTag(application.status)} You already applied to this program.</p>` : `<button class="btn btn-primary" data-action="apply-csr" data-id="${esc(program.id)}" ${canApply ? '' : 'disabled'}>${canApply ? 'Apply Now' : csrIsOpen(program) ? available ? 'Sign in as Student to Apply' : 'Seats Filled' : 'Applications Closed'}</button>`}</div></div>`; }
 		function institutionWorkspaceOrEmpty() { return currentInstitutionWorkspace() || { institutionId: '', students: [], programs: [], internships: [], collaborations: [], notifications: [], reports: [], admins: [], settings: {}, onboarding: { status: 'Pending', completed: false } }; }
 		function institutionStudents() { const workspace = institutionWorkspaceOrEmpty(); const account = currentInstitutionAccount(); const institutionName = account?.profile?.name || state.institution.name; const linked = loadStudentAccounts().filter((student) => student.profile?.college === institutionName); return [...workspace.students, ...linked.filter((student) => !workspace.students.some((item) => item.studentId === student.id)).map((student) => ({ studentId: student.id, ...student.profile, workspace: student.workspace || {} }))]; }
 		function institutionStudentStats() { const students = institutionStudents(); const assessed = students.filter((student) => (student.workspace?.assessments || student.assessments || []).length); const verified = students.filter((student) => (student.workspace?.skills || student.skills || []).some((skill) => skill.status === 'Verified' || (skill.score || 0) >= WEAK_THRESHOLD)); return { students, assessed, verified }; }
@@ -2170,7 +2245,7 @@
 			const visibility = type === 'password' ? `<button class="password-toggle" type="button" data-action="toggle-password" data-target="${name}" aria-label="Show ${label}" aria-pressed="false">Show</button>` : '';
 			return `<div class="auth-field"><label for="${name}">${label}${optional ? ' <span>(optional)</span>' : ' <b aria-hidden="true">*</b>'}</label><div class="input-wrap"><input id="${name}" name="${name}" type="${type}" placeholder="${placeholder}" autocomplete="${autocomplete}" ${optional ? '' : 'required'}>${visibility}</div></div>`;
 		}
-		function authPage(type) {
+			function authPage(type) {
 			const register = type === 'register';
 			const loginFields = `${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'current-password' })}`;
 			const registerFields = `${authInput('Full Name', 'name', { placeholder: 'Your full name', autocomplete: 'name' })}${authInput('Email', 'email', { type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })}${authInput('Password', 'password', { type: 'password', autocomplete: 'new-password' })}${authInput('Confirm Password', 'confirmPassword', { type: 'password', autocomplete: 'new-password' })}${authInput('College / University', 'college', { placeholder: 'Your institution', autocomplete: 'organization' })}${authInput('Course', 'course', { placeholder: 'e.g. B.Tech Computer Science' })}<div class="auth-field"><label for="year">Year of Study <b aria-hidden="true">*</b></label><select id="year" name="year" required><option value="">Select your year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Graduate</option></select></div>${authInput('Phone Number', 'phone', { type: 'tel', placeholder: '+91 98765 43210', autocomplete: 'tel', optional: true })}`;
@@ -2336,6 +2411,32 @@
 			if (action === 'tutor-publish-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (course) { course.status = 'Published'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course published.'); renderFunctional(); } return; }
 			if (action === 'tutor-delete-course') { const account = currentTutorAccount(); if (!account || !confirm('Delete this course?')) return; account.courses = (account.courses || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course deleted.'); renderFunctional(); return; }
 			if (action === 'logout') { clearStudentSession(); state.activeRole = null; saveState(); go('/login'); return; }
+			if (action === 'start-assignment') { openExamPortal(); return; }
+			if (action === 'view-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (program) document.body.insertAdjacentHTML('beforeend', csrProgramDetails(program)); return; }
+			if (action === 'edit-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (!program || program.companyId !== currentCompanyAccount()?.id) return; app.innerHTML = shell('company', 'Edit CSR Program', `${pageIntro('Edit CSR Program', 'Update your company-owned CSR program.')}${csrProgramForm(program)}`); bindFunctionalEvents(); bindThemeToggle(); return; }
+			if (action === 'publish-csr-program') { const program = csrProgramById(sourceEvent.currentTarget.dataset.id); if (!program || program.companyId !== currentCompanyAccount()?.id) return; program.status = 'Published'; saveState(); showToast('CSR program published.'); renderFunctional(); return; }
+			if (action === 'apply-csr') {
+				const program = csrProgramById(sourceEvent.currentTarget.dataset.id);
+				const session = currentStudentSession();
+				if (!session?.loggedIn || normalizeRole(session.role) !== 'student' || !currentStudentAccount()) return showToast('Sign in as a Student/Employee to apply.');
+				if (!program || !csrIsOpen(program)) return showToast('Applications for this CSR program are closed.');
+				if (csrApplicationFor(program.id)) return showToast('You have already applied to this CSR program.');
+				if (csrSelectedCount(program.id) >= Number(program.targetStudents || 0)) return showToast('All seats for this CSR program are filled.');
+				const account = currentStudentAccount();
+				const application = { id: `csr-application-${Date.now()}`, programId: program.id, companyId: program.companyId, companyName: program.companyName, studentId: account.id, studentName: account.profile?.name || account.fullName || 'Student', course: account.profile?.course || account.course || '', skills: (account.workspace?.skills || []).map((skill) => `${skill.name} ${skill.score || 0}%`).join(' · '), assessmentCount: account.workspace?.assessments?.length || 0, status: 'Applied', appliedAt: new Date().toISOString() };
+				csrApplications().unshift(application); saveState(); addEcosystemNotification('company', program.companyId, `${application.studentName} applied for ${program.title}.`, '/company/csr-applications'); showToast('CSR application submitted.'); renderFunctional(); return;
+			}
+			if (action === 'select-csr-student' || action === 'reject-csr-student' || action === 'complete-csr-student') {
+				const application = csrApplications().find((item) => item.id === sourceEvent.currentTarget.dataset.id);
+				if (!application || application.companyId !== currentCompanyAccount()?.id) return;
+				const program = csrProgramById(application.programId);
+				if (action === 'select-csr-student' && csrSelectedCount(application.programId) >= Number(program?.targetStudents || 0)) return showToast('The program has no remaining seats.');
+				application.status = action === 'select-csr-student' ? 'Selected' : action === 'reject-csr-student' ? 'Rejected' : 'Completed';
+				saveState(); addEcosystemNotification('student', application.studentId, `Your application for ${program?.title || 'the CSR program'} is ${application.status.toLowerCase()}.`, '/student/csr-applications'); showToast(`CSR application ${application.status.toLowerCase()}.`); renderFunctional(); return;
+			}
+			if (action === 'start-csr-participation') { const application = csrApplications().find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!application || application.companyId !== currentCompanyAccount()?.id || application.status !== 'Selected') return; application.status = 'In Progress'; saveState(); addEcosystemNotification('student', application.studentId, `You started participation in ${csrProgramById(application.programId)?.title || 'the CSR program'}.`, '/student/csr-applications'); showToast('CSR participation started.'); renderFunctional(); return; }
+			if (action === 'view-csr-student') { const application = csrApplications().find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!application || application.companyId !== currentCompanyAccount()?.id) return; document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close student profile">×</button><h2>${esc(application.studentName)}</h2><p>${esc(application.course || 'Course not provided')}</p><h3>Verified skills</h3><p>${esc(application.skills || 'No verified skills recorded.')}</p><p><b>Assessments:</b> ${application.assessmentCount || 0}<br><b>Applied:</b> ${esc(application.appliedAt.slice(0, 10))}<br><b>Status:</b> ${esc(application.status)}</p></div></div>`); return; }
+			if (action === 'csr-filter') { const filters = [...document.querySelectorAll('[data-action="csr-filter"]')].reduce((result, input) => ({ ...result, [input.dataset.filter]: input.value.toLowerCase() }), {}); const query = document.querySelector('[data-action="filter"]')?.value.toLowerCase() || ''; document.querySelectorAll('#csr-results [data-searchable]').forEach((item) => { item.hidden = Boolean((query && !item.dataset.searchable.toLowerCase().includes(query)) || (filters.category && item.dataset.csrCategory.toLowerCase() !== filters.category) || (filters.mode && item.dataset.csrMode.toLowerCase() !== filters.mode)); }); return; }
 			if (action === 'skip-company-onboarding') { go('/company/dashboard'); return; }
 			if (action === 'skip-institution-onboarding') { go('/institution/dashboard'); return; }
 			if (action === 'institution-preview-profile') { const account = currentInstitutionAccount(); const profile = account?.profile || state.institution; document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" data-action="close-modal"><div class="modal-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()"><button class="modal-close" data-action="close-modal" aria-label="Close profile preview">×</button><span class="tag success">Public Institution Profile</span><h2>${esc(profile.name)}</h2><p>${esc(profile.description || 'Institution description not added yet.')}</p><p><b>Type:</b> ${esc(profile.institutionType || 'Not specified')}<br><b>Affiliation:</b> ${esc(profile.affiliation || 'Not specified')}<br><b>Location:</b> ${esc(profile.location || 'Not specified')}</p></div></div>`); return; }
@@ -2426,17 +2527,30 @@
 			if (description) description.textContent = 'Choose your role, then sign in to your SkillAura workspace.';
 			if (switchText) switchText.innerHTML = 'New to SkillAura? <a href="#/register">Create an account</a>';
 		}
+		function setupRoleDemoButtons() {
+			const roleDemos = [
+				['company', 'Demo Company'],
+				['institution', 'Demo Institution']
+			];
+			roleDemos.forEach(([role, label]) => {
+				const form = document.querySelector(`form[data-form="${role}-login"]`);
+				if (!form || form.querySelector(`[data-demo="${role}"]`)) return;
+				form.querySelector('button[type="submit"]')?.insertAdjacentHTML('afterend', `<div class="divider">or continue as demo</div><div class="demo-grid"><button class="demo-btn" type="button" data-demo="${role}">${label}</button></div>`);
+			});
+		}
 		function bindFunctionalEvents() {
 			setupLoginRoleSelection();
+			setupRoleDemoButtons();
 			if (!document.body.dataset.demoLoginBound) {
 				document.body.addEventListener('click', (event) => {
 					const button = event.target.closest('[data-demo]');
-					if (!button || button.dataset.demo === 'student') return;
-					const role = button.dataset.demo === 'industry' ? 'company' : 'institution';
+					if (!button || !['company', 'institution'].includes(button.dataset.demo)) return;
+					const role = button.dataset.demo;
 					const accounts = role === 'company' ? loadCompanyAccounts() : loadInstitutionAccounts();
 					const account = accounts.find((item) => item.demoAccount);
 					if (role === 'company') startCompanySession(account);
 					else startInstitutionSession(account);
+					go(role === 'company' ? '/company/dashboard' : '/institution/dashboard');
 				}, true);
 				document.body.dataset.demoLoginBound = 'true';
 			}
@@ -2535,6 +2649,7 @@
 			document.querySelectorAll('form[data-form]').forEach((form) => form.addEventListener('submit', (event) => { event.preventDefault(); handleForm(form, event); }));
 			document.querySelectorAll('[data-demo]').forEach((button) => button.addEventListener('click', () => {
 				const demoRole = button.dataset.demo;
+					if (!['student', 'tutor'].includes(demoRole)) return;
 				if (demoRole === 'tutor') {
 					let account = loadTutorAccounts().find((item) => item.email === 'demo@tutor.skillaura');
 					if (!account) {
@@ -2725,6 +2840,20 @@
 			if (form.dataset.form === 'reset-password') { const accountId = localStorage.getItem(RESET_CANDIDATE_KEY); const accounts = loadStudentAccounts(); const index = accounts.findIndex((account) => account.id === accountId); if (index < 0) return go('/forgot-password'); if ((values.password || '').length < 8) return showFieldError(form, 'password', 'Use at least 8 characters.'); if (values.password !== values.confirmPassword) return showFieldError(form, 'confirmPassword', 'Passwords do not match.'); accounts[index].passwordHash = prototypeHash(values.password); saveStudentAccounts(accounts); localStorage.removeItem(RESET_CANDIDATE_KEY); showToast('Password updated. You can now log in.'); go('/login'); return; }
 			if (form.dataset.form === 'profile') { const normalizedRole = normalizeRole(form.dataset.role); const person = personFor(normalizedRole); person.name = values.name; person.email = values.email; if (normalizedRole === 'student') { person.college = values.details; person.title = `Welcome, ${(values.name || '').trim().split(/\s+/)[0] || 'Student'}`; const account = currentStudentAccount(); if (account) { account.profile = { ...account.profile, name: person.name, email: person.email, college: person.college, title: person.title }; saveStudentAccounts(loadStudentAccounts().map((item) => item.id === account.id ? account : item)); } } else if (normalizedRole === 'company') person.industryType = values.details; else person.institutionType = values.details; const session = currentAuthSession(); if (session) persistAuthSession({ ...session, name: person.name, email: person.email }); saveState(); notify('Profile changes saved.'); showToast('Profile changes saved.'); return; }
 			if (form.dataset.form === 'settings') { state.settings = { emailUpdates: form.elements.emailUpdates.checked, profileVisibility: form.elements.profileVisibility.checked, compactView: form.elements.compactView.checked }; saveState(); notify('Settings saved.'); showToast('Settings saved.'); return; }
+			if (form.dataset.form === 'csr-program') {
+				const account = currentCompanyAccount();
+				if (!account || normalizeRole(currentAuthSession()?.role) !== 'company') return go('/company/login');
+				if (!values.title?.trim()) return showFieldError(form, 'title', 'Enter a program title.');
+				if (!values.description?.trim()) return showFieldError(form, 'description', 'Add a program description.');
+				if (!values.skills?.trim()) return showFieldError(form, 'skills', 'Add at least one skill.');
+				if (values.startDate && values.endDate && values.endDate < values.startDate) return showFormError(form, 'End date must be on or after the start date.');
+				if (values.deadline && new Date(`${values.deadline}T23:59:59`).getTime() < Date.now() && values.status === 'Published') return showFormError(form, 'A published program must have an open application deadline.');
+				const existing = values.programId ? csrProgramById(values.programId) : null;
+				if (existing && existing.companyId !== account.id) return showFormError(form, 'You can only edit your own CSR programs.');
+				const program = { id: existing?.id || `csr-program-${Date.now()}`, companyId: account.id, companyName: account.profile?.name || account.name || 'Company', title: values.title.trim(), description: values.description.trim(), objectives: values.objectives?.trim() || '', category: values.category, skills: normalizeSkillList(values.skills).join(', '), targetStudents: Math.max(1, Number(values.targetStudents) || 1), trainingHours: Math.max(0, Number(values.trainingHours) || 0), duration: values.duration?.trim() || '', startDate: values.startDate || '', endDate: values.endDate || '', mode: values.mode || 'Online', location: values.location?.trim() || '', eligibility: values.eligibility?.trim() || '', benefits: values.benefits?.trim() || '', sponsoredCourse: values.sponsoredCourse?.trim() || '', scholarshipAmount: Math.max(0, Number(values.scholarshipAmount) || 0), internshipOpportunity: Boolean(values.internshipOpportunity), jobOpportunity: Boolean(values.jobOpportunity), certificateAvailable: Boolean(values.certificateAvailable), deadline: values.deadline || '', status: values.status || 'Draft', createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+				if (existing) Object.assign(existing, program); else csrPrograms().unshift(program);
+				saveState(); showToast(existing ? 'CSR program updated.' : 'CSR program saved.'); go('/company/csr-programs'); return;
+			}
 			if (form.dataset.form === 'opportunity') { if (!values.title || !values.company || !values.location || !values.skills || !values.description || !values.duration || !values.deadline) return showFormError(form, 'Complete all required opportunity fields.'); state.opportunities.unshift({ title: values.title, company: values.company, location: values.location, type: values.type, skills: values.skills, description: values.description, duration: values.duration, deadline: values.deadline, match: 'New' }); saveState(); notify(`Opportunity posted: ${values.title}.`); showToast('Opportunity posted successfully.'); go('/company/opportunities'); return; }
 			if (form.dataset.form === 'assessment') { const score = ['q1', 'q2', 'q3'].reduce((total, key) => total + (values[key] === '1' ? 1 : 0), 0); state.assessment = { score, completed: new Date().toISOString() }; const git = state.skills.find((skill) => skill.name === 'Git'); if (git) { git.score = Math.min(100, git.score + score * 5); git.status = score > 1 ? 'Verified' : git.status; } saveState(); notify('Assessment completed.'); showToast(`Assessment complete: ${score}/3 correct.`); renderFunctional(); return; }
 		}
@@ -2950,6 +3079,13 @@
 			}
 			document.body.classList.add('home-page');
 			enhanceHomePage(landingRoot);
+			const mobileMenu = landingRoot.querySelector('.mobile-menu');
+			if (mobileMenu) {
+				mobileMenu.onclick = () => setMobileNavState(mobileMenu.getAttribute('aria-expanded') !== 'true');
+				landingRoot.querySelectorAll('.navlinks a').forEach((link) => {
+					link.onclick = () => setMobileNavState(false);
+				});
+			}
 			window.__skillAuraScrollFrame = null;
 			window.__skillAuraScrollHandler = () => {
 					if (window.__skillAuraScrollFrame) return;
@@ -3013,7 +3149,7 @@
 				return;
 			}
 			teardownLandingExperience();
-			const match = path.match(/^\/(student|tutor|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports)$/);
+			const match = path.match(/^\/(student|tutor|company|industry|institution)\/(dashboard|profile|skills|opportunities|applications|shortlist|interviews|offers|messages|notifications|settings|candidates|analytics|partnerships|career-path|post-opportunity|programs|onboarding|assessment|skill-profile|skill-gaps|learning-recommendations|students|assessments|learning|internships|placements|industry|faculty|reports|csr-opportunities|csr-applications|csr-programs|csr-create|csr-participants|csr-analytics)$/);
 			const session = currentStudentSession();
 			if (path.startsWith('/employee/')) { go(path.replace('/employee/', '/student/')); return; }
 			if (path === '/role-selection' && session?.loggedIn) { go(dashboardRouteForRole(session.role)); return; }
@@ -3045,6 +3181,13 @@
 			else if (path === '/forgot-password') app.innerHTML = portalRecoveryPage('student');
 			else if (path === '/reset-password') app.innerHTML = recoveryPage(true);
 			else if (path === '/role-selection') app.innerHTML = roleSelection();
+			else if (path === '/student/csr-opportunities') app.innerHTML = studentCsrOpportunitiesPage();
+			else if (path === '/student/csr-applications') app.innerHTML = studentCsrApplicationsPage();
+			else if (path === '/company/csr-programs') app.innerHTML = companyCsrProgramsPage();
+			else if (path === '/company/csr-create') app.innerHTML = companyCsrCreatePage();
+			else if (path === '/company/csr-applications') app.innerHTML = companyCsrApplicationsPage();
+			else if (path === '/company/csr-participants') app.innerHTML = companyCsrParticipantsPage();
+			else if (path === '/company/csr-analytics') app.innerHTML = companyCsrAnalyticsPage();
 			else if (match) { const [, role, section] = match; const normalizedRole = normalizeRole(role); const pages = { dashboard: normalizedRole === 'student' ? studentDashboardPage : normalizedRole === 'company' ? companyDashboardPage : institutionDashboardPage, profile: normalizedRole === 'company' ? companyProfilePage : normalizedRole === 'institution' ? institutionProfilePage : () => profilePage(normalizedRole), skills: normalizedRole === 'student' ? skillsPage : normalizedRole === 'institution' ? institutionSkillsAnalyticsPage : institutionSkillsPage, opportunities: normalizedRole === 'company' ? companyOpportunitiesPage : () => opportunitiesPage(normalizedRole), applications: normalizedRole === 'student' ? studentApplicationsPage : normalizedRole === 'company' ? companyApplicationsPage : () => applicationsPage(normalizedRole), shortlist: companyShortlistPage, interviews: normalizedRole === 'student' ? studentInterviewsPage : companyInterviewsPage, offers: studentOffersPage, messages: companyMessagesPage, notifications: normalizedRole === 'student' ? studentNotificationsPage : normalizedRole === 'institution' ? institutionNotificationsPage : companyNotificationsPage, settings: normalizedRole === 'institution' ? institutionSettingsPage : () => settingsPage(normalizedRole), 'career-path': careerPage, candidates: companyCandidatesPage, analytics: normalizedRole === 'company' ? companyAnalyticsPage : normalizedRole === 'institution' ? institutionAnalyticsPage : () => analyticsPage(normalizedRole), partnerships: normalizedRole === 'institution' ? institutionPartnershipsPage : partnershipsPage, 'post-opportunity': normalizedRole === 'company' ? companyOpportunityFormPage : postOpportunityPage, programs: programsPage, onboarding: normalizedRole === 'company' ? companyOnboardingPage : normalizedRole === 'institution' ? institutionOnboardingPage : onboardingPage, assessment: normalizedRole === 'student' ? assessmentPage : institutionAssessmentsPage, 'skill-profile': skillProfilePage, 'skill-gaps': normalizedRole === 'institution' ? institutionSkillGapsPage : skillGapsPage, 'learning-recommendations': learningRecommendationsPage, students: institutionStudentsPage, assessments: institutionAssessmentsPage, learning: institutionLearningPage, internships: normalizedRole === 'student' ? studentInternshipsPage : institutionInternshipsPage, placements: normalizedRole === 'student' ? studentPlacementsPage : institutionPlacementsPage, industry: institutionIndustryPage, faculty: institutionFacultyPage, reports: institutionReportsPage }; app.innerHTML = pages[section] ? pages[section]() : notFound(); }
 			else app.innerHTML = notFound();
 			if (path.startsWith('/tutor/')) {
@@ -3057,7 +3200,11 @@
 				const submit = app.querySelector('form[data-form="register"] button[type="submit"]');
 				if (submit) submit.textContent = 'Create Account';
 			}
-			if (path === '/student/dashboard') document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', mockInterviewDashboardMarkup());
+			if (path === '/student/dashboard') {
+				document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', '<button class="btn btn-primary" data-action="start-assignment" style="margin:0 0 18px">Start Assignment</button>');
+				document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', mockInterviewDashboardMarkup());
+			}
+			if (path === '/company/dashboard') document.querySelector('.dash-content')?.insertAdjacentHTML('beforeend', csrCompanyDashboardMarkup());
 			bindFunctionalEvents();
 			setupLandingExperience();
 			setupPageMotion();

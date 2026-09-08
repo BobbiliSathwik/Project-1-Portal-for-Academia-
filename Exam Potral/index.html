@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Exam Test Portal</title>
+    <title>SkillBridge Exam Portal</title>
     <style>
         :root {
             color-scheme: light;
@@ -210,14 +210,14 @@
 </head>
 <body>
     <header class="site-header">
-        <h1 class="site-title">AI Exam Test Portal</h1>
-        <p class="student-name">Student: Alex Johnson</p>
+        <h1 class="site-title">SkillBridge Exam Portal</h1>
+        <p id="studentName" class="student-name">Student/Employee</p>
     </header>
 
     <main>
         <section id="dashboardScreen" class="page" aria-labelledby="dashboardHeading">
-            <h2 id="dashboardHeading" class="welcome-heading">Welcome, Alex Johnson</h2>
-            <p class="intro-text">Your exam is ready when you are.</p>
+            <h2 id="dashboardHeading" class="welcome-heading">Welcome to the SkillBridge Exam Portal</h2>
+            <p class="intro-text">Continue with your existing SkillBridge session to start the assignment.</p>
 
             <article class="exam-card">
                 <h2>AI Practice Examination</h2>
@@ -228,7 +228,7 @@
                     </div>
                     <div class="exam-detail">
                         <dt>Questions</dt>
-                        <dd>20</dd>
+                        <dd>5</dd>
                     </div>
                     <div class="exam-detail">
                         <dt>Duration</dt>
@@ -239,50 +239,93 @@
                         <dd>Available</dd>
                     </div>
                 </dl>
-                <button id="startExamButton" class="button" type="button">Start Exam</button>
+                <button id="startExamButton" class="button" type="button">Start Assignment</button>
             </article>
         </section>
 
         <section id="examPortalScreen" class="page hidden" aria-labelledby="portalHeading">
             <button id="backToDashboardButton" class="button back-button" type="button">← Back to Dashboard</button>
             <h2 id="portalHeading" class="portal-heading">Exam Portal</h2>
-            <p class="portal-description">Your friend's exam portal will be inserted here.</p>
+            <p class="portal-description">Answer each question, then submit to save your result to your SkillBridge workspace.</p>
 
             <div id="examPortalContainer">
-                <!--
-                ==================================================
-                FRIEND'S EXAM PORTAL CODE
-                ==================================================
-
-                PASTE / INTEGRATE THE EXISTING EXAM PORTAL CODE
-                INSIDE THIS CONTAINER.
-
-                DO NOT MODIFY THE DASHBOARD CODE ABOVE.
-
-                ==================================================
-                -->
                 <div class="placeholder-content">
-                    <strong>FRIEND'S EXAM PORTAL GOES HERE</strong>
-                    Replace this placeholder with the existing exam portal code.
+                    <strong>Loading assignment...</strong>
                 </div>
             </div>
         </section>
     </main>
 
     <script>
+        const STATE_KEY = 'skillaura-prototype-state';
+        const SESSION_KEYS = ['skillaura-current-user', 'skillaura_current_user'];
+        const questions = [
+            { text: 'Which practice most directly improves code quality?', options: ['Skipping tests', 'Code review', 'Removing documentation', 'Avoiding version control'], answer: 1 },
+            { text: 'What does SQL primarily help you do?', options: ['Style a page', 'Query structured data', 'Compile images', 'Design a logo'], answer: 1 },
+            { text: 'Which Git action records staged changes?', options: ['git commit', 'git status', 'git branch', 'git diff'], answer: 0 },
+            { text: 'What is a strong first step when debugging?', options: ['Guess randomly', 'Reproduce the issue', 'Delete the feature', 'Ignore the error'], answer: 1 },
+            { text: 'Which principle helps make a form more accessible?', options: ['Unlabeled inputs', 'Keyboard-only interaction', 'Low contrast text', 'Tiny controls'], answer: 1 }
+        ];
         const dashboardScreen = document.getElementById("dashboardScreen");
         const examPortalScreen = document.getElementById("examPortalScreen");
+        const examPortalContainer = document.getElementById("examPortalContainer");
         const startExamButton = document.getElementById("startExamButton");
         const backToDashboardButton = document.getElementById("backToDashboardButton");
+        const studentName = document.getElementById("studentName");
+
+        function readSession() {
+            for (const key of SESSION_KEYS) {
+                try {
+                    const session = JSON.parse(localStorage.getItem(key) || 'null');
+                    if (session?.loggedIn) return session;
+                } catch (error) {}
+            }
+            return null;
+        }
+
+        function saveResult(result) {
+            let state = {};
+            try { state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}') || {}; } catch (error) {}
+            state.examResults = Array.isArray(state.examResults) ? state.examResults : [];
+            state.examResults.unshift(result);
+            localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        }
+
+        function renderExam() {
+            examPortalContainer.innerHTML = `<form id="examForm" class="exam-card" style="max-width:none"><h2>SkillBridge Assignment</h2>${questions.map((question, index) => `<fieldset style="border:0;border-bottom:1px solid #edf5f5;padding:0 0 20px;margin:0 0 20px"><legend style="font-weight:600;margin-bottom:12px">${index + 1}. ${question.text}</legend>${question.options.map((option, optionIndex) => `<label style="display:block;padding:8px 0"><input type="radio" name="question-${index}" value="${optionIndex}"> ${option}</label>`).join('')}</fieldset>`).join('')}<button class="button" type="submit">Submit Assignment</button><p id="examError" class="placeholder-content" hidden></p></form>`;
+            document.getElementById('examForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const answers = questions.map((question, index) => Number(form.elements[`question-${index}`].value));
+                if (answers.some((answer) => Number.isNaN(answer))) {
+                    const error = document.getElementById('examError');
+                    error.hidden = false;
+                    error.textContent = 'Please answer every question before submitting.';
+                    return;
+                }
+                const correct = answers.reduce((total, answer, index) => total + (answer === questions[index].answer ? 1 : 0), 0);
+                const session = readSession();
+                const result = { id: `exam-${Date.now()}`, title: 'SkillBridge Assignment', score: Math.round((correct / questions.length) * 100), correct, total: questions.length, studentId: session?.userId || session?.id || null, studentName: session?.name || 'Student/Employee', completedAt: new Date().toISOString() };
+                saveResult(result);
+                examPortalContainer.innerHTML = `<div class="placeholder-content"><strong>Assignment submitted</strong>Your result is saved in your SkillBridge workspace: ${result.score}% (${result.correct}/${result.total}).<br><br><button id="returnToDashboardButton" class="button" type="button">Return to SkillBridge Dashboard</button></div>`;
+                document.getElementById('returnToDashboardButton').addEventListener('click', showDashboard);
+            });
+        }
 
         function showExamPortal() {
             dashboardScreen.classList.add("hidden");
             examPortalScreen.classList.remove("hidden");
+            const session = readSession();
+            if (!session) {
+                examPortalContainer.innerHTML = '<div class="placeholder-content"><strong>Sign in to continue</strong>Your SkillBridge session could not be found. <a href="/#/login">Return to SkillBridge login</a>.</div>';
+                return;
+            }
+            studentName.textContent = `Student/Employee: ${session.name || session.email || 'User'}`;
+            renderExam();
         }
 
         function showDashboard() {
-            examPortalScreen.classList.add("hidden");
-            dashboardScreen.classList.remove("hidden");
+            window.location.assign('/#/student/dashboard');
         }
 
         startExamButton.addEventListener("click", showExamPortal);
