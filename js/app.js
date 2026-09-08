@@ -295,7 +295,8 @@
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const hidden = ['settings', 'career-path', 'applications', 'programs', 'post-opportunity'];
 			const items = Object.entries(dashboardRoutes[role]).filter(([key]) => !hidden.includes(key));
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${items.map(([key,label])=>`<a class="${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key]||'◉'}</span><span class="side-label">${label}</span></a>`).join('')}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()" title="Settings" data-tooltip="Settings"><span class="side-icon" aria-hidden="true">⚙</span><span class="side-label">Settings</span></a><button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" onclick="location.hash='#/'" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`
+			const navigation = role === 'student' ? studentSidebarNavigation(current) : items.map(([key,label]) => `<a class="side-nav ${key===current?'active':''}" href="#/${role}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key]||'◉'}</span><span class="side-label">${label}</span></a>`).join('');
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${navigation}</nav><div class="side-spacer"></div><a class="side-nav ${current==='settings'?'active':''}" href="#/${role}/settings" onclick="closeSidebar()" title="Settings" data-tooltip="Settings"><span class="side-icon" aria-hidden="true">⚙</span><span class="side-label">Settings</span></a><button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" onclick="location.hash='#/'" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`
 		}
 
 		function dash(role) {
@@ -325,6 +326,16 @@
 
 		function closeSidebar() {
 			document.getElementById('sidebar')?.classList.remove('open');
+		}
+		function studentSidebarNavigation(current) {
+			const profileItems = [['profile', 'Profile Overview', '◉'], ['skills', 'My Skills', '✦'], ['assessment', 'My Assessments', '✓'], ['interviews', 'Interviews', '◷']];
+			const csrItems = [['csr-opportunities', 'CSR Opportunities', '♡'], ['csr-applications', 'My CSR Applications', '▤']];
+			const profileOpen = profileItems.some(([key]) => key === current);
+			const csrOpen = csrItems.some(([key]) => key === current);
+			const childLinks = (items) => items.map(([key, label, icon]) => `<a class="side-subitem ${key === current ? 'active' : ''}" href="#/student/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span></a>`).join('');
+			const parent = (key, label, icon, open, items) => `<div class="side-group ${open ? 'submenu-open' : ''}"><button class="side-parent" type="button" data-action="sidebar-submenu" data-submenu="${key}" aria-expanded="${open}" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span><span class="side-chevron" aria-hidden="true">⌄</span></button><div class="side-submenu">${childLinks(items)}</div></div>`;
+			const link = (key, label, icon) => `<a class="side-nav ${key === current ? 'active' : ''}" href="#/student/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icon}</span><span class="side-label">${label}</span></a>`;
+			return `${link('dashboard', 'Dashboard', '⌂')}${parent('profile', 'My Profile', '◉', profileOpen, profileItems)}${link('opportunities', 'Opportunities', '▣')}${link('applications', 'Applications', '▤')}${parent('csr', 'CSR', '♡', csrOpen, csrItems)}${link('internships', 'Internships', '◈')}${link('placements', 'Placements', '↗')}${link('career-path', 'Career Path', '◎')}`;
 		}
 
 		const SIDEBAR_PIN_KEY = 'skillaura-sidebar-pinned';
@@ -2037,7 +2048,8 @@
 			const routeRole = normalizedRole;
 			const current = location.hash.slice(1).split('/')[2] || 'dashboard';
 			const routes = dashboardRoutes[routeRole] || dashboardRoutes.company || {};
-			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${Object.entries(routes).map(([key, label]) => `<a class="${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key] || '◉'}</span><span class="side-label">${label}</span></a>`).join('')}</nav><div class="side-spacer"></div><button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" data-action="logout" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`;
+			const navigation = routeRole === 'student' ? studentSidebarNavigation(current) : Object.entries(routes).map(([key, label]) => `<a class="side-nav ${key === current ? 'active' : ''}" href="#/${routeRole}/${key}" onclick="closeSidebar()" title="${label}" data-tooltip="${label}"><span class="side-icon" aria-hidden="true">${icons[key] || '◉'}</span><span class="side-label">${label}</span></a>`).join('');
+			return `<aside class="sidebar" id="sidebar"><div class="side-brand">${brand()}</div><nav class="side-nav" aria-label="Workspace navigation">${navigation}</nav><div class="side-spacer"></div>${routeRole === 'student' ? `<a class="side-nav ${current === 'settings' ? 'active' : ''}" href="#/${routeRole}/settings" onclick="closeSidebar()" title="Settings" data-tooltip="Settings"><span class="side-icon" aria-hidden="true">⚙</span><span class="side-label">Settings</span></a>` : ''}<button class="side-pin" data-action="sidebar-pin" type="button" aria-pressed="false" aria-label="Pin sidebar" title="Pin sidebar">⌖</button><button class="logout" data-action="logout" title="Logout" data-tooltip="Logout"><span class="side-icon" aria-hidden="true">↪</span><span class="side-label">Logout</span></button></aside>`;
 		}
 		function globalSearchMarkup() { return `<div class="global-search" data-search-root><div class="global-search-input-wrap"><span class="global-search-icon" aria-hidden="true">⌕</span><input class="search" data-global-search-input type="search" placeholder="Search anything" aria-label="Search anything" aria-controls="global-search-results" autocomplete="off"><kbd>⌘ K</kbd><button class="global-search-clear" data-action="clear-global-search" type="button" aria-label="Clear search" hidden>×</button></div><div class="global-search-results" id="global-search-results" role="listbox" hidden></div></div>`; }
 		function shell(role, title, content) {
@@ -2045,7 +2057,8 @@
 			const person = personFor(normalizedRole);
 			const unread = state.notifications.filter((item) => !item.read).length + currentEcosystemNotifications().filter((item) => !item.read).length;
 			const demoTag = person.demoAccount ? '<span class="tag blue">Demo Account</span>' : '';
-			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right">${globalSearchMarkup()}${demoTag}<button class="notification-button" data-action="notifications" aria-label="Notifications">◌${unread ? `<sup>${unread}</sup>` : ''}</button><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></div></header><div class="dash-content">${content}</div></main></div>`;
+			const profileRoute = `#/${normalizedRole}/profile`;
+			return `<div class="app">${functionalSidebar(normalizedRole)}<main class="main"><header class="topbar"><div style="display:flex;align-items:center"><button class="mobile-dash-menu hidden" data-action="toggle-sidebar">☰</button><h2>${esc(title)}</h2></div><div class="topbar-right">${globalSearchMarkup()}${demoTag}<button class="notification-button${unread ? ' has-unread' : ''}" data-action="notifications" aria-label="Notifications${unread ? `, ${unread} unread` : ''}">◌${unread ? `<sup>${unread}</sup>` : ''}</button><a class="profile-header" href="${profileRoute}" aria-label="Open ${esc(person.name)} profile"><div class="avatar">${esc(person.initials)}</div><div class="user-meta">${esc(person.name)}<span>${roleLabel(normalizedRole)}</span></div></a></div></header><div class="dash-content">${content}</div></main></div>`;
 		}
 		function pageIntro(title, text, action = '') { return `<div class="dash-intro"><div><h1>${esc(title)}</h1><p>${esc(text)}</p></div>${action}</div>`; }
 		function searchBox(placeholder = 'Search this workspace') { return `<input class="page-search" data-action="filter" placeholder="⌕  ${placeholder}" aria-label="${placeholder}">`; }
@@ -2437,6 +2450,12 @@
 			}).join('')}</div></section>`);
 		}
 		function navigateFromAction(action, sourceEvent) {
+			if (action === 'sidebar-submenu') {
+				const group = sourceEvent.currentTarget.closest('.side-group');
+				const expanded = group.classList.toggle('submenu-open');
+				sourceEvent.currentTarget.setAttribute('aria-expanded', String(expanded));
+				return;
+			}
 			if (action === 'sidebar-pin') { setSidebarPinned(!isSidebarPinned()); return; }
 			if (action === 'tutor-add-question') { document.querySelector('[data-tutor-questions]')?.insertAdjacentHTML('beforeend', tutorExamQuestion()); bindFunctionalEvents(); return; }
 			if (action === 'tutor-remove-question') { const questions = document.querySelectorAll('[data-tutor-questions] .tutor-question'); if (questions.length > 1) sourceEvent.currentTarget.closest('.tutor-question')?.remove(); return; }
@@ -3043,8 +3062,12 @@
 			let devicePixelRatio = 1;
 			let pointerActive = false;
 			let animationFrame = null;
-			let lastSpawnX = target.x;
-			let lastSpawnY = target.y;
+			let lastPointerX = target.x;
+			let lastPointerY = target.y;
+			let lastPointerTime = 0;
+			let lastDirectionX = 0;
+			let lastDirectionY = 0;
+			let movementBudget = 0;
 			const resize = () => {
 				devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 				canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
@@ -3054,11 +3077,11 @@
 				context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
 			};
 			const isInteractive = (element) => element instanceof Element && Boolean(element.closest('a, button, input, select, textarea, summary, [role="button"], [data-action]'));
-			const spawn = (x, y) => {
-				if (reducedMotion || particles.length >= 36) return;
+			const spawn = (x, y, intensity = .35, burst = false) => {
+				if (reducedMotion || particles.length >= 64) return;
 				const angle = Math.random() * Math.PI * 2;
-				const distance = 4 + Math.random() * 7;
-				particles.push({ x, y, vx: Math.cos(angle) * distance, vy: Math.sin(angle) * distance, size: 1 + Math.random() * 1.5, life: 1, decay: .045 + Math.random() * .025 });
+				const distance = 3 + intensity * 5 + Math.random() * 6;
+				particles.push({ x: x + Math.cos(angle) * Math.random() * 3, y: y + Math.sin(angle) * Math.random() * 3, vx: Math.cos(angle) * distance, vy: Math.sin(angle) * distance, size: .8 + intensity * 1.7 + Math.random() * 1.8 + (burst ? .7 : 0), life: 1, decay: .035 + Math.random() * .028, alpha: .35 + intensity * .45 + Math.random() * .2 });
 			};
 			const animate = () => {
 				animationFrame = null;
@@ -3074,7 +3097,7 @@
 					particle.vy *= .94;
 					particle.life -= particle.decay;
 					context.beginPath();
-					context.fillStyle = `rgba(94, 234, 212, ${Math.max(0, particle.life * .7)})`;
+					context.fillStyle = `rgba(94, 234, 212, ${Math.max(0, particle.life * particle.alpha)})`;
 					context.shadowBlur = 8;
 					context.shadowColor = 'rgba(79, 209, 197, .55)';
 					context.arc(particle.x, particle.y, Math.max(.1, particle.size * particle.life), 0, Math.PI * 2);
@@ -3082,10 +3105,26 @@
 				});
 				context.shadowBlur = 0;
 				for (let index = particles.length - 1; index >= 0; index -= 1) if (particles[index].life <= 0) particles.splice(index, 1);
-				if ((!reducedMotion && pointerActive) || particles.length) animationFrame = requestAnimationFrame(animate);
+				if (particles.length) animationFrame = requestAnimationFrame(animate);
 			};
 			const schedule = () => { if (!animationFrame) animationFrame = requestAnimationFrame(animate); };
 			const pointerMove = (event) => {
+				const now = performance.now();
+				const deltaTime = Math.max(8, now - (lastPointerTime || now - 16.67));
+				const deltaX = event.clientX - lastPointerX;
+				const deltaY = event.clientY - lastPointerY;
+				const distance = Math.hypot(deltaX, deltaY);
+				const speed = Math.min(1, distance / deltaTime / 1.15);
+				const directionX = distance ? deltaX / distance : 0;
+				const directionY = distance ? deltaY / distance : 0;
+				const reversal = lastDirectionX * directionX + lastDirectionY * directionY < -.45;
+				lastPointerX = event.clientX;
+				lastPointerY = event.clientY;
+				lastPointerTime = now;
+				if (distance) {
+					lastDirectionX = directionX;
+					lastDirectionY = directionY;
+				}
 				target.x = event.clientX;
 				target.y = event.clientY;
 				dot.classList.toggle('is-hovering', isInteractive(event.target));
@@ -3097,11 +3136,16 @@
 					dot.style.top = `${current.y}px`;
 					return;
 				}
-				const distance = Math.hypot(target.x - lastSpawnX, target.y - lastSpawnY);
-				if (distance > 7) {
-					spawn(target.x, target.y);
-					lastSpawnX = target.x;
-					lastSpawnY = target.y;
+				if (distance > 2) {
+					const distanceFactor = Math.min(1, distance / 120);
+					const speedFactor = Math.min(1, speed);
+					const reversalBonus = reversal ? Math.min(2, distance / 45) : 0;
+					movementBudget += distance / 12 * (.35 + speedFactor * .9) + reversalBonus;
+					const particleCount = Math.min(12, Math.floor(movementBudget));
+					movementBudget -= particleCount;
+					for (let index = 0; index < particleCount && particles.length < 64; index += 1) {
+						spawn(event.clientX, event.clientY, .25 + distanceFactor * .75, reversal && index === particleCount - 1);
+					}
 				}
 				schedule();
 			};
@@ -3185,6 +3229,19 @@
 		function enhanceHomePage(landingRoot) {
 			if (landingRoot.querySelector('.home-stats')) return;
 			landingRoot.querySelector('.cta')?.insertAdjacentHTML('beforebegin', homeEnhancementsMarkup());
+			const finalCtaButton = landingRoot.querySelector('.home-final-cta a[href="#/student/opportunities"]');
+			if (finalCtaButton) {
+				finalCtaButton.textContent = 'Go to Top ↑';
+				finalCtaButton.removeAttribute('href');
+				finalCtaButton.setAttribute('role', 'button');
+				finalCtaButton.onclick = (event) => {
+					event.preventDefault();
+					window.scrollTo({ top: 0, behavior: 'smooth' });
+				};
+			}
+			landingRoot.querySelector('#roles')?.remove();
+			landingRoot.querySelector('#home-opportunities')?.remove();
+			landingRoot.querySelectorAll('.navlinks a[href="#roles"]').forEach((link) => link.remove());
 			const existingEcosystem = landingRoot.querySelector('#home-ecosystem');
 			if (existingEcosystem) {
 				const template = document.createElement('template');
