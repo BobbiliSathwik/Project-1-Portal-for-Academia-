@@ -4,6 +4,7 @@
   "description": "Online examination platform",
   "main": "server.js",
   "scripts": {
+    "prestart": "node create-admin.js",
     "start": "node server.js",
     "reset-exams": "node reset-exams.js",
     "test:integration": "node --test tests/integration.test.js",
