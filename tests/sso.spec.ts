@@ -31,6 +31,24 @@ async function enterExamPortal(role: keyof typeof users) {
 }
 
 test.describe('SkillAura to Exam Portal SSO', () => {
+  test('Student Start Assignment uses the shared SSO launch request', async ({ page }) => {
+    await page.goto('/#/login');
+    await page.getByRole('button', { name: 'Demo Student' }).click();
+    await expect(page).toHaveURL(/#\/student\/dashboard/);
+    const launchRequest = page.waitForRequest((request) => request.url().includes('/api/auth/exam-launch') && request.method() === 'POST');
+    await page.getByRole('button', { name: 'Start Assignment' }).click();
+    expect((await launchRequest).postData()).toBe('{}');
+  });
+
+  test('Tutor Take Exam uses the shared SSO launch request', async ({ page }) => {
+    await page.goto('/#/login');
+    await page.getByRole('button', { name: 'Demo Tutor' }).click();
+    await expect(page).toHaveURL(/#\/tutor\/dashboard/);
+    const launchRequest = page.waitForRequest((request) => request.url().includes('/api/auth/exam-launch') && request.method() === 'POST');
+    await page.getByRole('button', { name: 'Take Exam' }).click();
+    expect((await launchRequest).postData()).toBe('{}');
+  });
+
   test('authenticated Student can start SSO and receives a normal student session', async () => {
     const { examPortal } = await enterExamPortal('student');
     const profile = await examPortal.get('/api/student/profile');

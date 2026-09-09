@@ -2044,7 +2044,7 @@
 		function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
 		function go(route) { location.hash = route.startsWith('#') ? route : `#${route}`; }
 		const EXAM_PORTAL_URL = '/Exam%20Potral/index.html';
-		async function openExamPortal() {
+		async function openExamPortal(fallback) {
 			try {
 				const response = await fetch(skillAuraApiUrl('/api/auth/exam-launch'), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 				if (response.ok) {
@@ -2052,9 +2052,10 @@
 					if (typeof payload.launchUrl === 'string') { window.location.assign(payload.launchUrl); return; }
 				}
 				if (response.status === 401 || response.status === 403) { showToast('Sign in to SkillAura before starting an exam.'); return; }
-				const fallback = await fetch(EXAM_PORTAL_URL, { cache: 'no-store' });
-				if (!fallback.ok) throw new Error('Exam Portal is unavailable.');
-				await fallback.text();
+				if (fallback) { fallback(); return; }
+				const fallbackResponse = await fetch(EXAM_PORTAL_URL, { cache: 'no-store' });
+				if (!fallbackResponse.ok) throw new Error('Exam Portal is unavailable.');
+				await fallbackResponse.text();
 				window.location.assign(EXAM_PORTAL_URL);
 			} catch (error) {
 				showToast('Exam Portal is unavailable. Start the SkillBridge server and try again.');
@@ -2589,7 +2590,7 @@
 			if (action === 'tutor-publish-exam' || action === 'tutor-unpublish-exam') { const account = currentTutorAccount(); const exam = account?.exams?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (!account || !exam) return; exam.status = action === 'tutor-publish-exam' ? 'Published' : 'Draft'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast(action === 'tutor-publish-exam' ? 'Exam published.' : 'Exam unpublished.'); renderFunctional(); return; }
 			if (action === 'tutor-delete-exam') { const account = currentTutorAccount(); if (!account || !confirm('Delete this exam?')) return; account.exams = (account.exams || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Exam deleted.'); renderFunctional(); return; }
 			if (action === 'tutor-focus-course') { document.querySelector('[data-form="tutor-course"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.querySelector('[data-form="tutor-course"] input[name="title"]')?.focus(); return; }
-			if (action === 'tutor-take-exam') { document.body.insertAdjacentHTML('beforeend', tutorTakeExamPanel()); return; }
+			if (action === 'tutor-take-exam') { openExamPortal(() => { document.body.insertAdjacentHTML('beforeend', tutorTakeExamPanel()); }); return; }
 			if (action === 'tutor-start-exam') { state.tutorExamSession = { examId: sourceEvent.currentTarget.dataset.id, index: 0, answers: [] }; refreshTutorTakeExamPanel(); return; }
 			if (action === 'tutor-next-exam' || action === 'tutor-submit-exam') {
 				const choice = document.querySelector('input[name="tutor-exam-answer"]:checked');
