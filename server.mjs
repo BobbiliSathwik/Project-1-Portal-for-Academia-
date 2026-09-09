@@ -17,6 +17,7 @@ const ssoSharedSecret = process.env.SSO_SHARED_SECRET || '';
 const allowedAuthOrigins = new Set([
   'https://bobbilisathwik.github.io',
   'https://project-1-portal-for-academia.onrender.com',
+  'https://skillaura-main.onrender.com',
   'http://localhost:4173',
   'http://127.0.0.1:4173'
 ]);
