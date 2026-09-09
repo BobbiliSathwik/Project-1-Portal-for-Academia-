@@ -16,6 +16,7 @@ const examPortalBaseUrl = process.env.EXAM_PORTAL_BASE_URL || 'http://localhost:
 const ssoSharedSecret = process.env.SSO_SHARED_SECRET || '';
 const allowedAuthOrigins = new Set([
   'https://bobbilisathwik.github.io',
+  'https://project-1-portal-for-academia.onrender.com',
   'http://localhost:4173',
   'http://127.0.0.1:4173'
 ]);

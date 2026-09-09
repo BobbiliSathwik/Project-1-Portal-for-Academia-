@@ -16,7 +16,15 @@ const { OAuth2Client } = require("google-auth-library");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SKILLAURA_BASE_URL = (process.env.SKILLAURA_BASE_URL || "http://localhost:4173").replace(/\/$/, "");
+const normalizeHttpOrigin = (value, fallback) => {
+    const candidate = String(value || fallback).trim();
+    const parsed = new URL(candidate);
+    if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password || parsed.search || parsed.hash) {
+        throw new Error("SKILLAURA_BASE_URL must be a valid HTTP or HTTPS origin.");
+    }
+    return parsed.origin;
+};
+const SKILLAURA_BASE_URL = normalizeHttpOrigin(process.env.SKILLAURA_BASE_URL, "http://localhost:4173");
 const EXAM_PORTAL_BASE_URL = (process.env.EXAM_PORTAL_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
 const SSO_SHARED_SECRET = process.env.SSO_SHARED_SECRET || "";
 if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
@@ -31,7 +39,7 @@ const sessionSecure = process.env.SESSION_COOKIE_SECURE === "true" || process.en
 // -------------------------
 
 app.use(cors({
-    origin: process.env.SKILLAURA_BASE_URL || false,
+    origin: SKILLAURA_BASE_URL,
     credentials: false
 }));
 app.use(express.json());
