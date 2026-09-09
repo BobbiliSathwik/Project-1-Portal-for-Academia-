@@ -12,8 +12,12 @@ const providerModel = process.env.AI_MODEL || 'gpt-4o-mini';
 const authStorePath = join(root, 'data', 'skillaura-auth-users.json');
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) throw new Error('SESSION_SECRET must be set in the environment.');
+const examPortalBaseUrl = process.env.EXAM_PORTAL_BASE_URL || 'http://localhost:3000';
+const ssoSharedSecret = process.env.SSO_SHARED_SECRET || '';
 const sessionTtlMs = 8 * 60 * 60 * 1000;
 const authSessions = new Map();
+const examLaunches = new Map();
+const examLaunchTtlMs = Number(process.env.SSO_LAUNCH_TTL_MS || 90 * 1000);
 const authAttempts = new Map();
 const authRateLimitWindowMs = 15 * 60 * 1000;
 const authRateLimitMaxAttempts = 8;
@@ -62,6 +66,22 @@ const rateLimitStatus = (key) => {
 };
 const recordAuthAttempt = (key) => authAttempts.set(key, [...(authAttempts.get(key) || []), Date.now()]);
 const clearAuthAttempts = (key) => authAttempts.delete(key);
+const issueExamLaunch = (user) => {
+  const code = randomBytes(32).toString('base64url');
+  examLaunches.set(code, { userId: user.id, expiresAt: Date.now() + examLaunchTtlMs });
+  return code;
+};
+const consumeExamLaunch = (code) => {
+  const launch = examLaunches.get(code);
+  examLaunches.delete(code);
+  if (!launch || launch.expiresAt <= Date.now()) return null;
+  return launch;
+};
+const sameSecret = (request) => {
+  const supplied = request.headers['x-skillaura-sso-secret'];
+  if (!ssoSharedSecret || typeof supplied !== 'string' || supplied.length !== ssoSharedSecret.length) return false;
+  return timingSafeEqual(Buffer.from(supplied), Buffer.from(ssoSharedSecret));
+};
 const validSession = (request) => {
   const value = parseCookies(request).skillaura_session || '';
   const [id, signature] = value.split('.');
@@ -148,8 +168,27 @@ async function handleChat(request, response) {
 }
 
 async function handleAuth(request, response, pathname) {
-  if (['/api/auth/logout', '/api/auth/demo', '/api/auth/login', '/api/auth/register'].includes(pathname) && request.method === 'POST' && !sameOrigin(request)) {
+  if (['/api/auth/logout', '/api/auth/demo', '/api/auth/login', '/api/auth/register', '/api/auth/exam-launch'].includes(pathname) && request.method === 'POST' && !sameOrigin(request)) {
     return sendAuthJson(response, 403, { error: 'Same-origin authentication request required.' });
+  }
+  if (pathname === '/api/auth/exam-launch' && request.method === 'POST') {
+    const user = await authenticatedUser(request);
+    if (!user) return sendAuthJson(response, 401, { error: 'Authentication required.' });
+    if (!['student', 'tutor'].includes(user.role)) return sendAuthJson(response, 403, { error: 'Exam access is unavailable for this account.' });
+    if (!ssoSharedSecret) return sendAuthJson(response, 503, { error: 'Exam access is unavailable.' });
+    const code = issueExamLaunch(user);
+    return sendAuthJson(response, 200, { launchUrl: `${examPortalBaseUrl.replace(/\/$/, '')}/sso/launch?code=${encodeURIComponent(code)}` });
+  }
+  if (pathname === '/api/auth/exam-exchange' && request.method === 'POST') {
+    if (!sameSecret(request)) return sendAuthJson(response, 401, { error: 'Invalid exam launch.' });
+    const body = await readBody(request).catch(() => ({}));
+    const code = typeof body.code === 'string' ? body.code : '';
+    const launch = consumeExamLaunch(code);
+    if (!launch) return sendAuthJson(response, 401, { error: 'Invalid exam launch.' });
+    const store = await readAuthStore();
+    const user = store.users.find((item) => item.id === launch.userId);
+    if (!user || !['student', 'tutor'].includes(user.role)) return sendAuthJson(response, 401, { error: 'Invalid exam launch.' });
+    return sendAuthJson(response, 200, { user: publicAuthUser(user) });
   }
   if (pathname === '/api/auth/me' && request.method === 'GET') {
     const user = await authenticatedUser(request);

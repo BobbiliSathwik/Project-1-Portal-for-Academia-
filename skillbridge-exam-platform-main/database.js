@@ -12,9 +12,12 @@ db.prepare(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'examiner'
+        role TEXT NOT NULL DEFAULT 'examiner',
+        skill_aura_user_id TEXT UNIQUE
     )
 `).run();
+try { db.prepare("ALTER TABLE admins ADD COLUMN skill_aura_user_id TEXT").run(); } catch (e) {}
+db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_skill_aura_user_id ON admins(skill_aura_user_id) WHERE skill_aura_user_id IS NOT NULL").run();
 
 // -------------------------
 // Exams

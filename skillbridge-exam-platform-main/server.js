@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const session = require("express-session");
+const { randomBytes } = require("crypto");
 const svgCaptcha = require("svg-captcha");
 const db = require("./database");
 const cors = require("cors");
@@ -14,18 +15,33 @@ const { OAuth2Client } = require("google-auth-library");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SKILLAURA_BASE_URL = (process.env.SKILLAURA_BASE_URL || "http://localhost:4173").replace(/\/$/, "");
+const EXAM_PORTAL_BASE_URL = (process.env.EXAM_PORTAL_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
+const SSO_SHARED_SECRET = process.env.SSO_SHARED_SECRET || "";
+if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
+    throw new Error("SESSION_SECRET must be set in production.");
+}
+const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString("hex");
 
 // -------------------------
 // Basic server setup
 // -------------------------
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.SKILLAURA_BASE_URL || false,
+    credentials: false
+}));
 app.use(express.json());
 
 app.use(session({
-    secret: "exam-platform-secret",
+    secret: sessionSecret,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production"
+    }
 }));
 
 app.get("/admin.html", (req, res) => {
@@ -389,6 +405,65 @@ app.delete("/api/question-banks/:id", (req, res) => {
 // -------------------------
 const exams = {};
 const attempts = {};
+
+async function exchangeSkillAuraLaunchCode(code) {
+    if (!SSO_SHARED_SECRET || !code) return null;
+    const response = await fetch(`${SKILLAURA_BASE_URL}/api/auth/exam-exchange`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-skillaura-sso-secret": SSO_SHARED_SECRET
+        },
+        body: JSON.stringify({ code }),
+        signal: AbortSignal.timeout(5000)
+    });
+    if (!response.ok) return null;
+    const payload = await response.json().catch(() => ({}));
+    const user = payload.user;
+    if (!user || typeof user.id !== "string" || typeof user.email !== "string" || typeof user.name !== "string") return null;
+    if (!['student', 'tutor'].includes(user.role)) return null;
+    return user;
+}
+
+function findOrCreateSsoStudent(user) {
+    let account = db.prepare("SELECT * FROM admins WHERE skill_aura_user_id = ?").get(user.id);
+    if (!account) account = db.prepare("SELECT * FROM admins WHERE email = ?").get(user.email);
+    if (account && account.role !== "student") return null;
+    if (account) {
+        if (account.skill_aura_user_id && account.skill_aura_user_id !== user.id) return null;
+        db.prepare("UPDATE admins SET skill_aura_user_id = ? WHERE id = ?").run(user.id, account.id);
+        return { ...account, skill_aura_user_id: user.id };
+    }
+    const generatedPassword = bcrypt.hashSync(randomBytes(32).toString("hex"), 10);
+    const result = db.prepare(`
+        INSERT INTO admins (email, password, role, skill_aura_user_id)
+        VALUES (?, ?, 'student', ?)
+    `).run(user.email, generatedPassword, user.id);
+    return db.prepare("SELECT * FROM admins WHERE id = ?").get(result.lastInsertRowid);
+}
+
+app.get("/sso/launch", async (req, res) => {
+    try {
+        const user = await exchangeSkillAuraLaunchCode(typeof req.query.code === "string" ? req.query.code : "");
+        if (!user) return res.status(401).send("Exam launch is invalid or expired.");
+        const account = findOrCreateSsoStudent(user);
+        if (!account) return res.status(403).send("Exam access is unavailable for this account.");
+        req.session.regenerate((regenerateError) => {
+            if (regenerateError) return res.status(500).send("Exam access is temporarily unavailable.");
+            req.session.adminId = account.id;
+            req.session.adminEmail = account.email;
+            req.session.role = "student";
+            req.session.skillAuraUserId = user.id;
+            req.session.save((saveError) => {
+                if (saveError) return res.status(500).send("Exam access is temporarily unavailable.");
+                return res.redirect("/student-portal.html");
+            });
+        });
+    } catch (error) {
+        return res.status(401).send("Exam launch is invalid or expired.");
+    }
+});
+
 app.post("/api/admin/login", (req, res) => {
     const { email, password } = req.body;
 

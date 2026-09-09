@@ -2044,9 +2044,15 @@
 		const EXAM_PORTAL_URL = '/Exam%20Potral/index.html';
 		async function openExamPortal() {
 			try {
-				const response = await fetch(EXAM_PORTAL_URL, { cache: 'no-store' });
-				if (!response.ok) throw new Error('Exam Portal is unavailable.');
-				await response.text();
+				const response = await fetch('/api/auth/exam-launch', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+				if (response.ok) {
+					const payload = await response.json().catch(() => ({}));
+					if (typeof payload.launchUrl === 'string') { window.location.assign(payload.launchUrl); return; }
+				}
+				if (response.status === 401 || response.status === 403) { showToast('Sign in to SkillAura before starting an exam.'); return; }
+				const fallback = await fetch(EXAM_PORTAL_URL, { cache: 'no-store' });
+				if (!fallback.ok) throw new Error('Exam Portal is unavailable.');
+				await fallback.text();
 				window.location.assign(EXAM_PORTAL_URL);
 			} catch (error) {
 				showToast('Exam Portal is unavailable. Start the SkillBridge server and try again.');
