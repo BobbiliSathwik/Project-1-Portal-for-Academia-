@@ -14,6 +14,11 @@ const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) throw new Error('SESSION_SECRET must be set in the environment.');
 const examPortalBaseUrl = process.env.EXAM_PORTAL_BASE_URL || 'http://localhost:3000';
 const ssoSharedSecret = process.env.SSO_SHARED_SECRET || '';
+const allowedAuthOrigins = new Set([
+  'https://bobbilisathwik.github.io',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173'
+]);
 const sessionTtlMs = 8 * 60 * 60 * 1000;
 const authSessions = new Map();
 const examLaunches = new Map();
@@ -49,13 +54,18 @@ const passwordMatches = (password, stored) => {
 const signSessionId = (id) => createHmac('sha256', sessionSecret).update(id).digest('base64url');
 const parseCookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map((part) => part.trim()).filter(Boolean).map((part) => { const index = part.indexOf('='); return [index < 0 ? part : part.slice(0, index), index < 0 ? '' : decodeURIComponent(part.slice(index + 1))]; }));
 const isHttpsRequest = (request) => process.env.NODE_ENV === 'production' || request.socket.encrypted || request.headers['x-forwarded-proto'] === 'https';
-const sessionCookie = (id, maxAge = sessionTtlMs / 1000, request) => `skillaura_session=${encodeURIComponent(`${id}.${signSessionId(id)}`)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${request && isHttpsRequest(request) ? '; Secure' : ''}`;
-const sameOrigin = (request) => {
+const sessionCookie = (id, maxAge = sessionTtlMs / 1000, request) => `${`skillaura_session=${encodeURIComponent(`${id}.${signSessionId(id)}`)}; Path=/; Max-Age=${maxAge}; HttpOnly;`}${request && isHttpsRequest(request) ? ' SameSite=None; Secure' : ' SameSite=Lax'}`;
+const allowedAuthOrigin = (request) => {
   const origin = request.headers.origin;
-  if (!origin || origin === 'null') return false;
-  const protocol = request.headers['x-forwarded-proto'] || (request.socket.encrypted ? 'https' : 'http');
-  const host = request.headers['x-forwarded-host'] || request.headers.host;
-  return origin === `${protocol}://${host}`;
+  return typeof origin === 'string' && allowedAuthOrigins.has(origin);
+};
+const setAuthCorsHeaders = (request, response) => {
+  const origin = request.headers.origin;
+  if (!allowedAuthOrigin(request)) return false;
+  response.setHeader('Access-Control-Allow-Origin', origin);
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  response.setHeader('Vary', 'Origin');
+  return true;
 };
 const authClientKey = (request, email = '') => `${request.socket.remoteAddress || 'unknown'}:${email}`;
 const rateLimitStatus = (key) => {
@@ -168,9 +178,19 @@ async function handleChat(request, response) {
 }
 
 async function handleAuth(request, response, pathname) {
-  if (['/api/auth/logout', '/api/auth/demo', '/api/auth/login', '/api/auth/register', '/api/auth/exam-launch'].includes(pathname) && request.method === 'POST' && !sameOrigin(request)) {
+  const stateChangingAuthPath = ['/api/auth/logout', '/api/auth/demo', '/api/auth/login', '/api/auth/register', '/api/auth/exam-launch'].includes(pathname);
+  if (pathname.startsWith('/api/auth/') && request.method === 'OPTIONS') {
+    if (!setAuthCorsHeaders(request, response)) return sendAuthJson(response, 403, { error: 'Allowed authentication origin required.' });
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    response.writeHead(204);
+    response.end();
+    return true;
+  }
+  if (stateChangingAuthPath && request.method === 'POST' && !setAuthCorsHeaders(request, response)) {
     return sendAuthJson(response, 403, { error: 'Same-origin authentication request required.' });
   }
+  if (pathname.startsWith('/api/auth/')) setAuthCorsHeaders(request, response);
   if (pathname === '/api/auth/exam-launch' && request.method === 'POST') {
     const user = await authenticatedUser(request);
     if (!user) return sendAuthJson(response, 401, { error: 'Authentication required.' });

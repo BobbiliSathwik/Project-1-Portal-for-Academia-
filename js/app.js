@@ -91,6 +91,8 @@
 		};
 		const app = document.getElementById('app');
 		const AI_API_ENDPOINT = '/api/ai/chat';
+		const SKILLAURA_API_BASE_URL = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname) ? '' : 'https://project-1-portal-for-academia.onrender.com';
+		function skillAuraApiUrl(path) { return `${SKILLAURA_API_BASE_URL}${path}`; }
 		const AI_CONFIG = {
 			model: 'gpt-4o-mini',
 			maxOutput: 600,
@@ -2044,7 +2046,7 @@
 		const EXAM_PORTAL_URL = '/Exam%20Potral/index.html';
 		async function openExamPortal() {
 			try {
-				const response = await fetch('/api/auth/exam-launch', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+				const response = await fetch(skillAuraApiUrl('/api/auth/exam-launch'), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 				if (response.ok) {
 					const payload = await response.json().catch(() => ({}));
 					if (typeof payload.launchUrl === 'string') { window.location.assign(payload.launchUrl); return; }
@@ -2609,7 +2611,7 @@
 			if (action === 'tutor-edit-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); const form = document.querySelector('[data-form="tutor-course"]'); if (!course || !form) return; Object.entries(course).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ''; }); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); form.elements.title?.focus(); return; }
 			if (action === 'tutor-publish-course') { const account = currentTutorAccount(); const course = account?.courses?.find((item) => item.id === sourceEvent.currentTarget.dataset.id); if (course) { course.status = 'Published'; saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course published.'); renderFunctional(); } return; }
 			if (action === 'tutor-delete-course') { const account = currentTutorAccount(); if (!account || !confirm('Delete this course?')) return; account.courses = (account.courses || []).filter((item) => item.id !== sourceEvent.currentTarget.dataset.id); saveTutorAccounts(loadTutorAccounts().map((item) => item.id === account.id ? account : item)); showToast('Course deleted.'); renderFunctional(); return; }
-			if (action === 'logout') { fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => { serverAuthSession = null; serverAuthReady = true; clearStudentSession(); state.activeRole = null; saveState(); go('/login'); }); return; }
+			if (action === 'logout') { fetch(skillAuraApiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' }).finally(() => { serverAuthSession = null; serverAuthReady = true; clearStudentSession(); state.activeRole = null; saveState(); go('/login'); }); return; }
 			if (action === 'start-assignment') { openExamPortal(); return; }
 			if (action === 'view-skill') {
 				const skillName = sourceEvent.currentTarget.dataset.skill;
@@ -2885,7 +2887,7 @@
 		}
 		async function serverAuthRequest(path, body) {
 			try {
-				const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+				const response = await fetch(skillAuraApiUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
 				const payload = await response.json().catch(() => ({}));
 				if (!response.ok || !payload.success) { showFormError(document.querySelector('form[data-form]'), payload.error || 'Authentication failed.'); return null; }
 				serverAuthSession = { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true };
@@ -3845,7 +3847,7 @@
 		initializeDemoAccounts();
 		async function bootstrapServerAuth() {
 			try {
-				const response = await fetch('/api/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+				const response = await fetch(skillAuraApiUrl('/api/auth/me'), { credentials: 'include', cache: 'no-store' });
 				const payload = await response.json().catch(() => ({}));
 				serverAuthSession = response.ok && payload.user ? { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true } : null;
 				if (serverAuthSession) persistAuthSession(serverAuthSession);
