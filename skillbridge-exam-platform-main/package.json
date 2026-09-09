@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "reset-exams": "node reset-exams.js"
+    "reset-exams": "node reset-exams.js",
+    "test:integration": "node --test tests/integration.test.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",

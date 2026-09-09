@@ -1,7 +1,8 @@
 const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
+const path = require("path");
 
-const db = new Database("exam-platform.db");
+const db = new Database(process.env.DATABASE_PATH || path.join(__dirname, "exam-platform.db"));
 
 // -------------------------
 // Admins
@@ -18,6 +19,15 @@ db.prepare(`
 `).run();
 try { db.prepare("ALTER TABLE admins ADD COLUMN skill_aura_user_id TEXT").run(); } catch (e) {}
 db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_skill_aura_user_id ON admins(skill_aura_user_id) WHERE skill_aura_user_id IS NOT NULL").run();
+
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS express_sessions (
+        sid TEXT PRIMARY KEY,
+        session TEXT NOT NULL,
+        expires_at INTEGER NOT NULL
+    )
+`).run();
+db.prepare("CREATE INDEX IF NOT EXISTS idx_express_sessions_expires_at ON express_sessions(expires_at)").run();
 
 // -------------------------
 // Exams

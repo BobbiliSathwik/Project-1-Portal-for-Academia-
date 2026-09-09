@@ -4,6 +4,7 @@ const session = require("express-session");
 const { randomBytes } = require("crypto");
 const svgCaptcha = require("svg-captcha");
 const db = require("./database");
+const SQLiteSessionStore = require("./session-store");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
@@ -22,6 +23,8 @@ if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
     throw new Error("SESSION_SECRET must be set in production.");
 }
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString("hex");
+const sessionSameSite = ({ lax: "lax", strict: "strict", none: "none" })[(process.env.SESSION_COOKIE_SAMESITE || "lax").toLowerCase()] || "lax";
+const sessionSecure = process.env.SESSION_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production";
 
 // -------------------------
 // Basic server setup
@@ -34,13 +37,14 @@ app.use(cors({
 app.use(express.json());
 
 app.use(session({
+    store: new SQLiteSessionStore(db),
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production"
+        sameSite: sessionSameSite,
+        secure: sessionSecure
     }
 }));
 
