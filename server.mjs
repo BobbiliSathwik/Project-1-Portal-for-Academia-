@@ -56,13 +56,23 @@ const signSessionId = (id) => createHmac('sha256', sessionSecret).update(id).dig
 const parseCookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map((part) => part.trim()).filter(Boolean).map((part) => { const index = part.indexOf('='); return [index < 0 ? part : part.slice(0, index), index < 0 ? '' : decodeURIComponent(part.slice(index + 1))]; }));
 const isHttpsRequest = (request) => process.env.NODE_ENV === 'production' || request.socket.encrypted || request.headers['x-forwarded-proto'] === 'https';
 const sessionCookie = (id, maxAge = sessionTtlMs / 1000, request) => `${`skillaura_session=${encodeURIComponent(`${id}.${signSessionId(id)}`)}; Path=/; Max-Age=${maxAge}; HttpOnly;`}${request && isHttpsRequest(request) ? ' SameSite=None; Secure' : ' SameSite=Lax'}`;
-const allowedAuthOrigin = (request) => {
+const authRequestOrigin = (request) => {
   const origin = request.headers.origin;
-  return typeof origin === 'string' && allowedAuthOrigins.has(origin);
+  if (typeof origin === 'string') return allowedAuthOrigins.has(origin) ? origin : null;
+  const referer = request.headers.referer;
+  try {
+    const refererOrigin = new URL(referer).origin;
+    return allowedAuthOrigins.has(refererOrigin) ? refererOrigin : null;
+  } catch (error) {
+    return null;
+  }
+};
+const allowedAuthOrigin = (request) => {
+  return Boolean(authRequestOrigin(request));
 };
 const setAuthCorsHeaders = (request, response) => {
-  const origin = request.headers.origin;
-  if (!allowedAuthOrigin(request)) return false;
+  const origin = authRequestOrigin(request);
+  if (!origin) return false;
   response.setHeader('Access-Control-Allow-Origin', origin);
   response.setHeader('Access-Control-Allow-Credentials', 'true');
   response.setHeader('Vary', 'Origin');
