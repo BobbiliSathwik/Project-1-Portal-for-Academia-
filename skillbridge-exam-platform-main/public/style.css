@@ -531,3 +531,21 @@ body:has(#examArea) > .container {
         font-size: 11px;
     }
 }
+
+
+/* Admin-only login navigation */
+.back-to-portal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    color: #a9a4ff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity .2s ease, transform .2s ease;
+}
+.back-to-portal:hover {
+    opacity: .85;
+    transform: translateX(-2px);
+}

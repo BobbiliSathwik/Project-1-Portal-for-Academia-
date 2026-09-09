@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in • SkillBridge</title>
+    <title>Admin Sign in • SkillAura</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="login-page">
@@ -15,7 +15,7 @@
         <div class="visual-content">
             <div class="brand-mark">
                 <div class="brand-symbol">S</div>
-                <span>SkillBridge</span>
+                <span>SkillAura</span>
             </div>
 
             <div class="visual-copy">
@@ -45,21 +45,21 @@
         <div class="login-card">
             <div class="mobile-brand">
                 <div class="brand-symbol">S</div>
-                <span>SkillBridge</span>
+                <span>SkillAura</span>
             </div>
 
             <div class="login-heading">
                 <div class="welcome-pill">Welcome back</div>
-                <h2>Sign in to your account</h2>
-                <p>Use your Student or Examiner ID to continue.</p>
+                <h2>Administrator sign in</h2>
+                <p>Authorized administrators only. Use your admin credentials to continue.</p>
             </div>
 
             <form id="loginForm" class="modern-login-form">
                 <div class="field-group">
-                    <label for="email">Student / Examiner ID</label>
+                    <label for="email">Administrator ID</label>
                     <div class="field-wrap">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/></svg>
-                        <input id="email" type="text" placeholder="Enter your ID" autocomplete="username" required>
+                        <input id="email" type="text" placeholder="Enter administrator ID" autocomplete="username" required>
                     </div>
                 </div>
 
@@ -82,7 +82,7 @@
                 </div>
 
                 <button type="submit" class="login-submit">
-                    <span>Continue to SkillBridge</span>
+                    <span>Continue to Admin Panel</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
                 </button>
 
@@ -93,10 +93,12 @@
                 <p id="error" class="login-error"></p>
             </form>
 
+            <a id="backToPortal" class="back-to-portal" href="http://localhost:4173">← Back to SkillAura Portal</a>
+
             <div class="login-footer">
-                <span>SkillBridge Examination Portal</span>
+                <span>SkillAura Admin Console</span>
                 <span class="footer-separator">•</span>
-                <span>Authorized access only</span>
+                <span>Administrator access only</span>
             </div>
         </div>
     </main>
@@ -104,6 +106,12 @@
 
 <script>
 let failedAttempts = 0;
+const backToPortal = document.getElementById("backToPortal");
+if (backToPortal) {
+    backToPortal.href = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "http://localhost:4173"
+        : "https://project-1-portal-for-academia.onrender.com";
+}
 
 const passwordInput = document.getElementById("password");
 const passwordToggle = document.getElementById("passwordToggle");
@@ -136,12 +144,15 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
         const data = await response.json();
 
-        if (data.success) {
-            if (data.role === "student") {
-                window.location.href = "/student-portal.html";
-            } else if (data.role === "examiner") {
-                window.location.href = "/admin.html";
-            }
+        if (data.success && data.role === "examiner") {
+            window.location.href = "/admin.html";
+            return;
+        }
+
+        if (data.success && data.role !== "examiner") {
+            error.textContent = "This login is restricted to administrators.";
+            submit.querySelector("span").textContent = "Continue to Admin Panel";
+            submit.classList.remove("is-loading");
             return;
         }
 
@@ -153,12 +164,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         }
 
         error.textContent = data.error || "Invalid login. Please check your details.";
-        submit.querySelector("span").textContent = "Continue to SkillBridge";
+        submit.querySelector("span").textContent = "Continue to Admin Panel";
         submit.classList.remove("is-loading");
     } catch (err) {
         console.error(err);
         error.textContent = "Unable to connect. Please try again.";
-        submit.querySelector("span").textContent = "Continue to SkillBridge";
+        submit.querySelector("span").textContent = "Continue to Admin Panel";
         submit.classList.remove("is-loading");
     }
 });

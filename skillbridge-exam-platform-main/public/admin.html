@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>SkillBridge - Examiner Portal</title>
+    <title>SkillAura - Examiner Portal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,7 +13,7 @@
     <aside class="sidebar">
 
         <div class="brand">
-            SkillBridge
+            SkillAura
         </div>
 
         <nav>
@@ -45,12 +45,7 @@
                 🎥 Recordings
             </button>
         </nav>
-
-        <button class="logout" onclick="logout()">
-            🚪 Logout
-        </button>
-
-    </aside>
+</aside>
 
 
     <main class="main-content">
@@ -181,6 +176,14 @@
 
         <br><br>
 
+        <label>Core Knowledge Bank (optional)</label>
+        <br>
+        <select id="coreBankSelect">
+            <option value="">No Core Knowledge Check</option>
+        </select>
+
+        <br><br>
+
         <label>
             Number of Questions
         </label>
@@ -245,6 +248,15 @@
             id="questionBankFile"
             accept=".txt"
         >
+
+        <br><br>
+
+        <label>Bank type</label>
+        <br>
+        <select id="questionBankType">
+            <option value="normal">Normal Skill Questions</option>
+            <option value="core">Core Knowledge Questions (10+ basic questions)</option>
+        </select>
 
         <br><br>
 
@@ -477,7 +489,8 @@ async function createExam() {
                     title,
                     duration,
                     bankId,
-                    questionCount
+                    questionCount,
+                    coreBankId: document.getElementById("coreBankSelect")?.value || null
                 })
             });
 
@@ -690,6 +703,11 @@ async function uploadQuestionBank() {
         file
     );
 
+    formData.append(
+        "bankType",
+        document.getElementById("questionBankType").value
+    );
+
     message.textContent =
         "Uploading...";
 
@@ -761,6 +779,17 @@ async function loadQuestionBanks() {
             return;
         }
 
+        const coreSelect = document.getElementById("coreBankSelect");
+        if (coreSelect) {
+            coreSelect.innerHTML = '<option value="">No Core Knowledge Check</option>';
+            data.banks.filter(bank => bank.bankType === "core").forEach(bank => {
+                const opt = document.createElement("option");
+                opt.value = bank.id;
+                opt.textContent = `${bank.name} (${bank.questionCount} questions)`;
+                coreSelect.appendChild(opt);
+            });
+        }
+
         list.innerHTML = "";
 
         data.banks.forEach(bank => {
@@ -777,7 +806,7 @@ async function loadQuestionBanks() {
 
                     <div>
                         <h3>${bank.name}</h3>
-                        <p>Question Bank</p>
+                        <p>${bank.bankType === "core" ? "⭐ Core Knowledge Bank" : "Question Bank"}</p>
                     </div>
 
                 </div>
@@ -981,15 +1010,6 @@ function drawStudentGraph(points, name) {
   box.innerHTML=`<div class="graph-title"><strong>${escapeHtml(name)}'s progress</strong><span>${points.length} assessment${points.length===1?'':'s'}</span></div><div class="graph-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(name)} performance graph">${grids}<polyline points="${poly}" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>${circles}${labels}</svg></div>`;
 }
 
-async function logout() {
-
-    await fetch("/api/admin/logout", {
-        method: "POST"
-    });
-
-    window.location.href =
-        "/admin-login.html";
-}
 loadQuestionBankOptions();
 loadQuestionBanks();
 loadExams();

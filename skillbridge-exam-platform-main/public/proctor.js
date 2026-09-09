@@ -2,7 +2,7 @@
  * - MediaPipe Face Landmarker runs locally in the browser.
  * - Pre-exam: visual reading calibration (no voice calibration).
  * - During exam: face, multiple-face, gaze/head and optional body checks.
- * - The parent page owns the 3-warning policy and 5-second cooldown.
+ * - The parent page owns the warning policy; proctoring resumes immediately after warnings.
  */
 (() => {
   'use strict';
@@ -14,24 +14,24 @@
     faceModelPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
     poseModelPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
     detectionIntervalMs: 90,
-    noFaceGraceMs: 2400,
-    multipleFaceGraceMs: 650,
-    headAwayGraceMs: 1900,
-    gazeOutsideGraceMs: 1200,
-    bodyMoveGraceMs: 2800,
+    noFaceGraceMs: 4000,
+    multipleFaceGraceMs: 1500,
+    headAwayGraceMs: 2000,
+    gazeOutsideGraceMs: 2000,
+    bodyMoveGraceMs: 4500,
     maxFaces: 4,
     minFaceDetectionConfidence: 0.45,
     minFacePresenceConfidence: 0.45,
     minTrackingConfidence: 0.45,
-    defaultEnvelope: { minX: 0.14, maxX: 0.86, minY: 0.14, maxY: 0.86 },
+    defaultEnvelope: { minX: 0.10, maxX: 0.90, minY: 0.10, maxY: 0.90 },
     calibrationSampleMs: 70,
     calibrationMinSamples: 24,
-    calibrationPadX: 0.12,
-    calibrationPadY: 0.12,
-    bodyCenterDelta: 0.26,
-    bodyScaleDelta: 0.32,
+    calibrationPadX: 0.18,
+    calibrationPadY: 0.18,
+    bodyCenterDelta: 0.32,
+    bodyScaleDelta: 0.38,
     bodyOptional: true,
-    eventCooldownMs: 1400
+    eventCooldownMs: 2200
   };
 
   let FaceLandmarker = null;
@@ -106,9 +106,9 @@
   function gazeFromLandmarks(lm, blend) {
     if (!lm) return null;
 
-    // Primary: MediaPipe eye-look blendshapes. These encode relative eye
-    // direction and are much less sensitive to head position than raw pixel
-    // coordinates.
+    // Use both MediaPipe eye-look blendshapes and iris position.  The two
+    // signals are normalized independently of head pose and combined so a
+    // small amount of noise in either signal does not disable detection.
     const cat = Object.fromEntries((blend || []).map(c => [c.categoryName, Number(c.score) || 0]));
     const outL = cat.eyeLookOutLeft || 0;
     const inL = cat.eyeLookInLeft || 0;
@@ -119,20 +119,14 @@
     const upL = cat.eyeLookUpLeft || 0;
     const upR = cat.eyeLookUpRight || 0;
 
-    const horizSignal = (outL - inL + inR - outR) / 2;
-    const vertSignal = (downL + downR - upL - upR) / 2;
+    // Convert blendshape scores to a signed direction around 0.5.
+    const blendX = clamp(0.5 + ((outL - inL + inR - outR) / 2) * 2.0, 0, 1);
+    const blendY = clamp(0.5 + ((downL + downR - upL - upR) / 2) * 2.0, 0, 1);
     const blendStrength = Math.max(outL, inL, outR, inR, downL, downR, upL, upR);
+    const hasBlend = blendStrength >= 0.035;
 
-    if (blendStrength >= 0.025) {
-      return {
-        x: clamp(0.5 + horizSignal * 2.2, 0, 1),
-        y: clamp(0.5 + vertSignal * 2.2, 0, 1),
-        method: 'blendshapes',
-        strength: blendStrength
-      };
-    }
-
-    // Fallback: iris center inside each eye aperture.
+    // Iris centre relative to each eye's corners/lids. This is the primary
+    // continuous signal because it measures where the iris actually sits.
     const li = avgPoint([468,469,470,471,472], lm);
     const ri = avgPoint([473,474,475,476,477], lm);
     const leftX = ratioX(li, point(33,lm), point(133,lm));
@@ -140,15 +134,24 @@
     const leftY = ratioY(li, point(159,lm), point(145,lm));
     const rightY = ratioY(ri, point(386,lm), point(374,lm));
 
-    if ([leftX,rightX,leftY,rightY].every(Number.isFinite)) {
-      return {
-        x: clamp((leftX + rightX) / 2, 0, 1),
-        y: clamp((leftY + rightY) / 2, 0, 1),
-        method: 'iris',
-        strength: 0
-      };
+    const hasIris = [leftX,rightX,leftY,rightY].every(Number.isFinite);
+    if (!hasIris && !hasBlend) return null;
+
+    let x = hasIris ? (leftX + rightX) / 2 : blendX;
+    let y = hasIris ? (leftY + rightY) / 2 : blendY;
+
+    // Blendshape direction is useful when iris landmarks momentarily jitter.
+    // Give the direct iris measurement more weight when available.
+    if (hasIris && hasBlend) {
+      x = clamp(x * 0.72 + blendX * 0.28, 0, 1);
+      y = clamp(y * 0.72 + blendY * 0.28, 0, 1);
     }
-    return null;
+
+    return {
+      x, y,
+      method: hasIris ? (hasBlend ? 'iris+blendshapes' : 'iris') : 'blendshapes',
+      strength: hasIris ? Math.max(0.25, blendStrength) : blendStrength
+    };
   }
 
   function headOrientation(lm) {
@@ -156,12 +159,44 @@
     if (!nose || !forehead || !chin || !left || !right) return { away: false };
     const x = clamp((nose.x-left.x)/Math.max(right.x-left.x, 1e-5), 0, 1);
     const y = clamp((nose.y-forehead.y)/Math.max(chin.y-forehead.y, 1e-5), 0, 1);
-    return { x, y, away: Math.abs(x - 0.5) > 0.25 || Math.abs(y - 0.5) > 0.24 };
+    return { x, y, away: Math.abs(x - 0.5) > 0.31 || Math.abs(y - 0.5) > 0.30 };
   }
   function insideEnvelope(g) {
     const e = gazeEnvelope || CONFIG.defaultEnvelope;
-    return g.x >= e.minX && g.x <= e.maxX && g.y >= e.minY && g.y <= e.maxY;
+    // Tolerance is 20% of the learned reading-area width/height, not 0.20
+    // absolute coordinate units. An absolute 0.20 margin makes the envelope
+    // cover almost the entire camera and effectively disables eye detection.
+    const tolerance = 0.20;
+    const width = Math.max(e.maxX - e.minX, 0.20);
+    const height = Math.max(e.maxY - e.minY, 0.20);
+    const marginX = width * tolerance;
+    const marginY = height * tolerance;
+    return g.x >= e.minX - marginX && g.x <= e.maxX + marginX &&
+           g.y >= e.minY - marginY && g.y <= e.maxY + marginY;
   }
+
+  // Eye direction is evaluated separately from the calibration envelope.
+  // The envelope describes normal reading movement; direction tells us whether
+  // the eyes have moved far enough away from the screen centre to matter.
+  function gazeDirection(g) {
+    if (!g) return {label:'unknown', away:false, dx:0, dy:0};
+
+    // Smaller tolerance = more sensitive eye movement detection.
+    // 0.10 means about a 10% normalized displacement from screen centre.
+    const toleranceX = 0.10;
+    const toleranceY = 0.10;
+    const dx = g.x - 0.5;
+    const dy = g.y - 0.5;
+
+    if (Math.abs(dx) >= toleranceX || Math.abs(dy) >= toleranceY) {
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        return {label: dx < 0 ? 'left' : 'right', away:true, dx, dy};
+      }
+      return {label: dy < 0 ? 'up' : 'down', away:true, dx, dy};
+    }
+    return {label:'center', away:false, dx, dy};
+  }
+
 
   function processFace(result) {
     if (!running || now() < pausedUntil) return;
@@ -197,17 +232,20 @@
     const head = headOrientation(lm);
 
     if (gaze) {
-      const outside = !insideEnvelope(gaze);
-      if (outside) {
-        status('gaze-away', 'Eyes outside calibrated reading area');
+      const dir = gazeDirection(gaze);
+      if (dir.away) {
+        status('gaze-away', `Eyes looking ${dir.label}`);
         const start = startedAt.gazeOutside;
         if (sustained('gazeOutside', true, CONFIG.gazeOutsideGraceMs)) {
-          emitViolation('gaze_away', { gazeX: Number(gaze.x.toFixed(3)), gazeY: Number(gaze.y.toFixed(3)), durationMs: now()-(start||now()), confidence: 0.84 });
+          emitViolation('gaze_away', { gazeX: Number(gaze.x.toFixed(3)), gazeY: Number(gaze.y.toFixed(3)), direction: dir.label, durationMs: now()-(start||now()), confidence: 0.90 });
           startedAt.gazeOutside = null;
         }
       } else {
         startedAt.gazeOutside = null;
+        status('face-ok', 'Eyes centered / tracking');
       }
+    } else {
+      startedAt.gazeOutside = null;
     }
 
     if (head.away) {
@@ -219,7 +257,10 @@
       }
     } else {
       startedAt.headAway = null;
-      if (gaze && insideEnvelope(gaze)) status('face-ok', 'Face and eyes inside calibrated reading area');
+      if (gaze) {
+        const dir = gazeDirection(gaze);
+        if (!dir.away) status('face-ok', 'Eyes centered / tracking');
+      }
     }
   }
 
@@ -317,8 +358,8 @@
     root.innerHTML=`<style>
       .sb-eye-calibration-overlay{position:fixed;inset:0;z-index:2147483000;background:#070a14;color:#f4f5ff;font-family:Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
       .sb-cal-wrap{width:100vw;height:100vh;box-sizing:border-box;padding:28px 38px 24px;display:flex;flex-direction:column;gap:16px}
-      .sb-cal-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.sb-cal-kicker{font-size:12px;letter-spacing:.1em;font-weight:850;color:#b7a5ff}.sb-cal-head h2{margin:7px 0 6px;font-size:32px;letter-spacing:-.03em}.sb-cal-head p{margin:0;color:#9ca6bd;max-width:930px;line-height:1.55;font-size:13px}.sb-cal-phase{padding:10px 14px;border-radius:999px;border:1px solid rgba(167,139,250,.25);background:rgba(124,92,255,.10);font-size:14px;font-weight:850;white-space:nowrap}
-      .sb-cal-stage{position:relative;flex:1;min-height:0;border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(99,102,241,.12),transparent 52%),#0b0f1a;padding:48px;display:flex}.sb-cal-stage.h{align-items:center}.sb-cal-stage.v{justify-content:center}.sb-cal-text{position:relative;z-index:2;font-weight:760;line-height:1.55;letter-spacing:-.02em}.sb-cal-text.h{width:100%;font-size:clamp(24px,3.2vw,48px)}.sb-cal-text.v{width:min(900px,80vw);font-size:clamp(22px,2.6vw,38px);display:flex;flex-direction:column;gap:16px;text-align:center}.sb-cal-text span{display:block}.sb-cal-sweep{position:absolute;z-index:1;pointer-events:none;opacity:.35}.sb-cal-sweep.h{top:0;bottom:0;width:16%;left:-20%;background:linear-gradient(90deg,transparent,#8b5cf6,transparent);animation:sbSweepH 5s linear infinite}.sb-cal-sweep.v{left:0;right:0;height:16%;top:-20%;background:linear-gradient(180deg,transparent,#38bdf8,transparent);animation:sbSweepV 5s linear infinite}
+      .sb-cal-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.sb-cal-kicker{font-size:12px;letter-spacing:.1em;font-weight:850;color:#b7a5ff}.sb-cal-head h2{margin:7px 0 6px;font-size:32px;letter-spacing:-.03em}.sb-cal-head p{margin:0;color:#9ca6bd;max-width:1080px;line-height:1.55;font-size:13px}.sb-cal-phase{padding:10px 14px;border-radius:999px;border:1px solid rgba(167,139,250,.25);background:rgba(124,92,255,.10);font-size:14px;font-weight:850;white-space:nowrap}
+      .sb-cal-stage{position:relative;flex:1;min-height:0;border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(99,102,241,.12),transparent 52%),#0b0f1a;padding:44px 52px;display:flex}.sb-cal-stage.h{align-items:center}.sb-cal-stage.v{justify-content:center}.sb-cal-text{position:relative;z-index:2;font-weight:760;line-height:1.55;letter-spacing:-.02em}.sb-cal-text.h{width:100%;font-size:clamp(22px,2.7vw,42px)}.sb-cal-text.v{width:min(1180px,88vw);font-size:clamp(19px,2.05vw,32px);display:flex;flex-direction:column;gap:14px;text-align:left}.sb-cal-text span{display:block}.sb-cal-sweep{position:absolute;z-index:1;pointer-events:none;opacity:.35}.sb-cal-sweep.h{top:0;bottom:0;width:16%;left:-20%;background:linear-gradient(90deg,transparent,#8b5cf6,transparent);animation:sbSweepH 5s linear infinite}.sb-cal-sweep.v{left:0;right:0;height:16%;top:-20%;background:linear-gradient(180deg,transparent,#38bdf8,transparent);animation:sbSweepV 5s linear infinite}
       .sb-cal-bottom{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end}.sb-cal-status{border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.025);padding:13px 15px}.sb-cal-status small{display:block;text-transform:uppercase;letter-spacing:.1em;color:#707a95;font-size:10px}.sb-cal-status strong{display:block;margin-top:5px;font-size:14px}.sb-cal-btn{border:0;border-radius:13px;padding:14px 20px;background:linear-gradient(135deg,#8063ff,#4f46e5);color:white;font-weight:850;cursor:pointer}.sb-cal-btn.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}.sb-cal-btn:disabled{opacity:.45;cursor:not-allowed}@keyframes sbSweepH{0%{left:-20%}100%{left:105%}}@keyframes sbSweepV{0%{top:-20%}100%{top:105%}}@media(max-width:800px){.sb-cal-wrap{padding:18px}.sb-cal-head{flex-direction:column}.sb-cal-head h2{font-size:24px}.sb-cal-stage{padding:24px}.sb-cal-bottom{grid-template-columns:1fr}}
     </style>
     <div class='sb-cal-wrap'>
@@ -344,8 +385,8 @@
     const statusEl=overlay.querySelector('#sbCalStatus');
     const btn=overlay.querySelector('#sbCalButton');
 
-    const horizontal=`SkillBridge connects students, institutions and industry through verified skills. Read naturally across the screen from left to right while speaking clearly. Follow the words with your eyes at your normal reading pace.`;
-    const vertical=`Now continue reading naturally while following the text from the top of the screen toward the bottom. Keep your face visible and let your eyes move normally with the reading flow.`;
+    const horizontal=`EXAM RULES — PLEASE READ CAREFULLY. Keep your face clearly visible inside the camera frame throughout the examination. Keep your eyes on the screen and follow the questions naturally while reading. Do not repeatedly look away from the screen or intentionally leave the camera view. Do not use a mobile phone, smartwatch, tablet, second computer, or any other electronic device during the examination. Do not take help from another person or communicate with anyone for assistance. Do not use Google, websites, AI tools, notes, books, answer keys, or any other external source to find answers.`;
+    const vertical=`Remain at your examination position and do not unnecessarily move around or leave your position during the exam. Keep your surroundings quiet and do not talk to other people or create unnecessary noise. Read the questions naturally from LEFT to RIGHT and TOP to BOTTOM at your normal reading speed. Follow all AI proctor warnings and immediately correct the behavior that caused a warning. If you experience a technical problem or cannot continue, you may leave the examination by closing this browser tab to end the exam. By starting the examination, you confirm that you have read and understood these rules and agree to follow them throughout the assessment.`;
 
     let phase='horizontal';
     let sampleTimer=null;
@@ -507,7 +548,7 @@
     clearTimeout(timer); timer=null; monitorLoop();
     return true;
   }
-  function pauseFor(ms=5000){ pausedUntil=now()+Math.max(0,Number(ms)||0); clearConditions(); status('active',`AI Proctor paused for ${Math.ceil(ms/1000)}s after warning`); setTimeout(()=>{if(running)status('active','AI video recognition active');},Math.max(0,Number(ms)||0)); }
+  function pauseFor(ms=0){ pausedUntil=now()+Math.max(0,Number(ms)||0); clearConditions(); status('active',`AI Proctor paused for ${Math.ceil(ms/1000)}s after warning`); setTimeout(()=>{if(running)status('active','AI video recognition active');},Math.max(0,Number(ms)||0)); }
   function stop(){ running=false; clearTimeout(timer); timer=null; clearConditions(); bodyReference=null; try{faceLandmarker?.close?.();}catch(_){} try{poseLandmarker?.close?.();}catch(_){} faceLandmarker=null;poseLandmarker=null;videoElement=null;onViolation=null;onStatus=null;pausedUntil=0; }
 
   window.FaceProctor={start,stop,pauseFor,prepareCalibration,beginGazeCalibration,sampleGaze,finishGazeCalibration,calibrateGaze,getCalibration:()=>gazeEnvelope?{...gazeEnvelope}:null,getEvents:()=>[...eventLog],config:{...CONFIG}};

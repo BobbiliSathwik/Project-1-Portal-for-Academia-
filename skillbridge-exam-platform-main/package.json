@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "reset-exams": "node reset-exams.js",
-    "test:integration": "node --test tests/integration.test.js"
+    "test:integration": "node --test tests/integration.test.js",
+    "create-admin": "node create-admin.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",

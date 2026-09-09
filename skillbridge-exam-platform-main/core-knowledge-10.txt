@@ -1,0 +1,79 @@
+Question: What is the root element of an HTML document?
+A. <body>
+B. <html>
+C. <head>
+D. <root>
+Answer: B
+Difficulty Level: Very Easy
+
+Question: Which tag inserts JavaScript into an HTML document?
+A. <script>
+B. <javascript>
+C. <js>
+D. <code>
+Answer: A
+Difficulty Level: Very Easy
+
+Question: Which tag links an external CSS file?
+A. <css>
+B. <style>
+C. <link>
+D. <stylesheet>
+Answer: C
+Difficulty Level: Very Easy
+
+Question: Which tag creates a hyperlink?
+A. <url>
+B. <a>
+C. <link>
+D. <href>
+Answer: B
+Difficulty Level: Very Easy
+
+Question: Which attribute provides alternative text for an image?
+A. title
+B. src
+C. alt
+D. text
+Answer: C
+Difficulty Level: Very Easy
+
+Question: Which tag creates a numbered list?
+A. <ul>
+B. <ol>
+C. <li>
+D. <list>
+Answer: B
+Difficulty Level: Very Easy
+
+Question: Which tag creates a paragraph?
+A. <paragraph>
+B. <text>
+C. <p>
+D. <para>
+Answer: C
+Difficulty Level: Very Easy
+
+Question: Which tag creates a button?
+A. <button>
+B. <btn>
+C. <click>
+D. <inputbutton>
+Answer: A
+Difficulty Level: Very Easy
+
+Question: Which input type hides typed characters?
+A. secret
+B. password
+C. hidden-text
+D. private
+Answer: B
+Difficulty Level: Very Easy
+
+Question: Which tag creates a table row?
+A. <row>
+B. <td>
+C. <tr>
+D. <th>
+Answer: C
+Difficulty Level: Very Easy

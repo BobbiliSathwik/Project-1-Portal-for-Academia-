@@ -144,6 +144,8 @@ app.post(
 
         try {
 
+            const bankType = String(req.body.bankType || "normal").toLowerCase() === "core" ? "core" : "normal";
+
             console.log(
                 "Question bank uploaded:",
                 req.file.originalname
@@ -207,11 +209,11 @@ app.post(
                     // Optional difficulty metadata. Accept either:
                     // DIFFICULTY: EASY / MEDIUM / HARD
                     // in the block (recommended for adaptive exams).
-                    const difficultyLine = lines.find(line => /^DIFFICULTY:\s*/i.test(line));
+                    const difficultyLine = lines.find(line => /^(?:DIFFICULTY|DIFFICULTY LEVEL):\s*/i.test(line));
                     const rawDifficulty = difficultyLine
-                        ? difficultyLine.replace(/^DIFFICULTY:\s*/i, "").trim().toLowerCase()
+                        ? difficultyLine.replace(/^(?:DIFFICULTY|DIFFICULTY LEVEL):\s*/i, "").trim().toLowerCase()
                         : "";
-                    const difficulty = ["easy", "medium", "hard"].includes(rawDifficulty)
+                    const difficulty = ["very easy", "easy", "medium", "hard"].includes(rawDifficulty)
                         ? rawDifficulty
                         : null;
 
@@ -235,13 +237,14 @@ app.post(
             // Save question bank
             const result = db.prepare(`
                 INSERT INTO question_banks
-                (name, questions, admin_id, created_at)
-                VALUES (?, ?, ?, ?)
+                (name, questions, admin_id, created_at, bank_type)
+                VALUES (?, ?, ?, ?, ?)
             `).run(
                 req.file.originalname.replace(/\.txt$/i, ""),
                 JSON.stringify(questions),
                 req.session.adminId,
-                new Date().toISOString()
+                new Date().toISOString(),
+                bankType
             );
 
             console.log(
@@ -253,7 +256,8 @@ app.post(
                 success: true,
                 bankId: result.lastInsertRowid,
                 name: req.file.originalname,
-                questionCount: questions.length
+                questionCount: questions.length,
+                bankType
             });
 
         } catch (error) {
@@ -288,7 +292,7 @@ app.get("/api/question-banks", (req, res) => {
     try {
 
         const banks = db.prepare(`
-            SELECT id, name, questions, created_at
+            SELECT id, name, questions, created_at, bank_type
             FROM question_banks
             WHERE admin_id = ?
             ORDER BY id DESC
@@ -302,6 +306,7 @@ app.get("/api/question-banks", (req, res) => {
                 id: bank.id,
                 name: bank.name,
                 questionCount: questions.length,
+                bankType: bank.bank_type || "normal",
                 created_at: bank.created_at
             };
 
@@ -484,10 +489,10 @@ app.post("/api/admin/login", (req, res) => {
         WHERE email = ?
     `).get(email);
 
-    if (!admin) {
+    if (!admin || admin.role !== "examiner") {
         return res.status(401).json({
             success: false,
-            error: "Invalid email or password."
+            error: "Administrator access required."
         });
     }
     const passwordCorrect =
@@ -681,7 +686,8 @@ app.post("/api/exams", (req, res) => {
         title,
         duration,
         bankId,
-        questionCount
+        questionCount,
+        coreBankId
     } = req.body;
 
     // Check examiner login
@@ -747,11 +753,25 @@ app.post("/api/exams", (req, res) => {
          * the server will randomly select the required
          * number of questions from this bank.
          */
+        let resolvedCoreBankId = null;
+        if (coreBankId) {
+            const coreBank = db.prepare(`SELECT id, bank_type, questions FROM question_banks WHERE id = ? AND admin_id = ?`).get(coreBankId, req.session.adminId);
+            if (!coreBank || (coreBank.bank_type || "normal") !== "core") {
+                return res.status(400).json({ success:false, error:"Selected Core Knowledge bank is invalid." });
+            }
+            if (parseJsonSafe(coreBank.questions, []).length < 10) {
+                return res.status(400).json({ success:false, error:"Core Knowledge bank must contain at least 10 questions." });
+            }
+            resolvedCoreBankId = Number(coreBankId);
+        }
+
         const examData = {
             bankId: Number(bankId),
             questionCount: Number(questionCount),
             adaptive: true,
-            adaptiveBatchSize: 5
+            adaptiveBatchSize: 5,
+            coreBankId: resolvedCoreBankId,
+            coreTriggerEnabled: Boolean(resolvedCoreBankId)
         };
 
         // Save exam
@@ -950,16 +970,16 @@ function normalizeDifficulty(value, index, total) {
 }
 
 function difficultyRank(level) {
-    return { easy: 0, medium: 1, hard: 2 }[level] ?? 1;
+    return { "very easy": 0, easy: 1, medium: 2, hard: 3 }[level] ?? 2;
 }
 
 function nextDifficulty(level, score, batchSize = 5) {
     const rank = difficultyRank(level);
     if (score >= Math.ceil(batchSize * 0.8)) {
-        return ["easy", "medium", "hard"][Math.min(2, rank + 1)];
+        return ["very easy", "easy", "medium", "hard"][Math.min(3, rank + 1)];
     }
     if (score <= Math.floor(batchSize * 0.4)) {
-        return ["easy", "medium", "hard"][Math.max(0, rank - 1)];
+        return ["very easy", "easy", "medium", "hard"][Math.max(0, rank - 1)];
     }
     return level;
 }
@@ -1010,6 +1030,32 @@ function publicQuestion(question) {
         __bankIndex: question.__bankIndex,
         difficulty: question.difficulty
     };
+}
+
+function adaptiveDifficultyValue(level) {
+    return { "very easy": 0, easy: 1, medium: 2, hard: 3 }[String(level || "medium").toLowerCase()] ?? 2;
+}
+
+// SkillAura adaptive score: correctness is the main factor, while
+// correctly answering harder questions earns a higher mastery contribution.
+// This is SAT-inspired, not a copy of College Board's proprietary IRT model.
+function calculateAdaptiveScore(questions, answers) {
+    if (!questions.length) return 0;
+    let correct = 0;
+    let difficultyPoints = 0;
+    for (const question of questions) {
+        const chosen = String(answers[String(question.id)] || "");
+        const answerLetter = String(question.answer || question.correctAnswer || "").toUpperCase();
+        const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[answerLetter];
+        const correctOptionId = `${question.id}-option-${correctIndex}`;
+        if (chosen === correctOptionId) {
+            correct += 1;
+            difficultyPoints += adaptiveDifficultyValue(question.difficulty) / 3;
+        }
+    }
+    const correctnessComponent = (correct / questions.length) * 70;
+    const difficultyComponent = (difficultyPoints / questions.length) * 30;
+    return Math.round((correctnessComponent + difficultyComponent) * 100) / 100;
 }
 
 function selectAdaptiveBatch(pool, targetDifficulty, excludedIds, count) {
@@ -1098,6 +1144,8 @@ app.get("/api/exams/:id", (req, res) => {
     exam.totalQuestionCount = requestedCount;
     exam.adaptive = adaptiveEnabled;
     exam.adaptiveBatchSize = batchSize;
+    exam.coreCheckEnabled = Boolean(examData?.coreBankId);
+    exam.coreCheckTriggerAt = Math.ceil(requestedCount / 2);
     exam.completedQuestionCount = questions.length;
 
     // Do not rely on the client-visible correct answer; it is stripped below.
@@ -1245,6 +1293,29 @@ function getAttemptQuestions(examId, questionIds) {
 // Save exam attempt
 // -------------------------
 
+// -------------------------
+// Core Knowledge Check
+// -------------------------
+app.post("/api/exams/:id/core-check", (req, res) => {
+    if (!req.session.adminId || req.session.role !== "student") {
+        return res.status(403).json({success:false,error:"Student access required."});
+    }
+    try {
+        const exam = db.prepare(`SELECT * FROM exams WHERE id = ?`).get(req.params.id);
+        if (!exam) return res.status(404).json({success:false,error:"Exam not found."});
+        const examData = parseJsonSafe(exam.questions, {});
+        if (!examData.coreBankId) return res.status(404).json({success:false,error:"Core Knowledge Check is not configured for this exam."});
+        const bank = db.prepare(`SELECT questions FROM question_banks WHERE id = ? AND admin_id = ?`).get(Number(examData.coreBankId), exam.admin_id);
+        const pool = parseJsonSafe(bank?.questions, []);
+        if (pool.length < 10) return res.status(400).json({success:false,error:"Core Knowledge bank must contain at least 10 questions."});
+        const selected = shuffleServer(pool.map((q,i)=>({...q,id:q.id || `core-${examData.coreBankId}-q-${i+1}`}))).slice(0,10);
+        res.json({success:true,durationSeconds:60,questions:selected.map(q=>({id:q.id,question:q.question,options:q.options}))});
+    } catch(e) {
+        console.error("Core check error:",e);
+        res.status(500).json({success:false,error:"Could not load the Core Knowledge Check."});
+    }
+});
+
 app.post(
     "/api/attempts",
     upload.single("video"),
@@ -1312,46 +1383,56 @@ app.post(
 
             const answers = parseJsonSafe(req.body.answers, {});
             const questionIds = parseJsonSafe(req.body.questionIds, []);
+            const coreAnswers = parseJsonSafe(req.body.coreAnswers, {});
+            const coreQuestionIds = parseJsonSafe(req.body.coreQuestionIds, []).map(String);
             const selectedQuestions = getAttemptQuestions(examId, questionIds);
             let score = null;
             let total = null;
+            let coreScore = null;
+            let coreTotal = null;
 
                         if ((req.body.status || "completed") === "completed") {
-                total = selectedQuestions.length;
-
-                score = selectedQuestions.reduce((count, question, index) => {
-                    const questionId = String(questionIds[index] || "");
-                    const chosenOptionId = String(
-                        answers[questionId] || ""
-                    );
-
-                    const correctLetter = String(
-                        question.answer || question.correctAnswer || ""
-                    ).toUpperCase();
-
-                    const correctIndex = {
-                        A: 0,
-                        B: 1,
-                        C: 2,
-                        D: 3
-                    }[correctLetter];
-
-                    const correctOptionId =
-                        `${questionId}-option-${correctIndex}`;
-
-                    return count + (
-                        chosenOptionId === correctOptionId
-                            ? 1
-                            : 0
-                    );
+                const examDataForScoring = parseJsonSafe(exam.questions, {});
+                const isAdaptive = !Array.isArray(examDataForScoring) && examDataForScoring.adaptive !== false;
+                const rawCorrect = selectedQuestions.reduce((count, question, index) => {
+                    const questionId = String(questionIds[index] || question.id || "");
+                    const chosenOptionId = String(answers[questionId] || "");
+                    const correctLetter = String(question.answer || question.correctAnswer || "").toUpperCase();
+                    const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[correctLetter];
+                    return count + (chosenOptionId === `${questionId}-option-${correctIndex}` ? 1 : 0);
                 }, 0);
+
+                if (isAdaptive) {
+                    score = calculateAdaptiveScore(selectedQuestions, answers);
+                    total = 100;
+                } else {
+                    score = rawCorrect;
+                    total = selectedQuestions.length;
+                }
+            }
+
+            if ((req.body.status || "completed") === "completed" && coreQuestionIds.length) {
+                const examDataForCore = parseJsonSafe(exam.questions, {});
+                if (examDataForCore.coreBankId) {
+                    const coreBank = db.prepare(`SELECT questions FROM question_banks WHERE id = ?`).get(Number(examDataForCore.coreBankId));
+                    const pool = parseJsonSafe(coreBank?.questions, []);
+                    coreTotal = coreQuestionIds.length;
+                    coreScore = coreQuestionIds.reduce((count, qid) => {
+                        const idx = pool.findIndex((q,i) => String(q.id || `core-${examDataForCore.coreBankId}-q-${i+1}`) === qid);
+                        if (idx < 0) return count;
+                        const q = pool[idx];
+                        const letter = String(q.answer || q.correctAnswer || "").toUpperCase();
+                        const ci = {A:0,B:1,C:2,D:3}[letter];
+                        return count + (String(coreAnswers[qid] || "") === `${qid}-option-${ci}` ? 1 : 0);
+                    }, 0);
+                }
             }
 
             const completedAt = new Date().toISOString();
             db.prepare(`
                 INSERT INTO exam_attempts
-                (id, student_id, exam_id, started_at, completed_at, status, video_path, drive_file_id, score, total, answers, question_ids)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, student_id, exam_id, started_at, completed_at, status, video_path, drive_file_id, score, total, answers, question_ids, core_score, core_total, core_answers, core_question_ids)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 attemptId,
                 req.session.adminId,
@@ -1364,7 +1445,11 @@ app.post(
                 score,
                 total,
                 JSON.stringify(answers),
-                JSON.stringify(questionIds)
+                JSON.stringify(questionIds),
+                coreScore,
+                coreTotal,
+                JSON.stringify(coreAnswers),
+                JSON.stringify(coreQuestionIds)
             );
 
             // Always resolve the candidate name from the authenticated account.
@@ -1467,6 +1552,15 @@ app.get("/api/attempts/:id", (req, res) => {
     }
 
     const percentage = attempt.total ? Math.round((attempt.score / attempt.total) * 100) : 0;
+    const resultQuestionIds = parseJsonSafe(attempt.question_ids, []);
+    const resultAnswers = parseJsonSafe(attempt.answers, {});
+    const resultQuestions = getAttemptQuestions(attempt.exam_id, resultQuestionIds);
+    const rawCorrect = resultQuestions.reduce((count, question, index) => {
+        const questionId = String(resultQuestionIds[index] || question.id || "");
+        const answerLetter = String(question.answer || question.correctAnswer || "").toUpperCase();
+        const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[answerLetter];
+        return count + (String(resultAnswers[questionId] || "") === `${questionId}-option-${correctIndex}` ? 1 : 0);
+    }, 0);
     const nextAvailableAt = new Date(new Date(attempt.started_at).getTime() + EXAM_COOLDOWN_MS).toISOString();
     const profile = db.prepare("SELECT full_name FROM student_profiles WHERE admin_id = ?").get(req.session.adminId);
     const account = db.prepare("SELECT email FROM admins WHERE id = ?").get(req.session.adminId);
@@ -1480,12 +1574,17 @@ app.get("/api/attempts/:id", (req, res) => {
             studentName: profile?.full_name || account?.email || "Student",
             score: attempt.score ?? 0,
             total: attempt.total ?? 0,
+            rawScore: rawCorrect,
+            rawTotal: resultQuestions.length,
             percentage,
             status: attempt.status,
             completedAt: attempt.completed_at,
             nextAvailableAt,
             videoUrl: attempt.video_path || null,
-            driveFileId: attempt.drive_file_id || null
+            driveFileId: attempt.drive_file_id || null,
+            coreScore: attempt.core_score ?? null,
+            coreTotal: attempt.core_total ?? null,
+            corePassed: attempt.core_total ? Number(attempt.core_score) >= 8 : null
         }
     });
 });
@@ -1509,6 +1608,8 @@ app.get("/api/admin/results", (req, res) => {
                 a.status,
                 a.score,
                 a.total,
+                a.core_score,
+                a.core_total,
                 a.video_path,
                 a.drive_file_id,
                 e.title AS exam_title,
@@ -1532,6 +1633,9 @@ app.get("/api/admin/results", (req, res) => {
             examTitle: r.exam_title,
             score: r.score ?? 0,
             total: r.total ?? 0,
+            coreScore: r.core_score ?? null,
+            coreTotal: r.core_total ?? null,
+            corePassed: r.core_total ? Number(r.core_score) >= 8 : null,
             percentage: r.total ? Math.round((r.score / r.total) * 100) : 0,
             status: r.status,
             submittedAt: r.completed_at || r.started_at,
@@ -1574,6 +1678,8 @@ app.get("/api/admin/students/:studentId/performance", (req, res) => {
                 a.started_at,
                 a.score,
                 a.total,
+                a.core_score,
+                a.core_total,
                 a.status,
                 a.video_path,
                 a.drive_file_id,

@@ -3,3 +3,9 @@ test-results/
 playwright-report/
 data/skillaura-auth-users.json
 .env
+
+# Dependencies
+node_modules/
+
+# macOS
+.DS_Store

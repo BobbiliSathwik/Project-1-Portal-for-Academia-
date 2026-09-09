@@ -81,6 +81,11 @@ try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN score INTEGER").run(); } 
 try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN total INTEGER").run(); } catch (e) {}
 try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN answers TEXT").run(); } catch (e) {}
 try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN question_ids TEXT").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN core_score INTEGER").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN core_total INTEGER").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN core_answers TEXT").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE exam_attempts ADD COLUMN core_question_ids TEXT").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE question_banks ADD COLUMN bank_type TEXT NOT NULL DEFAULT 'normal'").run(); } catch (e) {}
 
 console.log("Database ready.");
 
