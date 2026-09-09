@@ -1794,23 +1794,35 @@
 			for (let index = 0; index < value.length; index += 1) { hash ^= value.charCodeAt(index); hash = Math.imul(hash, 16777619); }
 			return `sb-${(hash >>> 0).toString(16)}`;
 		}
+		function withoutLegacyPasswordHash(account) {
+			if (!account || typeof account !== 'object') return account;
+			const sanitized = { ...account };
+			delete sanitized.passwordHash;
+			return sanitized;
+		}
+		function sanitizeAccountList(accounts) { return accounts.map(withoutLegacyPasswordHash); }
+		function persistSanitizedAccounts(key, accounts) {
+			const sanitized = sanitizeAccountList(accounts);
+			try { localStorage.setItem(key, JSON.stringify(sanitized)); } catch (error) { }
+			return sanitized;
+		}
 		function loadStudentAccounts() {
 			try {
 				const current = JSON.parse(localStorage.getItem(STUDENT_ACCOUNTS_KEY));
-				if (Array.isArray(current)) return current;
+				if (Array.isArray(current)) return persistSanitizedAccounts(STUDENT_ACCOUNTS_KEY, current);
 				const legacy = JSON.parse(localStorage.getItem(LEGACY_STUDENT_ACCOUNTS_KEY));
-				if (Array.isArray(legacy)) { localStorage.setItem(STUDENT_ACCOUNTS_KEY, JSON.stringify(legacy)); return legacy; }
+				if (Array.isArray(legacy)) return persistSanitizedAccounts(STUDENT_ACCOUNTS_KEY, legacy);
 				return [];
 			} catch (error) { return []; }
 		}
-		function saveStudentAccounts(accounts) { try { localStorage.setItem(STUDENT_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Account changes could not be saved in this browser.'); } }
-		function loadCompanyAccounts() { try { const accounts = JSON.parse(localStorage.getItem(COMPANY_ACCOUNTS_KEY)); return Array.isArray(accounts) ? accounts : []; } catch (error) { return []; } }
-		function saveCompanyAccounts(accounts) { try { localStorage.setItem(COMPANY_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Company account changes could not be saved in this browser.'); } }
+		function saveStudentAccounts(accounts) { try { persistSanitizedAccounts(STUDENT_ACCOUNTS_KEY, accounts); } catch (error) { showToast('Account changes could not be saved in this browser.'); } }
+		function loadCompanyAccounts() { try { const accounts = JSON.parse(localStorage.getItem(COMPANY_ACCOUNTS_KEY)); return Array.isArray(accounts) ? persistSanitizedAccounts(COMPANY_ACCOUNTS_KEY, accounts) : []; } catch (error) { return []; } }
+		function saveCompanyAccounts(accounts) { try { persistSanitizedAccounts(COMPANY_ACCOUNTS_KEY, accounts); } catch (error) { showToast('Company account changes could not be saved in this browser.'); } }
 		function loadCompanyWorkspaces() { try { const workspaces = JSON.parse(localStorage.getItem(COMPANY_WORKSPACES_KEY)); return workspaces && typeof workspaces === 'object' ? workspaces : {}; } catch (error) { return {}; } }
 		function blankCompanyWorkspace(account) { return { companyId: account.id, opportunities: [], applications: [], shortlist: [], interviews: [], messages: [], notifications: [], offers: [], notes: {}, onboarding: { status: 'Pending', completed: false } }; }
 		function getCompanyWorkspace(companyId) { const workspaces = loadCompanyWorkspaces(); return workspaces[companyId] || blankCompanyWorkspace({ id: companyId }); }
 		function saveCompanyWorkspace(workspace) { const workspaces = loadCompanyWorkspaces(); workspaces[workspace.companyId] = workspace; try { localStorage.setItem(COMPANY_WORKSPACES_KEY, JSON.stringify(workspaces)); } catch (error) { showToast('Company workspace changes could not be saved.'); } }
-		function loadInstitutionAccounts() { try { const accounts = JSON.parse(localStorage.getItem(INSTITUTION_ACCOUNTS_KEY)); return Array.isArray(accounts) ? accounts : []; } catch (error) { return []; } }
+		function loadInstitutionAccounts() { try { const accounts = JSON.parse(localStorage.getItem(INSTITUTION_ACCOUNTS_KEY)); return Array.isArray(accounts) ? persistSanitizedAccounts(INSTITUTION_ACCOUNTS_KEY, accounts) : []; } catch (error) { return []; } }
 		function saveInstitutionAccounts(accounts) { try { localStorage.setItem(INSTITUTION_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Institution account changes could not be saved.'); } }
 		function loadTutorAccounts() { try { const accounts = JSON.parse(localStorage.getItem(TUTOR_ACCOUNTS_KEY)); return Array.isArray(accounts) ? accounts : []; } catch (error) { return []; } }
 		function saveTutorAccounts(accounts) { try { localStorage.setItem(TUTOR_ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (error) { showToast('Tutor account changes could not be saved.'); } }
@@ -1827,7 +1839,7 @@
 		function currentInstitutionWorkspace() { const account = currentInstitutionAccount(); return account ? getInstitutionWorkspace(account.id) : null; }
 		function normalizeRole(role) { return role === 'industry' ? 'company' : role === 'employee' ? 'student' : role; }
 		function isLearnerRole(role) { return ['student', 'tutor'].includes(normalizeRole(role)); }
-		function resolveAccountRole(account) { return normalizeRole((account && account.role) || (currentStudentSession() && currentStudentSession().role) || 'student'); }
+		function resolveAccountRole(account) { return normalizeRole((currentStudentSession() && currentStudentSession().role) || (account && account.role) || 'student'); }
 		function dashboardRouteForRole(role) { const normalized = normalizeRole(role); return normalized === 'company' ? '/company/dashboard' : normalized === 'institution' ? '/institution/dashboard' : normalized === 'tutor' ? '/tutor/dashboard' : '/student/dashboard'; }
 		function clearStudentSession() {
 			for (const key of LEGACY_USER_KEYS) {
@@ -1960,7 +1972,7 @@
 			let students = loadStudentAccounts();
 			let demoStudent = students.find((account) => account.email === 'student@skillaura.demo');
 			if (!demoStudent) {
-				demoStudent = { id: demoStudentId, studentId: demoStudentId, fullName: 'Demo Student', email: 'student@skillaura.demo', passwordHash: prototypeHash('Student@123'), institutionId: demoInstitutionId, role: 'student', demoAccount: true, registeredAt: new Date().toISOString(), onboardingCompleted: true, onboarding: { careerInterest: 'Software Developer', desiredRole: 'Software Developer' }, profile: { name: 'Demo Student', email: 'student@skillaura.demo', college: 'SkillAura Demo University', course: 'Computer Science and Engineering', year: '3rd Year', phone: '', initials: 'DS', title: 'Welcome, Demo Student', subtitle: 'Explore the connected SkillAura demo journey.', demoAccount: true, careerInterest: 'Software Developer', institutionId: demoInstitutionId }, workspace: { skills: clone(studentSkills), gaps: [{ name: 'Data Structures', score: 48, target: 75 }, { name: 'System Design', score: 35, target: 65 }], applications: [], assessments: clone(studentAssessments), preferences: { careerInterest: 'Software Developer' }, portfolio: { projects: ['Skill tracking dashboard'], certifications: ['Python Foundations'], achievements: ['Completed demo onboarding'] } } };
+				demoStudent = { id: demoStudentId, studentId: demoStudentId, fullName: 'Demo Student', email: 'student@skillaura.demo', institutionId: demoInstitutionId, role: 'student', demoAccount: true, registeredAt: new Date().toISOString(), onboardingCompleted: true, onboarding: { careerInterest: 'Software Developer', desiredRole: 'Software Developer' }, profile: { name: 'Demo Student', email: 'student@skillaura.demo', college: 'SkillAura Demo University', course: 'Computer Science and Engineering', year: '3rd Year', phone: '', initials: 'DS', title: 'Welcome, Demo Student', subtitle: 'Explore the connected SkillAura demo journey.', demoAccount: true, careerInterest: 'Software Developer', institutionId: demoInstitutionId }, workspace: { skills: clone(studentSkills), gaps: [{ name: 'Data Structures', score: 48, target: 75 }, { name: 'System Design', score: 35, target: 65 }], applications: [], assessments: clone(studentAssessments), preferences: { careerInterest: 'Software Developer' }, portfolio: { projects: ['Skill tracking dashboard'], certifications: ['Python Foundations'], achievements: ['Completed demo onboarding'] } } };
 				students.push(demoStudent);
 				saveStudentAccounts(students);
 			}
@@ -1968,7 +1980,7 @@
 			let companies = loadCompanyAccounts();
 			let demoCompany = companies.find((account) => account.email === 'company@skillaura.demo');
 			if (!demoCompany) {
-				demoCompany = { id: demoCompanyId, companyId: demoCompanyId, role: 'company', demoAccount: true, email: 'company@skillaura.demo', passwordHash: prototypeHash('Company@123'), profile: { name: 'TechNova Solutions', email: 'company@skillaura.demo', industryType: 'Software & Technology', location: 'Hyderabad, India', size: '51–200 employees', contactPerson: 'Demo Recruiter', designation: 'Talent Acquisition Manager', initials: 'TS', title: 'Welcome, TechNova Solutions', subtitle: 'Explore skill-based recruitment with demo data.', demoAccount: true }, createdAt: new Date().toISOString() };
+				demoCompany = { id: demoCompanyId, companyId: demoCompanyId, role: 'company', demoAccount: true, email: 'company@skillaura.demo', profile: { name: 'TechNova Solutions', email: 'company@skillaura.demo', industryType: 'Software & Technology', location: 'Hyderabad, India', size: '51–200 employees', contactPerson: 'Demo Recruiter', designation: 'Talent Acquisition Manager', initials: 'TS', title: 'Welcome, TechNova Solutions', subtitle: 'Explore skill-based recruitment with demo data.', demoAccount: true }, createdAt: new Date().toISOString() };
 				companies.push(demoCompany);
 				saveCompanyAccounts(companies);
 			}
@@ -1976,7 +1988,7 @@
 			let institutions = loadInstitutionAccounts();
 			let demoInstitution = institutions.find((account) => account.email === 'institution@skillaura.demo');
 			if (!demoInstitution) {
-				demoInstitution = { id: demoInstitutionId, institutionId: demoInstitutionId, role: 'institution', demoAccount: true, email: 'institution@skillaura.demo', passwordHash: prototypeHash('Institution@123'), profile: { name: 'SkillAura Demo Institute', email: 'institution@skillaura.demo', institutionType: 'Engineering College', affiliation: 'SkillAura Demo University', location: 'Hyderabad, India', contactPerson: 'Demo Administrator', designation: 'Placement Officer', initials: 'SD', title: 'Welcome, SkillAura Demo Institute', subtitle: 'Explore institution readiness and outcomes.', demoAccount: true }, createdAt: new Date().toISOString() };
+				demoInstitution = { id: demoInstitutionId, institutionId: demoInstitutionId, role: 'institution', demoAccount: true, email: 'institution@skillaura.demo', profile: { name: 'SkillAura Demo Institute', email: 'institution@skillaura.demo', institutionType: 'Engineering College', affiliation: 'SkillAura Demo University', location: 'Hyderabad, India', contactPerson: 'Demo Administrator', designation: 'Placement Officer', initials: 'SD', title: 'Welcome, SkillAura Demo Institute', subtitle: 'Explore institution readiness and outcomes.', demoAccount: true }, createdAt: new Date().toISOString() };
 				institutions.push(demoInstitution);
 				saveInstitutionAccounts(institutions);
 			}
@@ -2855,13 +2867,13 @@
 				if (demoRole === 'tutor') {
 					let account = loadTutorAccounts().find((item) => item.email === 'demo@tutor.skillaura');
 					if (!account) {
-						account = { id: 'tutor-demo', email: 'demo@tutor.skillaura', passwordHash: prototypeHash('demo-access'), role: 'tutor', demoAccount: true, profile: { name: 'Demo Tutor', email: 'demo@tutor.skillaura', initials: 'DT', expertise: 'JavaScript, Web Development', bio: 'I help learners build practical skills for modern digital careers.' }, courses: [{ id: 'course-demo-js', title: 'Modern JavaScript Foundations', description: 'Build a strong foundation in JavaScript and browser development.', category: 'Web Development', difficulty: 'Beginner', skills: 'JavaScript, DOM, Accessibility', modules: 'Module 1: Language foundations\nModule 2: Browser projects', duration: '6 weeks', price: 'Free', status: 'Published', learners: 24, completion: 68 }] };
+						account = { id: 'tutor-demo', email: 'demo@tutor.skillaura', role: 'tutor', demoAccount: true, profile: { name: 'Demo Tutor', email: 'demo@tutor.skillaura', initials: 'DT', expertise: 'JavaScript, Web Development', bio: 'I help learners build practical skills for modern digital careers.' }, courses: [{ id: 'course-demo-js', title: 'Modern JavaScript Foundations', description: 'Build a strong foundation in JavaScript and browser development.', category: 'Web Development', difficulty: 'Beginner', skills: 'JavaScript, DOM, Accessibility', modules: 'Module 1: Language foundations\nModule 2: Browser projects', duration: '6 weeks', price: 'Free', status: 'Published', learners: 24, completion: 68 }] };
 						saveTutorAccounts([...(loadTutorAccounts()), account]);
 					}
 					account.id = user.id; account.email = user.email; startTutorSession(account); go('/tutor/dashboard'); return;
 				}
 				let account = loadStudentAccounts().find((item) => item.email === 'demo@student.skillaura');
-				if (!account) { const profile = { ...clone(defaultState.student), name: 'Demo Student/Employee', email: 'demo@student.skillaura', initials: 'DS', title: 'Welcome, Demo', subtitle: 'Here is your career readiness overview.' }; account = { id: 'student-demo', email: profile.email, passwordHash: prototypeHash('demo-access'), profile, workspace: studentWorkspace(), createdAt: new Date().toISOString() }; saveStudentAccounts([...loadStudentAccounts(), account]); }
+				if (!account) { const profile = { ...clone(defaultState.student), name: 'Demo Student/Employee', email: 'demo@student.skillaura', initials: 'DS', title: 'Welcome, Demo', subtitle: 'Here is your career readiness overview.' }; account = { id: 'student-demo', email: profile.email, profile, workspace: studentWorkspace(), createdAt: new Date().toISOString() }; saveStudentAccounts([...loadStudentAccounts(), account]); }
 				account.id = user.id; account.email = user.email; startStudentSession(account, 'student'); go('/student/dashboard');
 			}));
 		}
@@ -2879,10 +2891,10 @@
 		function localAccountFromServer(user, values = {}) {
 			const role = normalizeRole(user.role);
 			const profile = { name: user.name, email: user.email, initials: user.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), college: values.college || '', course: values.course || '', year: values.year || '', expertise: values.expertise || '', bio: values.bio || '', industryType: values.industryType || '', institutionType: values.institutionType || '' };
-			if (role === 'student') { const accounts = loadStudentAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, workspace: newStudentWorkspace() }; account.id = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; account.workspace ||= newStudentWorkspace(); saveStudentAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
-			if (role === 'tutor') { const accounts = loadTutorAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, courses: [], exams: [] }; account.id = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveTutorAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
-			if (role === 'company') { const accounts = loadCompanyAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, companyId: user.id, email: user.email, profile }; account.id = user.id; account.companyId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveCompanyAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
-			const accounts = loadInstitutionAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, institutionId: user.id, email: user.email, profile }; account.id = user.id; account.institutionId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveInstitutionAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account;
+			if (role === 'student') { const accounts = loadStudentAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, workspace: newStudentWorkspace() }; account.id = user.id; account.role = role; account.email = user.email; account.profile = { ...account.profile, ...profile }; account.workspace ||= newStudentWorkspace(); saveStudentAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			if (role === 'tutor') { const accounts = loadTutorAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, email: user.email, profile, courses: [], exams: [] }; account.id = user.id; account.role = role; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveTutorAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			if (role === 'company') { const accounts = loadCompanyAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, companyId: user.id, email: user.email, profile }; account.id = user.id; account.role = role; account.companyId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveCompanyAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account; }
+			const accounts = loadInstitutionAccounts(); const account = accounts.find((item) => item.id === user.id || item.email === user.email) || { id: user.id, institutionId: user.id, email: user.email, profile }; account.id = user.id; account.role = role; account.institutionId = user.id; account.email = user.email; account.profile = { ...account.profile, ...profile }; saveInstitutionAccounts([...accounts.filter((item) => item.id !== account.id), account]); return account;
 		}
 		async function handleForm(form, submitEvent) {
 			const values = Object.fromEntries(new FormData(form).entries());
@@ -3033,8 +3045,8 @@
 				const user = await serverAuthRequest('/api/auth/login', { email: values.email, password: values.password, role });
 				if (!user) return;
 				const account = localAccountFromServer(user, values);
-				if (role === 'tutor') { startTutorSession(account); go('/tutor/dashboard'); return; }
-				startStudentSession(account, role);
+				if (normalizeRole(user.role) === 'tutor') { startTutorSession(account); go('/tutor/dashboard'); return; }
+				startStudentSession(account, normalizeRole(user.role));
 				go('/student/dashboard'); return;
 			}
 			if (form.dataset.form === 'register') {
@@ -3060,7 +3072,7 @@
 			}
 			if (form.dataset.form === 'onboarding') { const account = currentStudentAccount(); if (!account) return go('/login'); const onboarding = { careerInterest: values.interests || '', desiredRole: values.roles || '', technicalSkills: values.technicalSkills || '', softSkills: values.softSkills || '', preferredIndustry: values.industries || '', opportunityType: values.opportunityType || '', location: values.location || '' }; state.student.preferences = onboarding; const accounts = loadStudentAccounts(); const index = accounts.findIndex((item) => item.id === account.id); if (index >= 0) { accounts[index].onboarding = onboarding; accounts[index].onboardingCompleted = true; saveStudentAccounts(accounts); } saveState(); notify('Your onboarding preferences were saved.'); go('/student/dashboard'); return; }
 			if (form.dataset.form === 'recovery') { if (!isValidEmail(values.email)) return showFieldError(form, 'email', 'Enter a valid email address.'); const account = loadStudentAccounts().find((item) => item.email === values.email.trim().toLowerCase()); if (!account) return showFieldError(form, 'email', 'No student account exists for this email.'); try { localStorage.setItem(RESET_CANDIDATE_KEY, account.id); } catch (error) { } showToast('Reset link simulated. Choose a new password now.'); go('/reset-password'); return; }
-			if (form.dataset.form === 'reset-password') { const accountId = localStorage.getItem(RESET_CANDIDATE_KEY); const accounts = loadStudentAccounts(); const index = accounts.findIndex((account) => account.id === accountId); if (index < 0) return go('/forgot-password'); if ((values.password || '').length < 8) return showFieldError(form, 'password', 'Use at least 8 characters.'); if (values.password !== values.confirmPassword) return showFieldError(form, 'confirmPassword', 'Passwords do not match.'); accounts[index].passwordHash = prototypeHash(values.password); saveStudentAccounts(accounts); localStorage.removeItem(RESET_CANDIDATE_KEY); showToast('Password updated. You can now log in.'); go('/login'); return; }
+			if (form.dataset.form === 'reset-password') { const accountId = localStorage.getItem(RESET_CANDIDATE_KEY); const accounts = loadStudentAccounts(); const index = accounts.findIndex((account) => account.id === accountId); if (index < 0) return go('/forgot-password'); if ((values.password || '').length < 8) return showFieldError(form, 'password', 'Use at least 8 characters.'); if (values.password !== values.confirmPassword) return showFieldError(form, 'confirmPassword', 'Passwords do not match.'); saveStudentAccounts(accounts); localStorage.removeItem(RESET_CANDIDATE_KEY); showToast('Password updated. You can now log in.'); go('/login'); return; }
 			if (form.dataset.form === 'profile') { const normalizedRole = normalizeRole(form.dataset.role); const person = personFor(normalizedRole); person.name = values.name; person.email = values.email; if (normalizedRole === 'student') { person.college = values.details; person.title = `Welcome, ${(values.name || '').trim().split(/\s+/)[0] || 'Student'}`; const account = currentStudentAccount(); if (account) { account.profile = { ...account.profile, name: person.name, email: person.email, college: person.college, title: person.title }; saveStudentAccounts(loadStudentAccounts().map((item) => item.id === account.id ? account : item)); } } else if (normalizedRole === 'company') person.industryType = values.details; else person.institutionType = values.details; const session = currentAuthSession(); if (session) persistAuthSession({ ...session, name: person.name, email: person.email }); saveState(); notify('Profile changes saved.'); showToast('Profile changes saved.'); return; }
 			if (form.dataset.form === 'settings') { state.settings = { emailUpdates: form.elements.emailUpdates.checked, profileVisibility: form.elements.profileVisibility.checked, compactView: form.elements.compactView.checked }; saveState(); notify('Settings saved.'); showToast('Settings saved.'); return; }
 			if (form.dataset.form === 'csr-program') {
@@ -3827,9 +3839,9 @@
 		initializeDemoAccounts();
 		async function bootstrapServerAuth() {
 			try {
-				const response = await fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' });
+				const response = await fetch('/api/auth/me', { credentials: 'same-origin', cache: 'no-store' });
 				const payload = await response.json().catch(() => ({}));
-				serverAuthSession = payload.authenticated && payload.user ? { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true } : null;
+				serverAuthSession = response.ok && payload.user ? { ...payload.user, id: payload.user.id, userId: payload.user.id, loggedIn: true } : null;
 				if (serverAuthSession) persistAuthSession(serverAuthSession);
 			} catch (error) { serverAuthSession = null; }
 			serverAuthReady = true;

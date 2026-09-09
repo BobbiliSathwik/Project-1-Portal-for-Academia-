@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, type Page } from '@playwright/test';
 
 /**
  * Custom test fixture for SkillAura tests
@@ -104,17 +104,17 @@ export const SELECTORS = {
 /**
  * Navigation helpers
  */
-export async function goHome(page) {
+export async function goHome(page: Page) {
   await page.goto(ROUTES.home);
   await page.waitForLoadState('networkidle');
 }
 
-export async function goToLogin(page) {
+export async function goToLogin(page: Page) {
   await page.goto(ROUTES.login);
   await page.waitForLoadState('networkidle');
 }
 
-export async function goToRegister(page) {
+export async function goToRegister(page: Page) {
   await page.goto(ROUTES.register);
   await page.waitForLoadState('networkidle');
 }
@@ -122,7 +122,7 @@ export async function goToRegister(page) {
 /**
  * Theme helpers
  */
-export async function setTheme(page, theme) {
+export async function setTheme(page: Page, theme: string) {
   await page.evaluate((t) => {
     localStorage.setItem('skillaura-theme', t);
     document.documentElement.dataset.theme = t;
@@ -130,7 +130,7 @@ export async function setTheme(page, theme) {
   await page.reload();
 }
 
-export async function getTheme(page) {
+export async function getTheme(page: Page) {
   return await page.evaluate(() => {
     return document.documentElement.dataset.theme || 'light';
   });
@@ -139,7 +139,7 @@ export async function getTheme(page) {
 /**
  * Auth helpers
  */
-export async function login(page, email, password) {
+export async function login(page: Page, email: string, password: string) {
   await page.goto(ROUTES.login);
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
@@ -147,7 +147,7 @@ export async function login(page, email, password) {
   await page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {});
 }
 
-export async function register(page, name, email, password, role = 'Student') {
+export async function register(page: Page, name: string, email: string, password: string, role: string = 'Student') {
   await page.goto(ROUTES.register);
   await page.fill('input[placeholder*="full name" i]', name);
   await page.fill('input[type="email"]', email);
@@ -161,7 +161,7 @@ export async function register(page, name, email, password, role = 'Student') {
 /**
  * Check if user is logged in
  */
-export async function isLoggedIn(page) {
+export async function isLoggedIn(page: Page) {
   const session = await page.evaluate(() => {
     try {
       return JSON.parse(localStorage.getItem('skillaura-current-user') || '{}');
@@ -175,7 +175,7 @@ export async function isLoggedIn(page) {
 /**
  * Logout
  */
-export async function logout(page) {
+export async function logout(page: Page) {
   try {
     await page.click('button[data-action="logout"]');
     await page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {});
@@ -187,7 +187,7 @@ export async function logout(page) {
 /**
  * Wait for app to load
  */
-export async function waitForAppLoad(page) {
+export async function waitForAppLoad(page: Page) {
   await page.waitForSelector('#app', { timeout: 5000 });
   await page.waitForLoadState('networkidle');
 }
